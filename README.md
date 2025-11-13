@@ -112,7 +112,7 @@ ______________________________________________________________________
 ### Running the Pipeline
 
 ```bash
-cd src/fashion-mnist
+cd pipelines/fashion-mnist
 
 # Run all stages
 dvc repro
@@ -147,12 +147,12 @@ ______________________________________________________________________
 ```bash
 # 1. Create structure
 mkdir -p data/my-dataset/{raw,processed}
-mkdir -p src/my-dataset/scripts
+mkdir -p pipelines/my-dataset/scripts
 
 # 2. Create pipeline files (dvc.yaml, params.yaml, scripts/*.py)
 
 # 3. Run pipeline
-cd src/my-dataset
+cd pipelines/my-dataset
 dvc repro
 
 # 4. Version and push
@@ -166,7 +166,7 @@ git push origin main v1.0.0
 **Update existing dataset:**
 
 ```bash
-cd src/fashion-mnist
+cd pipelines/fashion-mnist
 vim params.yaml  # Modify parameters
 dvc repro        # Re-run pipeline
 dvc push
@@ -279,7 +279,7 @@ data-registry/
 │       ├── raw/                # Downloaded files (DVC-tracked)
 │       ├── processed/          # Parquet files (DVC-tracked)
 │       └── metrics.json        # Dataset metrics (git-tracked)
-├── src/
+├── pipelines/
 │   └── fashion-mnist/
 │       ├── dvc.yaml           # Pipeline definition
 │       ├── params.yaml        # Pipeline parameters

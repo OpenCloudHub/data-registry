@@ -9,7 +9,7 @@ stages:
       size: 771
     params:
       params.yaml:
-        download.base_url:
+        download.base_url: 
           http://fashion-mnist.s3-website.eu-central-1.amazonaws.com
     outs:
     - path: ../../data/fashion-mnist/raw
@@ -27,31 +27,31 @@ stages:
       nfiles: 4
     - path: scripts/process.py
       hash: md5
-      md5: bdaffb1b9b6938dbd2b886a9da5589aa
-      size: 1557
+      md5: 783cbeb377d0d7b70f6dd6aa1ea76b0a
+      size: 2117
     outs:
     - path: ../../data/fashion-mnist/processed/train
       hash: md5
-      md5: 26b97371cb74bfc9ca2132a0f4d16ecf.dir
-      size: 30291440
+      md5: a3e9fa6ffb666870e08b73e5d3446ab6.dir
+      size: 15146519
       nfiles: 1
     - path: ../../data/fashion-mnist/processed/val
       hash: md5
-      md5: 57ddae36e724e291a753f91e2cf33358.dir
-      size: 5067085
+      md5: ab9dd0e612c7b33b5689833bfc9e94f2.dir
+      size: 2523665
       nfiles: 1
   analyze:
     cmd: python scripts/analyze.py
     deps:
     - path: ../../data/fashion-mnist/processed/train
       hash: md5
-      md5: 26b97371cb74bfc9ca2132a0f4d16ecf.dir
-      size: 30291440
+      md5: a3e9fa6ffb666870e08b73e5d3446ab6.dir
+      size: 15146519
       nfiles: 1
     - path: ../../data/fashion-mnist/processed/val
       hash: md5
-      md5: 57ddae36e724e291a753f91e2cf33358.dir
-      size: 5067085
+      md5: ab9dd0e612c7b33b5689833bfc9e94f2.dir
+      size: 2523665
       nfiles: 1
     - path: scripts/analyze.py
       hash: md5
@@ -60,5 +60,5 @@ stages:
     outs:
     - path: ../../data/fashion-mnist/metrics.json
       hash: md5
-      md5: 3c67e3138ad813b5f178bb251a9d00ee
+      md5: 19bdf4bcfc06874287df3a9d8dfc1c9a
       size: 230

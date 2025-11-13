@@ -12,6 +12,7 @@ import yaml
 params = yaml.safe_load(open("params.yaml"))["process"]
 raw_dir = Path(params["raw_dir"])
 output_dir = Path(params["output_dir"])
+sample_fraction = params.get("sample_fraction", 1.0)  # Default to full dataset
 output_dir_train = output_dir / "train"
 output_dir_val = output_dir / "val"
 output_dir_train.mkdir(parents=True, exist_ok=True)
@@ -31,12 +32,23 @@ def read_idx(images_gz, labels_gz):
     return images, labels
 
 
-print("📦 Converting to Parquet...")
+def sample_data(images, labels, fraction):
+    """Sample a fraction of the data."""
+    if fraction >= 1.0:
+        return images, labels
+
+    n_samples = int(len(images) * fraction)
+    indices = np.random.RandomState(42).choice(len(images), n_samples, replace=False)
+    return images[indices], labels[indices]
+
+
+print(f"📦 Converting to Parquet (sampling {sample_fraction * 100:.0f}%)...")
 
 # Train
 images, labels = read_idx(
     raw_dir / "train-images-idx3-ubyte.gz", raw_dir / "train-labels-idx1-ubyte.gz"
 )
+images, labels = sample_data(images, labels, sample_fraction)
 table = pa.table({"image": images.reshape(-1, 784).tolist(), "label": labels})
 pq.write_table(table, output_dir_train / "train.parquet")
 print(f"  ✓ train: {len(images)} samples")
@@ -45,6 +57,7 @@ print(f"  ✓ train: {len(images)} samples")
 images, labels = read_idx(
     raw_dir / "t10k-images-idx3-ubyte.gz", raw_dir / "t10k-labels-idx1-ubyte.gz"
 )
+images, labels = sample_data(images, labels, sample_fraction)
 table = pa.table({"image": images.reshape(-1, 784).tolist(), "label": labels})
 pq.write_table(table, output_dir_val / "val.parquet")
 print(f"  ✓ val: {len(images)} samples")

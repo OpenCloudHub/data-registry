@@ -7,6 +7,7 @@ download:
 process:
   raw_dir: "../../data/fashion-mnist/raw"
   output_dir: "../../data/fashion-mnist/processed"
+  sample_fraction: 0.5  # Use 50% of the dataset
 
 analyze:
   data_dir: "../../data/fashion-mnist/processed"
