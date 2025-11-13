@@ -1,0 +1,17 @@
+[project]
+name = "Data-Registry"
+version = "0.1.0"
+description = "Demo DVC Data Registry"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dvc[s3]>=3.64.0",
+    "numpy>=2.3.4",
+    "pyarrow>=22.0.0",
+    "ray[data]>=2.51.1",
+]
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.12.8",
+]

@@ -1,0 +1,13 @@
+# src/fashion-mnist/params.yaml
+
+download:
+  base_url: "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com"
+  output_dir: "../../data/fashion-mnist/raw"
+
+process:
+  raw_dir: "../../data/fashion-mnist/raw"
+  output_dir: "../../data/fashion-mnist/processed"
+
+analyze:
+  data_dir: "../../data/fashion-mnist/processed"
+  output_file: "../../data/fashion-mnist/metrics.json"

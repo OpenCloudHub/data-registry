@@ -1,0 +1,28 @@
+# src/fashion-mnist/dvc.yaml
+stages:
+  download:
+    cmd: python scripts/download.py
+    deps:
+      - scripts/download.py
+    params:
+      - download.base_url
+    outs:
+      - ../../data/fashion-mnist/raw
+
+  process:
+    cmd: python scripts/process.py
+    deps:
+      - scripts/process.py
+      - ../../data/fashion-mnist/raw
+    outs:
+      - ../../data/fashion-mnist/processed/train
+      - ../../data/fashion-mnist/processed/val
+
+  analyze:
+    cmd: python scripts/analyze.py
+    deps:
+      - scripts/analyze.py
+      - ../../data/fashion-mnist/processed/train
+      - ../../data/fashion-mnist/processed/val
+    outs:
+      - ../../data/fashion-mnist/metrics.json
