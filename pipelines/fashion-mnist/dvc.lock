@@ -9,7 +9,7 @@ stages:
       size: 1089
     params:
       params.yaml:
-        download.base_url:
+        download.base_url: 
           http://fashion-mnist.s3-website.eu-central-1.amazonaws.com
     outs:
     - path: ../../data/fashion-mnist/raw
@@ -55,10 +55,10 @@ stages:
       nfiles: 1
     - path: scripts/analyze.py
       hash: md5
-      md5: b8e1b2b674ed539d8a96fc32251ddc77
-      size: 4355
+      md5: f0572f9a2117b6cbcd31639d948fa162
+      size: 4346
     outs:
     - path: ../../data/fashion-mnist/processed/metadata.json
       hash: md5
-      md5: 168914b7a285f3c311c22f1178a28033
-      size: 1899
+      md5: 9218026c20e22c86feb66e0163686db7
+      size: 1896

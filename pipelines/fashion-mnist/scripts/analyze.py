@@ -97,7 +97,7 @@ def compute_metadata(data_dir: Path) -> Dict[str, Any]:
                 },
             },
         },
-        "statistics": {
+        "metrics": {
             "train": {
                 "pixel_mean": float(train_norm.mean()),
                 "pixel_std": float(train_norm.std()),
@@ -136,6 +136,6 @@ if __name__ == "__main__":
     print(f"   Val: {metadata['splits']['val']['num_samples']} samples")
     print(f"   Shape: {metadata['schema']['features']['image']['shape']}")
     print(
-        f"   Train stats: mean={metadata['statistics']['train']['pixel_mean']:.4f}, "
-        f"std={metadata['statistics']['train']['pixel_std']:.4f}"
+        f"   Train stats: mean={metadata['metrics']['train']['pixel_mean']:.4f}, "
+        f"std={metadata['metrics']['train']['pixel_std']:.4f}"
     )
