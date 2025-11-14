@@ -9,6 +9,7 @@ dependencies = [
     "numpy>=2.3.4",
     "pyarrow>=22.0.0",
     "ray[data]>=2.51.1",
+    "scikit-learn>=1.7.2",
 ]
 [dependency-groups]
 dev = [

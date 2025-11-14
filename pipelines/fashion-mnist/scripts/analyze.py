@@ -97,7 +97,7 @@ def compute_metadata(data_dir: Path) -> Dict[str, Any]:
                 },
             },
         },
-        "metrics": {
+        "metadata": {
             "train": {
                 "pixel_mean": float(train_norm.mean()),
                 "pixel_std": float(train_norm.std()),
