@@ -29,8 +29,8 @@ stages:
       nfiles: 2
     - path: scripts/process.py
       hash: md5
-      md5: f3961f80cb34354677be33d32dd54037
-      size: 3606
+      md5: 9fdb0d03a088b86656c56cd9b4375618
+      size: 2693
     params:
       params.yaml:
         process:
@@ -40,33 +40,21 @@ stages:
           test_size: 0.2
           random_state: 42
     outs:
-    - path: ../../data/wine-quality/processed/train
+    - path: ../../data/wine-quality/processed/wine-quality.csv
       hash: md5
-      md5: 16d246593f6d092f4d685bd2f33d40a1.dir
-      size: 111764
-      nfiles: 1
-    - path: ../../data/wine-quality/processed/val
-      hash: md5
-      md5: 1e21dffc8350c54f9748193ffba3fafe.dir
-      size: 40271
-      nfiles: 1
+      md5: ef07e40c57c0640f3bd9c417b9e052d8
+      size: 392245
   analyze:
     cmd: python scripts/analyze.py
     deps:
-    - path: ../../data/wine-quality/processed/train
+    - path: ../../data/wine-quality/processed/wine-quality.csv
       hash: md5
-      md5: 16d246593f6d092f4d685bd2f33d40a1.dir
-      size: 111764
-      nfiles: 1
-    - path: ../../data/wine-quality/processed/val
-      hash: md5
-      md5: 1e21dffc8350c54f9748193ffba3fafe.dir
-      size: 40271
-      nfiles: 1
+      md5: ef07e40c57c0640f3bd9c417b9e052d8
+      size: 392245
     - path: scripts/analyze.py
       hash: md5
-      md5: 3141348ad64d05fceca538d175f73b22
-      size: 5367
+      md5: 21cd08a3c35aaaf16a564a098f2d96fb
+      size: 3317
     params:
       params.yaml:
         analyze:
@@ -75,5 +63,5 @@ stages:
     outs:
     - path: ../../data/wine-quality/processed/metadata.json
       hash: md5
-      md5: 41caff123fa90438abf0d0da61c60442
-      size: 7352
+      md5: 71d8a1bcc43e0768f3735424a5deb22e
+      size: 4441

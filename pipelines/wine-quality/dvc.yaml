@@ -17,15 +17,13 @@ stages:
     params:
       - process
     outs:
-      - ../../data/wine-quality/processed/train
-      - ../../data/wine-quality/processed/val
+      - ../../data/wine-quality/processed/wine-quality.csv
 
   analyze:
     cmd: python scripts/analyze.py
     deps:
       - scripts/analyze.py
-      - ../../data/wine-quality/processed/train
-      - ../../data/wine-quality/processed/val
+      - ../../data/wine-quality/processed/wine-quality.csv
     params:
       - analyze
     outs:
