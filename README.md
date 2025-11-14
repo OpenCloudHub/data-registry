@@ -1,5 +1,4 @@
 <!-- filepath: /workspace/project/README.md -->
-
 <a id="readme-top"></a>
 
 <!-- PROJECT LOGO & TITLE -->
@@ -46,7 +45,6 @@ ______________________________________________________________________
 This repository manages dataset preparation, versioning, and distribution for ML training pipelines. It demonstrates automated data pipelines with DVC (Data Version Control) for reproducible machine learning workflows.
 
 **Architecture:**
-
 ```
 Data Registry (DVC) → Storage (Local/MinIO) → Training Repos (Ray Data)
 ```
@@ -80,14 +78,13 @@ ______________________________________________________________________
    cd data-registry
    ```
 
-1. **Open in DevContainer** (Recommended)
+2. **Open in DevContainer** (Recommended)
 
    VSCode: `Ctrl+Shift+P` → `Dev Containers: Rebuild and Reopen in Container`
 
-1. **Configure DVC Remote**
+3. **Configure DVC Remote**
 
    **For local development:**
-
    ```bash
    dvc remote add -d local /workspace/shared-data/dvcstore
    dvc remote modify local mkdir true
@@ -95,19 +92,25 @@ ______________________________________________________________________
    git commit -m "Configure local DVC remote"
    ```
 
-   **For production (MinIO):**
+   **For production (MinIO cluster):**
 
+   Configure DVC remote (tracked in git):
    ```bash
-   dvc remote add -d minio s3://mlops-datasets/data-registry
-   dvc remote modify minio endpointurl http://minio.opencloudub.local:9000
-
-   export AWS_ACCESS_KEY_ID=minioadmin
-   export AWS_SECRET_ACCESS_KEY=minioadmin
-
-   dvc remote default minio
+   dvc remote add -d minio s3://dvcstore
+   dvc remote modify minio endpointurl https://minio-api.storage.internal.opencloudhub.org
+   dvc remote modify minio ssl_verify false
    git add .dvc/config
    git commit -m "Configure MinIO remote"
    ```
+
+   Add credentials to `.dvc/config.local` (NOT tracked in git):
+   ```bash
+   dvc remote modify minio --local access_key_id admin
+   dvc remote modify minio --local secret_access_key 12345678
+   ```
+
+   > **Note:** `.dvc/config.local` is gitignored and stores sensitive credentials locally.
+   > Each team member needs to configure their own credentials.
 
 ### Running the Pipeline
 
@@ -129,8 +132,8 @@ dvc repro analyze
 # Check pipeline status
 dvc status
 
-# View computed metrics
-cat data/fashion-mnist/metrics.json
+# View computed metadata
+cat data/fashion-mnist/metadata.json
 
 # Push to remote storage
 dvc push
@@ -143,7 +146,6 @@ ______________________________________________________________________
 ### Data Engineer: Adding/Updating Datasets
 
 **Create new dataset:**
-
 ```bash
 # 1. Create structure
 mkdir -p data/my-dataset/{raw,processed}
@@ -164,7 +166,6 @@ git push origin main v1.0.0
 ```
 
 **Update existing dataset:**
-
 ```bash
 cd pipelines/fashion-mnist
 vim params.yaml  # Modify parameters
@@ -177,16 +178,27 @@ git tag v1.1.0 && git push origin main v1.1.0
 ### ML Engineer: Using Datasets
 
 **Setup in training repo:**
-
 ```bash
 pip install dvc
+
+# Configure local or MinIO remote
 dvc remote add -d local /workspace/shared-data/dvcstore
+# OR
+dvc remote add -d minio s3://dvcstore
+dvc remote modify minio endpointurl https://minio-api.storage.internal.opencloudhub.org
+dvc remote modify minio ssl_verify false
+
+# Add credentials to .dvc/config.local (if using MinIO)
+cat > .dvc/config.local <<EOF
+['remote "minio"']
+    access_key_id = YOUR_ACCESS_KEY
+    secret_access_key = YOUR_SECRET_KEY
+EOF
 ```
 
 #### Option 1: Download Data with DVC CLI
 
 **Download specific dataset version:**
-
 ```bash
 # Download to local directory
 dvc get https://github.com/OpenCloudHub/data-registry \
@@ -194,15 +206,14 @@ dvc get https://github.com/OpenCloudHub/data-registry \
     -o ./data/fashion-mnist \
     --rev v1.0.0
 
-# Download just the metrics
+# Download just the metadata
 dvc get https://github.com/OpenCloudHub/data-registry \
-    data/fashion-mnist/metrics.json \
-    -o ./data/fashion-mnist/metrics.json \
+    data/fashion-mnist/metadata.json \
+    -o ./data/fashion-mnist/metadata.json \
     --rev v1.0.0
 ```
 
 **Import and track dataset in your repo:**
-
 ```bash
 # Import creates a .dvc file to track the dataset
 dvc import https://github.com/OpenCloudHub/data-registry \
@@ -215,7 +226,6 @@ dvc update data/fashion-mnist.dvc --rev v1.1.0
 ```
 
 **Pull from configured remote:**
-
 ```bash
 # If you've imported the dataset
 dvc pull data/fashion-mnist.dvc
@@ -224,48 +234,56 @@ dvc pull data/fashion-mnist.dvc
 #### Option 2: Load Data in Python Code
 
 **Load data in training code:**
-
 ```python
 import dvc.api
 import ray
 import json
 
-
 def load_versioned_data(dataset_name, version="v1.0.0"):
     """Load specific dataset version."""
     repo = "https://github.com/OpenCloudHub/data-registry"
-
+    
     train_path = dvc.api.get_url(
-        f"data/{dataset_name}/processed/train.parquet", repo=repo, rev=version
+        f"data/{dataset_name}/processed/train/train.parquet",
+        repo=repo, rev=version
     )
     val_path = dvc.api.get_url(
-        f"data/{dataset_name}/processed/val.parquet", repo=repo, rev=version
+        f"data/{dataset_name}/processed/val/val.parquet",
+        repo=repo, rev=version
     )
-
-    metrics_content = dvc.api.read(
-        f"data/{dataset_name}/metrics.json", repo=repo, rev=version
+    
+    metadata_content = dvc.api.read(
+        f"data/{dataset_name}/metadata.json",
+        repo=repo, rev=version
     )
-    metrics = json.loads(metrics_content)
-
+    metadata = json.loads(metadata_content)
+    
     train_ds = ray.data.read_parquet(train_path)
     val_ds = ray.data.read_parquet(val_path)
-
-    return train_ds, val_ds, metrics
-
+    
+    return train_ds, val_ds, metadata
 
 # Usage
-train_ds, val_ds, metrics = load_versioned_data("fashion-mnist", "v1.0.0")
+train_ds, val_ds, metadata = load_versioned_data("fashion-mnist", "v0.0.2")
 
 # Log to MLflow
 import mlflow
+mlflow.log_params({
+    "data_version": "v0.0.2",
+    "data_pixel_mean": metadata["metrics"]["train"]["pixel_mean"],
+    "data_pixel_std": metadata["metrics"]["train"]["pixel_std"],
+})
+```
 
-mlflow.log_params(
-    {
-        "data_version": "v1.0.0",
-        "data_pixel_mean": metrics["pixel_mean"],
-        "data_pixel_std": metrics["pixel_std"],
-    }
-)
+#### Option 3: Direct Access (Local Development)
+
+**Use mounted shared storage:**
+```bash
+# If using shared devcontainer storage
+ls /workspace/shared-data/dvcstore/data/fashion-mnist/processed/
+
+# Use directly in training
+python train.py --data-path /workspace/shared-data/dvcstore/data/fashion-mnist/processed
 ```
 
 ______________________________________________________________________
@@ -278,18 +296,23 @@ data-registry/
 │   └── fashion-mnist/
 │       ├── raw/                # Downloaded files (DVC-tracked)
 │       ├── processed/          # Parquet files (DVC-tracked)
-│       └── metrics.json        # Dataset metrics (git-tracked)
+│       │   ├── train/
+│       │   │   └── train.parquet
+│       │   └── val/
+│       │       └── val.parquet
+│       └── metadata.json       # Dataset metadata (git-tracked)
 ├── pipelines/
 │   └── fashion-mnist/
 │       ├── dvc.yaml           # Pipeline definition
 │       ├── params.yaml        # Pipeline parameters
 │       └── scripts/
 │           ├── download.py    # Stage 1: Download raw data
-│           ├── prepare.py     # Stage 2: Convert to Parquet
-│           └── analyze.py     # Stage 3: Compute metrics
+│           ├── process.py     # Stage 2: Convert to Parquet
+│           └── analyze.py     # Stage 3: Compute metadata
 ├── .devcontainer/             # VS Code DevContainer config
 ├── .dvc/
-│   └── config                 # DVC remote configuration
+│   ├── config                 # DVC remote configuration (git-tracked)
+│   └── config.local           # Local credentials (gitignored)
 └── .github/workflows/         # CI/CD workflows (future)
 ```
 
@@ -303,26 +326,44 @@ Make sure the mounted path exists locally and that you adjust the name in the
 [devcontainer.json](.devcontainer/devcontainer.json) `mounts` section.
 
 **Configuration:**
-
 ```
-Host: ~Development/projects/opencloudub/dev/shared-data/dvcstore/
+Host: ~/Development/projects/opencloudhub/dev/shared-data/dvcstore/
 Container: /workspace/shared-data/dvcstore/
 ```
 
-**Benefits:** Fast, no infrastructure, shared across devcontainers\
+**Benefits:** Fast, no infrastructure, shared across devcontainers  
 **Limitations:** Single machine only, no backup
 
 ### MinIO (Production)
 
+**Prerequisites:**
+- MinIO cluster with S3 API accessible
+- HTTPRoute configured for S3 API endpoint (not console)
+- Valid credentials from MinIO secret
+
 **Configuration:**
 
-```bash
-dvc remote add -d minio s3://mlops-datasets/data-registry
-dvc remote modify minio endpointurl http://minio.opencloudub.local:9000
+`.dvc/config` (git-tracked):
+```ini
+[core]
+    remote = minio
+['remote "local"']
+    url = /workspace/shared-data/dvcstore
+['remote "minio"']
+    url = s3://dvcstore
+    endpointurl = https://minio-api.storage.internal.opencloudhub.org
+    ssl_verify = false
 ```
 
-**Benefits:** Centralized, accessible across cluster, production-ready\
-**Use:** Set credentials via environment variables
+`.dvc/config.local` (gitignored):
+```ini
+['remote "minio"']
+    access_key_id = admin
+    secret_access_key = 12345678
+```
+
+**Benefits:** Centralized, accessible across cluster, production-ready  
+**Note:** Each developer needs their own `.dvc/config.local` with credentials
 
 ### Switching Between Remotes
 

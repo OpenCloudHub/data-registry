@@ -1,4 +1,8 @@
 [core]
-    remote = local
+    remote = minio
 ['remote "local"']
     url = /workspace/shared-data/dvcstore
+['remote "minio"']
+    url = s3://dvcstore
+    endpointurl = https://minio-api.storage.internal.opencloudhub.org
+    ssl_verify = false
