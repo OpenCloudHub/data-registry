@@ -1,0 +1,16 @@
+# pipelines/wine-quality/params.yaml
+
+download:
+  base_url: "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality"
+  output_dir: "../../data/wine-quality/raw"
+
+process:
+  raw_dir: "../../data/wine-quality/raw"
+  output_dir: "../../data/wine-quality/processed"
+  sample_fraction: 1.0  # Use full dataset
+  test_size: 0.2  # 80/20 train/val split
+  random_state: 42
+
+analyze:
+  data_dir: "../../data/wine-quality/processed"
+  output_file: "../../data/wine-quality/processed/metadata.json"

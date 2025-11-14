@@ -1,0 +1,79 @@
+schema: '2.0'
+stages:
+  download:
+    cmd: python scripts/download.py
+    deps:
+    - path: scripts/download.py
+      hash: md5
+      md5: 26f8cc6903bf5a15d6c66c0887faa525
+      size: 1172
+    params:
+      params.yaml:
+        download:
+          base_url: 
+            https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality
+          output_dir: ../../data/wine-quality/raw
+    outs:
+    - path: ../../data/wine-quality/raw
+      hash: md5
+      md5: f915efbc9aa1fc14335fbdbf859a890a.dir
+      size: 348625
+      nfiles: 2
+  process:
+    cmd: python scripts/process.py
+    deps:
+    - path: ../../data/wine-quality/raw
+      hash: md5
+      md5: f915efbc9aa1fc14335fbdbf859a890a.dir
+      size: 348625
+      nfiles: 2
+    - path: scripts/process.py
+      hash: md5
+      md5: f3961f80cb34354677be33d32dd54037
+      size: 3606
+    params:
+      params.yaml:
+        process:
+          raw_dir: ../../data/wine-quality/raw
+          output_dir: ../../data/wine-quality/processed
+          sample_fraction: 1.0
+          test_size: 0.2
+          random_state: 42
+    outs:
+    - path: ../../data/wine-quality/processed/train
+      hash: md5
+      md5: 16d246593f6d092f4d685bd2f33d40a1.dir
+      size: 111764
+      nfiles: 1
+    - path: ../../data/wine-quality/processed/val
+      hash: md5
+      md5: 1e21dffc8350c54f9748193ffba3fafe.dir
+      size: 40271
+      nfiles: 1
+  analyze:
+    cmd: python scripts/analyze.py
+    deps:
+    - path: ../../data/wine-quality/processed/train
+      hash: md5
+      md5: 16d246593f6d092f4d685bd2f33d40a1.dir
+      size: 111764
+      nfiles: 1
+    - path: ../../data/wine-quality/processed/val
+      hash: md5
+      md5: 1e21dffc8350c54f9748193ffba3fafe.dir
+      size: 40271
+      nfiles: 1
+    - path: scripts/analyze.py
+      hash: md5
+      md5: 3141348ad64d05fceca538d175f73b22
+      size: 5367
+    params:
+      params.yaml:
+        analyze:
+          data_dir: ../../data/wine-quality/processed
+          output_file: ../../data/wine-quality/processed/metadata.json
+    outs:
+    - path: ../../data/wine-quality/processed/metadata.json
+      hash: md5
+      md5: 41caff123fa90438abf0d0da61c60442
+      size: 7352

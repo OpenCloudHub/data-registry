@@ -1,0 +1,32 @@
+# pipelines/wine-quality/dvc.yaml
+stages:
+  download:
+    cmd: python scripts/download.py
+    deps:
+      - scripts/download.py
+    params:
+      - download
+    outs:
+      - ../../data/wine-quality/raw
+
+  process:
+    cmd: python scripts/process.py
+    deps:
+      - scripts/process.py
+      - ../../data/wine-quality/raw
+    params:
+      - process
+    outs:
+      - ../../data/wine-quality/processed/train
+      - ../../data/wine-quality/processed/val
+
+  analyze:
+    cmd: python scripts/analyze.py
+    deps:
+      - scripts/analyze.py
+      - ../../data/wine-quality/processed/train
+      - ../../data/wine-quality/processed/val
+    params:
+      - analyze
+    outs:
+      - ../../data/wine-quality/processed/metadata.json
