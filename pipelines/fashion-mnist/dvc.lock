@@ -5,11 +5,11 @@ stages:
     deps:
     - path: scripts/download.py
       hash: md5
-      md5: c8d46af444a14498461ef195c2e2f7ef
-      size: 771
+      md5: accebc5228e8a3695be4b84775b4afa8
+      size: 1089
     params:
       params.yaml:
-        download.base_url: 
+        download.base_url:
           http://fashion-mnist.s3-website.eu-central-1.amazonaws.com
     outs:
     - path: ../../data/fashion-mnist/raw
@@ -27,38 +27,38 @@ stages:
       nfiles: 4
     - path: scripts/process.py
       hash: md5
-      md5: 783cbeb377d0d7b70f6dd6aa1ea76b0a
-      size: 2117
+      md5: 987283d3fd241446da254ce4e38fbc42
+      size: 3292
     outs:
     - path: ../../data/fashion-mnist/processed/train
       hash: md5
-      md5: a3e9fa6ffb666870e08b73e5d3446ab6.dir
-      size: 15146519
+      md5: 985929b4cb87ce3e68d0cf7b0c875a04.dir
+      size: 15336015
       nfiles: 1
     - path: ../../data/fashion-mnist/processed/val
       hash: md5
-      md5: ab9dd0e612c7b33b5689833bfc9e94f2.dir
-      size: 2523665
+      md5: 08ea215316c6650c9652a6bf53652e72.dir
+      size: 2555824
       nfiles: 1
   analyze:
     cmd: python scripts/analyze.py
     deps:
     - path: ../../data/fashion-mnist/processed/train
       hash: md5
-      md5: a3e9fa6ffb666870e08b73e5d3446ab6.dir
-      size: 15146519
+      md5: 985929b4cb87ce3e68d0cf7b0c875a04.dir
+      size: 15336015
       nfiles: 1
     - path: ../../data/fashion-mnist/processed/val
       hash: md5
-      md5: ab9dd0e612c7b33b5689833bfc9e94f2.dir
-      size: 2523665
+      md5: 08ea215316c6650c9652a6bf53652e72.dir
+      size: 2555824
       nfiles: 1
     - path: scripts/analyze.py
       hash: md5
-      md5: 8f3230382f958321fa1e4e2e93dfdcba
-      size: 971
+      md5: b8e1b2b674ed539d8a96fc32251ddc77
+      size: 4355
     outs:
-    - path: ../../data/fashion-mnist/metrics.json
+    - path: ../../data/fashion-mnist/processed/metadata.json
       hash: md5
-      md5: 19bdf4bcfc06874287df3a9d8dfc1c9a
-      size: 230
+      md5: 168914b7a285f3c311c22f1178a28033
+      size: 1899

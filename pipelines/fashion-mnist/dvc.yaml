@@ -25,4 +25,4 @@ stages:
       - ../../data/fashion-mnist/processed/train
       - ../../data/fashion-mnist/processed/val
     outs:
-      - ../../data/fashion-mnist/metrics.json
+      - ../../data/fashion-mnist/processed/metadata.json
