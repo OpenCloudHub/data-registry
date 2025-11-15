@@ -29,6 +29,12 @@ stages:
       hash: md5
       md5: 987283d3fd241446da254ce4e38fbc42
       size: 3292
+    params:
+      params.yaml:
+        process:
+          raw_dir: ../../data/fashion-mnist/raw
+          output_dir: ../../data/fashion-mnist/processed
+          sample_fraction: 0.5
     outs:
     - path: ../../data/fashion-mnist/processed/train
       hash: md5
@@ -57,6 +63,11 @@ stages:
       hash: md5
       md5: f0572f9a2117b6cbcd31639d948fa162
       size: 4346
+    params:
+      params.yaml:
+        analyze:
+          data_dir: ../../data/fashion-mnist/processed
+          output_file: ../../data/fashion-mnist/processed/metadata.json
     outs:
     - path: ../../data/fashion-mnist/processed/metadata.json
       hash: md5

@@ -14,6 +14,8 @@ stages:
     deps:
       - scripts/process.py
       - ../../data/fashion-mnist/raw
+    params:
+      - process
     outs:
       - ../../data/fashion-mnist/processed/train
       - ../../data/fashion-mnist/processed/val
@@ -24,5 +26,7 @@ stages:
       - scripts/analyze.py
       - ../../data/fashion-mnist/processed/train
       - ../../data/fashion-mnist/processed/val
+    params:
+      - analyze
     outs:
       - ../../data/fashion-mnist/processed/metadata.json

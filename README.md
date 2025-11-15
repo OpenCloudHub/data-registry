@@ -174,7 +174,7 @@ vim params.yaml  # Modify parameters
 dvc repro        # Re-run pipeline
 dvc push
 git add . && git commit -m "Update FashionMNIST v1.1.0"
-git tag v1.1.0 && git push origin main v1.1.0
+git tag fashion-mnist-v1.1.0 && git push origin main fashion-mnist-v1.1.0
 ```
 
 ### ML Engineer: Using Datasets
@@ -206,13 +206,13 @@ EOF
 dvc get https://github.com/OpenCloudHub/data-registry \
     data/fashion-mnist/processed \
     -o ./data/fashion-mnist \
-    --rev v1.0.0
+    --rev fashion-mnist-v1.0.0
 
 # Download just the metadata
 dvc get https://github.com/OpenCloudHub/data-registry \
     data/fashion-mnist/metadata.json \
     -o ./data/fashion-mnist/metadata.json \
-    --rev v1.0.0
+    --rev fashion-mnist-v1.0.0
 ```
 
 **Import and track dataset in your repo:**
@@ -221,10 +221,10 @@ dvc get https://github.com/OpenCloudHub/data-registry \
 dvc import https://github.com/OpenCloudHub/data-registry \
     data/fashion-mnist/processed \
     -o data/fashion-mnist \
-    --rev v1.0.0
+    --rev fashion-mnist-v1.0.0
 
 # Later update to new version
-dvc update data/fashion-mnist.dvc --rev v1.1.0
+dvc update data/fashion-mnist.dvc --rev fashion-mnist-v1.1.0
 ```
 
 **Pull from configured remote:**
@@ -241,7 +241,7 @@ import dvc.api
 import ray
 import json
 
-def load_versioned_data(dataset_name, version="v1.0.0"):
+def load_versioned_data(dataset_name, version="fashion-mnist-v1.0.0"):
     """Load specific dataset version."""
     repo = "https://github.com/OpenCloudHub/data-registry"
     
@@ -266,12 +266,12 @@ def load_versioned_data(dataset_name, version="v1.0.0"):
     return train_ds, val_ds, metadata
 
 # Usage
-train_ds, val_ds, metadata = load_versioned_data("fashion-mnist", "v0.0.2")
+train_ds, val_ds, metadata = load_versioned_data("fashion-mnist", "fashion-mnist-v0.0.2")
 
 # Log to MLflow
 import mlflow
 mlflow.log_params({
-    "data_version": "v0.0.2",
+    "data_version": "fashion-mnist-v0.0.2",
     "data_pixel_mean": metadata["metrics"]["train"]["pixel_mean"],
     "data_pixel_std": metadata["metrics"]["train"]["pixel_std"],
 })
