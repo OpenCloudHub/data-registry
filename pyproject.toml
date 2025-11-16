@@ -5,6 +5,7 @@ description = "Demo DVC Data Registry"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "datasets>=4.4.1",
     "dvc[s3]>=3.64.0",
     "numpy>=2.3.4",
     "pyarrow>=22.0.0",

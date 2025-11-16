@@ -1,0 +1,30 @@
+stages:
+  download:
+    cmd: python scripts/download.py
+    params:
+      - download
+    outs:
+      - ../../data/emotion/raw/emotions.parquet
+
+  process:
+    cmd: python scripts/process.py
+    deps:
+      - ../../data/emotion/raw/emotions.parquet
+      - scripts/process.py
+    params:
+      - process
+    outs:
+      - ../../data/emotion/processed/train/train.parquet
+      - ../../data/emotion/processed/val/val.parquet
+
+  analyze:
+    cmd: python scripts/analyze.py
+    deps:
+      - ../../data/emotion/processed/train/train.parquet
+      - ../../data/emotion/processed/val/val.parquet
+      - scripts/analyze.py
+    params:
+      - analyze
+    metrics:
+      - ../../data/emotion/metadata.json:
+          cache: false

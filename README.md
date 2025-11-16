@@ -87,6 +87,7 @@ ______________________________________________________________________
 3. **Configure DVC Remote**
 
    **For local development:**
+   We mounted a shared volume to the `DevContainer` so that during local development one could easily without the need for a Cluster
    ```bash
    dvc remote add -d local /workspace/shared-data/dvcstore
    dvc remote modify local mkdir true
@@ -181,7 +182,7 @@ git tag fashion-mnist-v1.1.0 && git push origin main fashion-mnist-v1.1.0
 
 **Setup in training repo:**
 ```bash
-pip install dvc
+uv add dvc
 
 # Configure local or MinIO remote
 dvc remote add -d local /workspace/shared-data/dvcstore

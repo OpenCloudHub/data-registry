@@ -1,0 +1,67 @@
+schema: '2.0'
+stages:
+  download:
+    cmd: python scripts/download.py
+    params:
+      params.yaml:
+        download:
+          dataset_name: boltuix/emotions-dataset
+          output_dir: ../../data/emotion/raw
+    outs:
+    - path: ../../data/emotion/raw/emotions.parquet
+      hash: md5
+      md5: 051135d87a861b528e601044f6031722
+      size: 7293576
+  process:
+    cmd: python scripts/process.py
+    deps:
+    - path: ../../data/emotion/raw/emotions.parquet
+      hash: md5
+      md5: 051135d87a861b528e601044f6031722
+      size: 7293576
+    - path: scripts/process.py
+      hash: md5
+      md5: 6e9ef4c205f1121fc19491f74a7fa5b6
+      size: 3307
+    params:
+      params.yaml:
+        process:
+          raw_dir: ../../data/emotion/raw
+          output_dir: ../../data/emotion/processed
+          sample_fraction: 0.5
+          train_split: 0.8
+          random_seed: 42
+    outs:
+    - path: ../../data/emotion/processed/train/train.parquet
+      hash: md5
+      md5: 1d63093bfea6cfa85505bd55ad34e4e8
+      size: 2930464
+    - path: ../../data/emotion/processed/val/val.parquet
+      hash: md5
+      md5: 0700b816e54ca33e56997272cf203767
+      size: 747463
+  analyze:
+    cmd: python scripts/analyze.py
+    deps:
+    - path: ../../data/emotion/processed/train/train.parquet
+      hash: md5
+      md5: 1d63093bfea6cfa85505bd55ad34e4e8
+      size: 2930464
+    - path: ../../data/emotion/processed/val/val.parquet
+      hash: md5
+      md5: 0700b816e54ca33e56997272cf203767
+      size: 747463
+    - path: scripts/analyze.py
+      hash: md5
+      md5: fe294581e751da2bdd825c0e996e5d2e
+      size: 3856
+    params:
+      params.yaml:
+        analyze:
+          data_dir: ../../data/emotion/processed
+          output_file: ../../data/emotion/metadata.json
+    outs:
+    - path: ../../data/emotion/metadata.json
+      hash: md5
+      md5: 0678f92b6f2a0899e4be8bbd8ddf8999
+      size: 2338

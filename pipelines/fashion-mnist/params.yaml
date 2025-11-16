@@ -11,4 +11,4 @@ process:
 
 analyze:
   data_dir: "../../data/fashion-mnist/processed"
-  output_file: "../../data/fashion-mnist/processed/metadata.json"
+  output_file: "../../data/fashion-mnist/metadata.json"

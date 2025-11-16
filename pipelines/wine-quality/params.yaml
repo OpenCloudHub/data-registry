@@ -13,4 +13,4 @@ process:
 
 analyze:
   data_dir: "../../data/wine-quality/processed"
-  output_file: "../../data/wine-quality/processed/metadata.json"
+  output_file: "../../data/wine-quality/metadata.json"
