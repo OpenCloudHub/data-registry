@@ -59,9 +59,9 @@ stages:
       params.yaml:
         analyze:
           data_dir: ../../data/wine-quality/processed
-          output_file: ../../data/wine-quality/processed/metadata.json
+          output_file: ../../data/wine-quality/metadata.json
     outs:
-    - path: ../../data/wine-quality/processed/metadata.json
+    - path: ../../data/wine-quality/metadata.json
       hash: md5
       md5: 71d8a1bcc43e0768f3735424a5deb22e
       size: 4441

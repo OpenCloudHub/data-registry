@@ -27,4 +27,4 @@ stages:
     params:
       - analyze
     outs:
-      - ../../data/wine-quality/processed/metadata.json
+      - ../../data/wine-quality/metadata.json

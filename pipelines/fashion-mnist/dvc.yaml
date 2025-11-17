@@ -29,4 +29,4 @@ stages:
     params:
       - analyze
     outs:
-      - ../../data/fashion-mnist/processed/metadata.json
+      - ../../data/fashion-mnist/metadata.json

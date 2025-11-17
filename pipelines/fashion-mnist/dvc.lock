@@ -67,9 +67,9 @@ stages:
       params.yaml:
         analyze:
           data_dir: ../../data/fashion-mnist/processed
-          output_file: ../../data/fashion-mnist/processed/metadata.json
+          output_file: ../../data/fashion-mnist/metadata.json
     outs:
-    - path: ../../data/fashion-mnist/processed/metadata.json
+    - path: ../../data/fashion-mnist/metadata.json
       hash: md5
       md5: 9218026c20e22c86feb66e0163686db7
       size: 1896
