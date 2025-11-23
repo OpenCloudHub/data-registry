@@ -88,7 +88,7 @@ def get_readme_urls(repo: str, data_version: str, data_path: str) -> List[str]:
 
 def initialize_table(connection_string: str, table_name: str):
     """
-    Create the pgvector table compatible with LangChain.
+    Create the pgvector table if it doesn't exist.
 
     Args:
         connection_string: PostgreSQL connection string
@@ -96,42 +96,36 @@ def initialize_table(connection_string: str, table_name: str):
     """
     with psycopg.connect(connection_string) as conn:
         with conn.cursor() as cur:
-            # Drop existing table if it exists (clean slate)
-            cur.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")
-            print(f"✓ Dropped existing table '{table_name}' (if any)")
-
             # Ensure vector extension is enabled
             cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
-            # Create table with LangChain-compatible schema
+            # Create table with proper schema
             cur.execute(f"""
-                CREATE TABLE {table_name} (
+                CREATE TABLE IF NOT EXISTS {table_name} (
                     id SERIAL PRIMARY KEY,
-                    langchain_id UUID NOT NULL UNIQUE,
-                    document TEXT NOT NULL,
+                    chunk_text TEXT NOT NULL,
                     embedding VECTOR(384) NOT NULL,
-                    cmetadata JSONB,
-                    custom_id TEXT,
+                    source_repo TEXT NOT NULL,
+                    source_file TEXT NOT NULL,
+                    chunk_index INT NOT NULL,
+                    doc_id UUID NOT NULL,
+                    chunk_id UUID NOT NULL,
+                    data_version TEXT NOT NULL,
+                    embedding_model TEXT NOT NULL,
                     created_at TIMESTAMP DEFAULT NOW()
                 )
             """)
 
             # Create HNSW index for fast similarity search
             cur.execute(f"""
-                CREATE INDEX {table_name}_embedding_idx 
+                CREATE INDEX IF NOT EXISTS {table_name}_embedding_idx 
                 ON {table_name} 
                 USING hnsw (embedding vector_cosine_ops)
             """)
 
-            # Create index on langchain_id for faster lookups
-            cur.execute(f"""
-                CREATE INDEX {table_name}_langchain_id_idx 
-                ON {table_name} (langchain_id)
-            """)
-
             conn.commit()
 
-    print(f"✓ Table '{table_name}' initialized with LangChain-compatible schema")
+    print(f"✓ Table '{table_name}' initialized successfully")
 
 
 class Chunker:
@@ -216,7 +210,7 @@ class Embedder:
 
 
 class PGVectorWriter:
-    """Write embeddings to pgvector database in LangChain-compatible format."""
+    """Write embeddings to pgvector database."""
 
     def __init__(
         self,
@@ -249,7 +243,7 @@ class PGVectorWriter:
 
     def __call__(self, batch: Dict) -> Dict:
         """
-        Write a batch of embeddings to pgvector in LangChain format.
+        Write a batch of embeddings to pgvector.
 
         Args:
             batch: Dict with embeddings and metadata
@@ -262,33 +256,23 @@ class PGVectorWriter:
         with self._conn.cursor() as cur:
             # Prepare data for batch insert
             for i in range(len(batch["chunk_id"])):
-                # Use chunk_id as langchain_id
-                langchain_id = batch["chunk_id"][i]
-
-                # Store text as document
-                document = batch["text"][i]
-
-                # Store all metadata in JSONB
-                metadata = {
-                    "source_repo": batch["source_repo"][i],
-                    "source_file": batch["source_file"][i],
-                    "chunk_index": int(batch["chunk_index"][i]),
-                    "doc_id": batch["doc_id"][i],
-                    "data_version": self.data_version,
-                    "embedding_model": self.embedding_model,
-                }
-
                 cur.execute(
                     f"""
                     INSERT INTO {self.table_name} 
-                    (langchain_id, document, embedding, cmetadata)
-                    VALUES (%s, %s, %s, %s)
+                    (chunk_text, embedding, source_repo, source_file, 
+                     chunk_index, doc_id, chunk_id, data_version, embedding_model)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
-                        langchain_id,
-                        document,
+                        batch["text"][i],
                         batch["embeddings"][i].tolist(),
-                        psycopg.types.json.Jsonb(metadata),
+                        batch["source_repo"][i],
+                        batch["source_file"][i],
+                        int(batch["chunk_index"][i]),
+                        batch["doc_id"][i],
+                        batch["chunk_id"][i],
+                        self.data_version,
+                        self.embedding_model,
                     ),
                 )
 
@@ -348,7 +332,7 @@ def main():
 
     # Get URLs for README files from DVC (async but wrapped in sync call)
     print(f"\n{'=' * 60}")
-    print("Fetching README URLs from DVC")
+    print("Fetching README URLs from DVC (async)")
     print(f"{'=' * 60}")
     readme_urls = get_readme_urls(repo, data_version, data_path)
 
