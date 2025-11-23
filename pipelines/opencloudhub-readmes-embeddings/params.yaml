@@ -6,8 +6,8 @@ data:
 
 embedding:
   model_name: "sentence-transformers/all-MiniLM-L6-v2"
-  chunk_size: 500
-  chunk_overlap: 50
+  chunk_size: 800
+  chunk_overlap: 100
   batch_size: 32
   device: "cpu"
 
