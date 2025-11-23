@@ -103,15 +103,13 @@ def initialize_table(connection_string: str, table_name: str):
             # Ensure vector extension is enabled
             cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
-            # Create table with LangChain-compatible schema
+            # Create table with LangChain's EXACT expected schema
             cur.execute(f"""
                 CREATE TABLE {table_name} (
-                    id SERIAL PRIMARY KEY,
-                    langchain_id UUID NOT NULL UNIQUE,
-                    document TEXT NOT NULL,
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    content TEXT NOT NULL,
                     embedding VECTOR(384) NOT NULL,
-                    cmetadata JSONB,
-                    custom_id TEXT,
+                    metadata JSONB,
                     created_at TIMESTAMP DEFAULT NOW()
                 )
             """)
@@ -123,10 +121,10 @@ def initialize_table(connection_string: str, table_name: str):
                 USING hnsw (embedding vector_cosine_ops)
             """)
 
-            # Create index on langchain_id for faster lookups
+            # Create index on id for faster lookups
             cur.execute(f"""
-                CREATE INDEX {table_name}_langchain_id_idx 
-                ON {table_name} (langchain_id)
+                CREATE INDEX {table_name}_id_idx 
+                ON {table_name} (id)
             """)
 
             conn.commit()
@@ -262,11 +260,11 @@ class PGVectorWriter:
         with self._conn.cursor() as cur:
             # Prepare data for batch insert
             for i in range(len(batch["chunk_id"])):
-                # Use chunk_id as langchain_id
-                langchain_id = batch["chunk_id"][i]
+                # Use chunk_id as UUID
+                record_id = batch["chunk_id"][i]
 
-                # Store text as document
-                document = batch["text"][i]
+                # Store text as content (LangChain expects this column name)
+                content = batch["text"][i]
 
                 # Store all metadata in JSONB
                 metadata = {
@@ -281,12 +279,12 @@ class PGVectorWriter:
                 cur.execute(
                     f"""
                     INSERT INTO {self.table_name} 
-                    (langchain_id, document, embedding, cmetadata)
+                    (id, content, embedding, metadata)
                     VALUES (%s, %s, %s, %s)
                     """,
                     (
-                        langchain_id,
-                        document,
+                        record_id,
+                        content,
                         batch["embeddings"][i].tolist(),
                         psycopg.types.json.Jsonb(metadata),
                     ),
