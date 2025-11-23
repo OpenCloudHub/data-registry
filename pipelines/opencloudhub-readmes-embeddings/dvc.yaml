@@ -1,0 +1,20 @@
+stages:
+  process:
+    cmd: python scripts/process.py
+    deps:
+      - scripts/process.py
+      - ../../data/readme-embeddings/raw
+    params:
+      - embedding
+      - pgvector
+    # No outs - data goes directly to pgvector
+    
+  analyze:
+    cmd: python scripts/analyze.py
+    deps:
+      - scripts/analyze.py
+      - ../../data/readme-embeddings/raw
+    params:
+      - embedding
+    outs:
+      - ../../data/readme-embeddings/metadata.json

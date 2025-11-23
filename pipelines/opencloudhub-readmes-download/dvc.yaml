@@ -1,0 +1,10 @@
+stages:
+  download:
+    cmd: python scripts/download.py
+    deps:
+      - scripts/download.py
+    params:
+      - org_name
+      - output_dir
+    outs:
+      - ../../data/opencloudhub-readmes/raw

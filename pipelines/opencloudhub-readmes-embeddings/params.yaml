@@ -1,0 +1,17 @@
+data:
+  version: "opencloudhub-readmes-v1.0.0"  # Manually bump when data changes
+
+embedding:
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  chunk_size: 500
+  chunk_overlap: 50
+  batch_size: 32
+  device: "cpu"
+
+pgvector:
+  host: "demo-app-db-cluster-rw.storage.svc.cluster.local"
+  port: 5432
+  database: "demo_app"
+  user: "demo-app"
+  password_env_var: "POSTGRES_PASSWORD"
+  table_name: "readme_embeddings"
