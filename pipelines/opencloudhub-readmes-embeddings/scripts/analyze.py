@@ -1,10 +1,12 @@
 """
 Analyze processed README embeddings and generate metadata.
+Fetches data from a specific DVC version for reproducibility.
 """
 
 import json
 from pathlib import Path
 
+import dvc.api
 import yaml
 
 
@@ -14,35 +16,54 @@ def load_params() -> dict:
     return yaml.safe_load(open(params_path))
 
 
-def analyze_readmes(input_dir: Path) -> dict:
+def fetch_readme_list(data_version: str, data_path: str) -> list:
+    """
+    Get list of README files from DVC version.
+
+    Args:
+        data_version: Git revision
+        data_path: Path to data in repo
+
+    Returns:
+        List of (filename, content) tuples
+    """
+    fs = dvc.api.DVCFileSystem(rev=data_version)
+
+    readmes = []
+    for entry in fs.ls(data_path, detail=False):
+        if entry.endswith(".md"):
+            try:
+                content = dvc.api.read(
+                    path=entry, rev=data_version, mode="r", encoding="utf-8"
+                )
+                filename = Path(entry).name
+                readmes.append((filename, content))
+            except Exception as e:
+                print(f"Warning: Could not read {entry}: {e}")
+
+    return readmes
+
+
+def analyze_readmes(readmes: list) -> dict:
     """
     Analyze README files and generate statistics.
 
     Args:
-        input_dir: Directory containing README markdown files
+        readmes: List of (filename, content) tuples
 
     Returns:
         Dictionary with analysis metadata
     """
-    readme_files = list(input_dir.glob("*.md"))
+    total_files = len(readmes)
+    repo_names = [Path(fname).stem.replace("_README", "") for fname, _ in readmes]
 
-    # Count total files and repos
-    total_files = len(readme_files)
-    repo_names = [f.stem.replace("_README", "") for f in readme_files]
-
-    # Calculate file sizes
-    file_sizes = [f.stat().st_size for f in readme_files]
+    # Calculate sizes and counts
+    file_sizes = [len(content.encode("utf-8")) for _, content in readmes]
     total_size = sum(file_sizes)
     avg_size = total_size / total_files if total_files > 0 else 0
 
-    # Count total characters and lines
-    total_chars = 0
-    total_lines = 0
-
-    for file in readme_files:
-        content = file.read_text(encoding="utf-8")
-        total_chars += len(content)
-        total_lines += len(content.splitlines())
+    total_chars = sum(len(content) for _, content in readmes)
+    total_lines = sum(len(content.splitlines()) for _, content in readmes)
 
     avg_chars = total_chars / total_files if total_files > 0 else 0
     avg_lines = total_lines / total_files if total_files > 0 else 0
@@ -66,23 +87,19 @@ def main():
 
     # Get data version from params
     data_version = params["data"]["version"]
-
-    # Input directory
-    script_dir = Path(__file__).parent
-    input_dir = script_dir.parent.parent.parent / "data" / "readme-embeddings" / "raw"
-    output_file = (
-        script_dir.parent.parent.parent / "data" / "readme-embeddings" / "metadata.json"
-    )
+    data_path = params["data"]["path"]
+    output_file = Path(params["analyze"]["output_file"])
 
     print(f"\n{'=' * 60}")
-    print("Analyzing READMEs")
+    print("Analyzing READMEs from DVC version")
     print(f"{'=' * 60}")
-    print(f"Input directory: {input_dir}")
     print(f"Data version: {data_version}")
+    print(f"Data path: {data_path}")
     print(f"{'=' * 60}\n")
 
-    # Analyze data
-    stats = analyze_readmes(input_dir)
+    # Fetch and analyze data
+    readmes = fetch_readme_list(data_version, data_path)
+    stats = analyze_readmes(readmes)
 
     # Build metadata
     metadata = {

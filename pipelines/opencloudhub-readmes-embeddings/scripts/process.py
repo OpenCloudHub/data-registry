@@ -1,5 +1,6 @@
 """
 Process README files using Ray Data: chunk, embed, and store to pgvector.
+Reads data directly from DVC without intermediate local storage.
 """
 
 import os
@@ -7,10 +8,13 @@ import uuid
 from pathlib import Path
 from typing import Dict, List
 
+import dvc.api
 import psycopg
 import ray
+import s3fs
 import torch
 import yaml
+from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 
@@ -19,6 +23,67 @@ def load_params() -> dict:
     """Load parameters from params.yaml"""
     params_path = Path(__file__).parent.parent / "params.yaml"
     return yaml.safe_load(open(params_path))
+
+
+def get_s3_filesystem(endpoint_url: str) -> s3fs.S3FileSystem:
+    """
+    Create S3 filesystem for MinIO with SSL verification disabled.
+
+    Args:
+        endpoint_url: MinIO endpoint URL
+
+    Returns:
+        Configured S3FileSystem instance
+    """
+    return s3fs.S3FileSystem(
+        anon=False,
+        endpoint_url=endpoint_url,
+        key=os.getenv("AWS_ACCESS_KEY_ID"),
+        secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        client_kwargs={
+            "verify": False,  # Disable SSL verification for self-signed certs
+        },
+    )
+
+
+def get_readme_urls(repo: str, data_version: str, data_path: str) -> List[str]:
+    """
+    Get URLs for all README files from DVC.
+
+    Args:
+        repo: DVC repository URL
+        data_version: Git revision (tag, branch, commit)
+        data_path: Path to data directory in the repo
+
+    Returns:
+        List of S3 URLs to README files
+    """
+    print(f"Fetching README URLs from DVC version: {data_version}")
+
+    # List files in the directory
+    fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version)
+    readme_paths = []
+
+    try:
+        for entry in fs.ls(data_path, detail=False):
+            if entry.endswith(".md"):
+                readme_paths.append(entry)
+    except Exception as e:
+        raise RuntimeError(f"Failed to list files from DVC: {e}")
+
+    print(f"Found {len(readme_paths)} README files")
+
+    # Get URLs for each file
+    urls = []
+    for path in readme_paths:
+        try:
+            url = dvc.api.get_url(path, repo=repo, rev=data_version)
+            urls.append(url)
+            print(f"  ✓ {Path(path).name} -> {url}")
+        except Exception as e:
+            print(f"  ✗ Failed to get URL for {path}: {e}")
+
+    return urls
 
 
 def initialize_table(connection_string: str, table_name: str):
@@ -218,12 +283,17 @@ class PGVectorWriter:
 
 def get_connection_string(params: dict) -> str:
     """Build PostgreSQL connection string from params."""
+    # Load environment variables
+    env_path = Path(__file__).parent.parent.parent / ".env"
+    load_dotenv(env_path)
+
     pg_config = params["pgvector"]
-    password = os.environ.get(pg_config["password_env_var"])
+    password = os.getenv("POSTGRES_DEMO_APP_DB_PASSWORD")
 
     if not password:
         raise ValueError(
-            f"Environment variable {pg_config['password_env_var']} not set"
+            "Environment variable POSTGRES_DEMO_APP_DB_PASSWORD not set. "
+            f"Checked .env file at: {env_path}"
         )
 
     return (
@@ -236,8 +306,11 @@ def main():
     """Main processing pipeline using Ray Data."""
     params = load_params()
 
-    # Get data version from params
+    # Get data version and path from params
+    repo = params["data"]["dvc_repo"]
     data_version = params["data"]["version"]
+    data_path = params["data"]["path"]
+    endpoint_url = params["data"]["endpoint_url"]
 
     # Load embedding params
     emb_params = params["embedding"]
@@ -250,32 +323,40 @@ def main():
     # Get database connection
     conn_string = get_connection_string(params)
     table_name = params["pgvector"]["table_name"]
+
+    # Initialize table (create if not exists)
+    print(f"\n{'=' * 60}")
     print("Initializing database table")
     print(f"{'=' * 60}")
     initialize_table(conn_string, table_name)
 
-    # Input directory
-    script_dir = Path(__file__).parent
-    input_dir = script_dir.parent.parent.parent / "data" / "readme-embeddings" / "raw"
+    # Get URLs for README files from DVC (async but wrapped in sync call)
+    print(f"\n{'=' * 60}")
+    print("Fetching README URLs from DVC (async)")
+    print(f"{'=' * 60}")
+    readme_urls = get_readme_urls(repo, data_version, data_path)
+
+    if not readme_urls:
+        raise RuntimeError("No README files found in DVC")
 
     print(f"\n{'=' * 60}")
-    print("Processing READMEs with Ray Data")
+    print("Creating S3 filesystem for MinIO")
+    print(f"{'=' * 60}")
+    s3_fs = get_s3_filesystem(endpoint_url)
+    print(f"✓ S3 filesystem created for {endpoint_url}")
 
     print(f"\n{'=' * 60}")
     print("Processing READMEs with Ray Data")
     print(f"{'=' * 60}")
-    print(f"Input directory: {input_dir}")
+    print(f"Number of files: {len(readme_urls)}")
     print(f"Embedding model: {model_name}")
     print(f"Chunk size: {chunk_size}, Overlap: {chunk_overlap}")
     print(f"Data version: {data_version}")
     print(f"Target table: {table_name}")
     print(f"{'=' * 60}\n")
 
-    # Initialize Ray
-    ray.init(ignore_reinit_error=True)
-
-    # Build Ray Data pipeline
-    ds = ray.data.read_text(str(input_dir / "*.md"), include_paths=True)
+    # Build Ray Data pipeline - read directly from S3 URLs
+    ds = ray.data.read_text(readme_urls, filesystem=s3_fs, include_paths=True)
 
     print(f"Loaded {ds.count()} README files")
 
@@ -291,11 +372,12 @@ def main():
     print(f"Created {ds.count()} text chunks")
 
     # Generate embeddings
+    # Here we coul utilize the power of ray resource management and distrubuted workloads
     ds = ds.map_batches(
         Embedder,
         fn_constructor_kwargs={"model_name": model_name, "device": device},
         batch_size=batch_size,
-        num_cpus=1,
+        num_cpus=4,
     )
 
     # Write to pgvector

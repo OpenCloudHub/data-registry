@@ -1,0 +1,53 @@
+schema: '2.0'
+stages:
+  analyze:
+    cmd: python scripts/analyze.py
+    deps:
+    - path: scripts/analyze.py
+      hash: md5
+      md5: b80d20e311d09a94fb5735de374d9da3
+      size: 3991
+    params:
+      params.yaml:
+        data:
+          dvc_repo: https://github.com/OpenCloudHub/data-registry
+          endpoint_url: https://minio-api.storage.internal.opencloudhub.org
+          version: opencloudhub-readmes-v1.0.0
+          path: data/opencloudhub-readmes/raw
+        embedding:
+          model_name: sentence-transformers/all-MiniLM-L6-v2
+          chunk_size: 500
+          chunk_overlap: 50
+          batch_size: 32
+          device: cpu
+    outs:
+    - path: ../../data/opencloudhub-readmes/metadata.json
+      hash: md5
+      md5: 359f2b0e78d9226a09aeecd715c37afb
+      size: 693
+  process:
+    cmd: python scripts/process.py
+    deps:
+    - path: scripts/process.py
+      hash: md5
+      md5: 4ccfd3b51280d6f9366a504c61cb36b2
+      size: 13183
+    params:
+      params.yaml:
+        data:
+          dvc_repo: https://github.com/OpenCloudHub/data-registry
+          endpoint_url: https://minio-api.storage.internal.opencloudhub.org
+          version: opencloudhub-readmes-v1.0.0
+          path: data/opencloudhub-readmes/raw
+        embedding:
+          model_name: sentence-transformers/all-MiniLM-L6-v2
+          chunk_size: 500
+          chunk_overlap: 50
+          batch_size: 32
+          device: cpu
+        pgvector:
+          host: 127.0.0.1
+          port: 5432
+          database: demo_app
+          user: demo-app
+          table_name: readme_embeddings

@@ -1,5 +1,8 @@
 data:
-  version: "opencloudhub-readmes-v1.0.0"  # Manually bump when data changes
+  dvc_repo: "https://github.com/OpenCloudHub/data-registry"
+  endpoint_url: "https://minio-api.storage.internal.opencloudhub.org"
+  version: "opencloudhub-readmes-v1.0.0"  # Git revision: tag, branch, or commit hash
+  path: "data/opencloudhub-readmes/raw"  # Path in the repo
 
 embedding:
   model_name: "sentence-transformers/all-MiniLM-L6-v2"
@@ -9,9 +12,11 @@ embedding:
   device: "cpu"
 
 pgvector:
-  host: "demo-app-db-cluster-rw.storage.svc.cluster.local"
+  host: "127.0.0.1" # "demo-app-db-cluster-rw.storage.svc.cluster.local"
   port: 5432
   database: "demo_app"
   user: "demo-app"
-  password_env_var: "POSTGRES_PASSWORD"
   table_name: "readme_embeddings"
+
+analyze:
+  output_file: "../../data/opencloudhub-readmes/metadata.json"

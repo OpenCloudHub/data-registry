@@ -3,8 +3,10 @@ stages:
     cmd: python scripts/process.py
     deps:
       - scripts/process.py
-      - ../../data/readme-embeddings/raw
+      # Remove dependency on local data since we fetch via dvc.api
     params:
+      - data
+      - data
       - embedding
       - pgvector
     # No outs - data goes directly to pgvector
@@ -13,8 +15,9 @@ stages:
     cmd: python scripts/analyze.py
     deps:
       - scripts/analyze.py
-      - ../../data/readme-embeddings/raw
     params:
+      - data
+      - data
       - embedding
     outs:
-      - ../../data/readme-embeddings/metadata.json
+      - ../../data/opencloudhub-readmes/metadata.json
