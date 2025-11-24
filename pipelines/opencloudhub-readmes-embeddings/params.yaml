@@ -12,7 +12,7 @@ embedding:
   device: "cpu"
 
 pgvector:
-  host: "127.0.0.1" # "demo-app-db-cluster-rw.storage.svc.cluster.local"
+  host: "192.168.49.2" # "demo-app-db-cluster-rw.storage.svc.cluster.local"
   port: 5432
   database: "demo_app"
   user: "demo-app"
