@@ -19,5 +19,6 @@ stages:
       - data
       - data
       - embedding
-    outs:
-      - ../../data/opencloudhub-readmes/metadata.json
+    metrics:
+      - ../../data/opencloudhub-readmes/metadata.json:
+          cache: false
