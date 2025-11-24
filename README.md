@@ -100,7 +100,7 @@ ______________________________________________________________________
    Configure DVC remote (tracked in git):
    ```bash
    dvc remote add -d minio s3://dvcstore
-   dvc remote modify minio endpointurl https://minio-api.storage.internal.opencloudhub.org
+   dvc remote modify minio endpointurl https://minio-api.internal.opencloudhub.org
    dvc remote modify minio ssl_verify false
    git add .dvc/config
    git commit -m "Configure MinIO remote"
@@ -189,7 +189,7 @@ uv add dvc
 dvc remote add -d local /workspace/shared-data/dvcstore
 # OR
 dvc remote add -d minio s3://dvcstore
-dvc remote modify minio endpointurl https://minio-api.storage.internal.opencloudhub.org
+dvc remote modify minio endpointurl https://minio-api.internal.opencloudhub.org
 dvc remote modify minio ssl_verify false
 
 # Add credentials to .dvc/config.local (if using MinIO)
@@ -355,7 +355,7 @@ Container: /workspace/shared-data/dvcstore/
     url = /workspace/shared-data/dvcstore
 ['remote "minio"']
     url = s3://dvcstore
-    endpointurl = https://minio-api.storage.internal.opencloudhub.org
+    endpointurl = https://minio-api.internal.opencloudhub.org
     ssl_verify = false
 ```
 

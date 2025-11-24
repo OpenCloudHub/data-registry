@@ -11,7 +11,7 @@ stages:
       params.yaml:
         data:
           dvc_repo: https://github.com/OpenCloudHub/data-registry
-          endpoint_url: https://minio-api.storage.internal.opencloudhub.org
+          endpoint_url: https://minio-api.internal.opencloudhub.org
           version: opencloudhub-readmes-v1.0.0
           path: data/opencloudhub-readmes/raw
         embedding:
@@ -36,7 +36,7 @@ stages:
       params.yaml:
         data:
           dvc_repo: https://github.com/OpenCloudHub/data-registry
-          endpoint_url: https://minio-api.storage.internal.opencloudhub.org
+          endpoint_url: https://minio-api.internal.opencloudhub.org
           version: opencloudhub-readmes-v1.0.0
           path: data/opencloudhub-readmes/raw
         embedding:

@@ -14,9 +14,7 @@ import requests
 
 try:
     # Test if MinIO is reachable
-    response = requests.get(
-        "https://minio-api.storage.internal.opencloudhub.org", verify=False
-    )
+    response = requests.get("https://minio-api.internal.opencloudhub.org", verify=False)
     print(f"✓ MinIO endpoint is reachable: {response.status_code}")
 except Exception as e:
     print(f"❌ Cannot reach MinIO: {e}")
@@ -29,7 +27,7 @@ try:
 
     s3_fs = s3fs.S3FileSystem(
         anon=False,
-        endpoint_url="https://minio-api.storage.internal.opencloudhub.org",
+        endpoint_url="https://minio-api.internal.opencloudhub.org",
         key="admin",
         secret="12345678",
         client_kwargs={

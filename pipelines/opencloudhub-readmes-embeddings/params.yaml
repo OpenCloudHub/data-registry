@@ -1,6 +1,6 @@
 data:
   dvc_repo: "https://github.com/OpenCloudHub/data-registry"
-  endpoint_url: "https://minio-api.storage.internal.opencloudhub.org"
+  endpoint_url: "https://minio-api.internal.opencloudhub.org"
   version: "opencloudhub-readmes-v1.0.0"  # Git revision: tag, branch, or commit hash
   path: "data/opencloudhub-readmes/raw"  # Path in the repo
 
