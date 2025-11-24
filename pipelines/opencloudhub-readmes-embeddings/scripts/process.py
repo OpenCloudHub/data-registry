@@ -140,6 +140,7 @@ class Chunker:
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
             length_function=len,
+            add_start_index=True,  # track index in original document
         )
 
     def __call__(self, row: Dict) -> List[Dict]:
