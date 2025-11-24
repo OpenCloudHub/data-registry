@@ -16,15 +16,15 @@ stages:
           path: data/opencloudhub-readmes/raw
         embedding:
           model_name: sentence-transformers/all-MiniLM-L6-v2
-          chunk_size: 500
-          chunk_overlap: 50
+          chunk_size: 800
+          chunk_overlap: 100
           batch_size: 32
           device: cpu
     outs:
     - path: ../../data/opencloudhub-readmes/metadata.json
       hash: md5
-      md5: 359f2b0e78d9226a09aeecd715c37afb
-      size: 693
+      md5: 42e98dbe20d6aed6b68c2c1ed8e11ee1
+      size: 694
   process:
     cmd: python scripts/process.py
     deps:
