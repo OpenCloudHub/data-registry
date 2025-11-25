@@ -53,8 +53,8 @@ stages:
       size: 747463
     - path: scripts/analyze.py
       hash: md5
-      md5: fe294581e751da2bdd825c0e996e5d2e
-      size: 3856
+      md5: 637109c5d2c858cd513655631ca0c72e
+      size: 3876
     params:
       params.yaml:
         analyze:

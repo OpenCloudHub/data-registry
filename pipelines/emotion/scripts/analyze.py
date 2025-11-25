@@ -1,4 +1,4 @@
-"""Compute dataset metadata and statistics."""
+"""Compute dataset metadata and statistics for emotion dataset."""
 
 import json
 from pathlib import Path

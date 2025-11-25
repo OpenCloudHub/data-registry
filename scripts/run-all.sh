@@ -1,126 +1,152 @@
 #!/usr/bin/env bash
-set -e  # Exit on error
+set -e
 
 # ==============================================================================
 # Run all data pipelines and create versioned tags
 # ==============================================================================
-# This script:
-# 1. Runs all DVC data processing pipelines
-# 2. Pushes data to remote storage (MinIO/S3)
-# 3. Creates Git tags for versioned dataset releases
-# 4. Commits and pushes changes to Git
-# ==============================================================================
 
-VERSION="v1.0.0"
+BUMP_TYPE="${BUMP_TYPE:-patch}"
+IS_CRON="${IS_CRON:-false}"
 
 echo ""
 echo "════════════════════════════════════════════════════════════════════════════════"
 echo "🚀 Data Registry Pipeline Execution"
 echo "════════════════════════════════════════════════════════════════════════════════"
-echo "Version: ${VERSION}"
+echo "Bump type: ${BUMP_TYPE}"
+echo "Is cron: ${IS_CRON}"
 echo ""
 
 # ------------------------------------------------------------------------------
-# Step 1: Run Data Processing Pipelines
+# Run all pipelines
 # ------------------------------------------------------------------------------
-echo "📊 Step 1/5: Running data processing pipelines..."
+echo "📊 Running data processing pipelines..."
 echo "────────────────────────────────────────────────────────────────────────────────"
 
-echo "  → Processing emotion dataset..."
-dvc repro pipelines/emotion/dvc.yaml
-echo "     ✓ Emotion dataset complete"
-
-echo "  → Processing fashion-mnist dataset..."
-dvc repro pipelines/fashion-mnist/dvc.yaml
-echo "     ✓ Fashion-MNIST dataset complete"
-
-echo "  → Processing wine-quality dataset..."
-dvc repro pipelines/wine-quality/dvc.yaml
-echo "     ✓ Wine Quality dataset complete"
-
-echo "  → Downloading opencloudhub-readmes..."
-dvc repro pipelines/opencloudhub-readmes-download/dvc.yaml
-echo "     ✓ OpenCloudHub READMEs downloaded"
-
-echo "  → Adding RAG evaluation questions..."
-dvc add data/opencloudhub-readmes/rag-evaluation/questions.csv
-echo "     ✓ RAG evaluation questions added"
-
-echo ""
-
-# ------------------------------------------------------------------------------
-# Step 2: Push Data to Remote Storage
-# ------------------------------------------------------------------------------
-echo "📤 Step 2/5: Pushing data to remote storage (MinIO)..."
-echo "────────────────────────────────────────────────────────────────────────────────"
-dvc push
-echo "   ✓ All datasets pushed to remote storage"
-echo ""
-
-# ------------------------------------------------------------------------------
-# Step 3: Create Git Tags for Dataset Versions
-# ------------------------------------------------------------------------------
-echo "🏷️  Step 3/5: Creating dataset version tags..."
-echo "────────────────────────────────────────────────────────────────────────────────"
-
-DATASETS=(
+PIPELINES=(
+  "emotion"
   "fashion-mnist"
   "wine-quality"
-  "emotion"
-  "opencloudhub-readmes"
-  "opencloudhub-readmes-rag-evaluation"
+  "opencloudhub-readmes-download"
 )
 
-for dataset in "${DATASETS[@]}"; do
-  TAG="${dataset}-${VERSION}"
-  git tag -f "${TAG}" -m "${dataset} ${VERSION}"
-  echo "   ✓ Created tag: ${TAG}"
+for pipeline in "${PIPELINES[@]}"; do
+  echo "  → Processing ${pipeline}..."
+  dvc repro pipelines/${pipeline}/dvc.yaml
+  echo "     ✓ ${pipeline} complete"
 done
+
+echo "  → Adding RAG evaluation questions..."
+dvc add data/opencloudhub-readmes/rag-evaluation/questions.csv 2>/dev/null || echo "     ℹ️  Already tracked"
+echo "     ✓ RAG evaluation questions processed"
+
 echo ""
 
 # ------------------------------------------------------------------------------
-# Step 4: Push Tags to GitHub
+# Detect which datasets changed using dvc diff
 # ------------------------------------------------------------------------------
-echo "📤 Step 4/5: Pushing tags to GitHub..."
+echo "🔍 Detecting changed datasets..."
 echo "────────────────────────────────────────────────────────────────────────────────"
-git push -f origin --tags
-echo "   ✓ All tags pushed to GitHub"
+
+DVC_DIFF=$(dvc diff --json HEAD 2>/dev/null || echo '{"added":[],"deleted":[],"modified":[],"renamed":[]}')
+
+CHANGED_DATASETS=$(echo "$DVC_DIFF" | python3 -c "
+import sys, json
+try:
+    diff = json.load(sys.stdin)
+    datasets = set()
+    
+    for change_type in ['added', 'modified']:
+        for item in diff.get(change_type, []):
+            path = item.get('path', '')
+            if path.startswith('data/'):
+                parts = path.split('/')
+                if len(parts) >= 2:
+                    datasets.add(parts[1])
+    
+    for item in diff.get('renamed', []):
+        new_path = item.get('path', {}).get('new', '')
+        if new_path.startswith('data/'):
+            parts = new_path.split('/')
+            if len(parts) >= 2:
+                datasets.add(parts[1])
+    
+    for ds in sorted(datasets):
+        print(ds)
+except:
+    pass
+")
+
+if [ -z "$CHANGED_DATASETS" ]; then
+  echo "  ℹ️  No datasets changed - skipping push and tagging"
+  exit 0
+fi
+
+# Show what changed
+while IFS= read -r dataset; do
+  [ -n "$dataset" ] && echo "  ✓ Changes detected: ${dataset}"
+done <<< "$CHANGED_DATASETS"
+
 echo ""
 
 # ------------------------------------------------------------------------------
-# Step 5: Commit and Push Changes
+# Push data to remote storage
 # ------------------------------------------------------------------------------
-echo "💾 Step 5/5: Committing and pushing changes..."
+echo "📤 Pushing data to remote storage..."
 echo "────────────────────────────────────────────────────────────────────────────────"
-git add .
-git commit -m "chore: update datasets to ${VERSION}" || echo "   ℹ️  No changes to commit"
-git push
-echo "   ✓ Changes pushed to GitHub"
+dvc push
+echo "   ✓ Data pushed to MinIO"
 echo ""
 
 # ------------------------------------------------------------------------------
-# Step 6: Run Embeddings Pipeline (Requires Committed Tags)
+# Create tags only for changed datasets
 # ------------------------------------------------------------------------------
-echo "🧠 Running embeddings pipeline..."
+echo "🏷️  Creating tags for changed datasets..."
 echo "────────────────────────────────────────────────────────────────────────────────"
-echo "   ℹ️  This step requires the tags to be committed and pushed first"
-echo "   → Processing README embeddings and storing in pgvector..."
-dvc repro pipelines/opencloudhub-readmes-embeddings/dvc.yaml
-echo "   ✓ Embeddings pipeline complete"
+
+while IFS= read -r dataset; do
+  [ -z "$dataset" ] && continue
+  
+  LATEST_TAG=$(git tag -l "${dataset}-v*" --sort=-version:refname | head -n1)
+  
+  if [ -z "$LATEST_TAG" ]; then
+    NEW_VERSION="1.0.0"
+  else
+    CURRENT_VERSION=$(echo "$LATEST_TAG" | grep -oP "${dataset}-v\K[0-9]+\.[0-9]+\.[0-9]+" | head -1)
+    IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+    
+    case $BUMP_TYPE in
+      major) NEW_VERSION="$((MAJOR + 1)).0.0" ;;
+      minor) NEW_VERSION="${MAJOR}.$((MINOR + 1)).0" ;;
+      patch) NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
+    esac
+  fi
+  
+  if [ "$IS_CRON" = "true" ]; then
+    TAG_NAME="${dataset}-v${NEW_VERSION}-automated"
+    TAG_MESSAGE="${dataset} v${NEW_VERSION} (automated)"
+  else
+    TAG_NAME="${dataset}-v${NEW_VERSION}"
+    TAG_MESSAGE="${dataset} v${NEW_VERSION}"
+  fi
+  
+  git tag -a "${TAG_NAME}" -m "${TAG_MESSAGE}"
+  echo "   ✓ Created: ${TAG_NAME}"
+done <<< "$CHANGED_DATASETS"
+
 echo ""
 
 # ------------------------------------------------------------------------------
 # Summary
 # ------------------------------------------------------------------------------
 echo "════════════════════════════════════════════════════════════════════════════════"
-echo "✅ All pipelines completed successfully!"
+echo "✅ Pipeline execution complete!"
 echo "════════════════════════════════════════════════════════════════════════════════"
 echo ""
-echo "📦 Datasets tagged and published:"
-for dataset in "${DATASETS[@]}"; do
-  echo "   • ${dataset}-${VERSION}"
-done
-echo ""
-echo "🔗 View releases: https://github.com/OpenCloudHub/data-registry/tags"
-echo "════════════════════════════════════════════════════════════════════════════════"
+echo "📦 Tagged datasets:"
+while IFS= read -r dataset; do
+  [ -n "$dataset" ] && {
+    LATEST_TAG=$(git tag -l "${dataset}-v*" --sort=-version:refname | head -n1)
+    echo "   • ${LATEST_TAG}"
+  }
+done <<< "$CHANGED_DATASETS"
 echo ""

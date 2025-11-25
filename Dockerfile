@@ -42,7 +42,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ENV ENVIRONMENT=development
 
 #==============================================================================#
-# Serves both for training and serving, could be separated if needed
+# Serves for executing pipelines in CI/CD or production environments. Could be seperated furthe rinto differnet images if needed.
 FROM rayproject/ray:${RAY_VERSION}-${RAY_PY_TAG} AS prod
 
 WORKDIR /workspace/project
@@ -53,9 +53,11 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev
 
-COPY src/ ./src/
-
 ENV VIRTUAL_ENV="/workspace/project/.venv" \
     PATH="/workspace/project/.venv/bin:$PATH" \
     PYTHONPATH="/workspace/project" \
     ENVIRONMENT=production
+
+# Entrypoint will run mounted code
+ENTRYPOINT ["uv", "run"]
+CMD ["bash"]

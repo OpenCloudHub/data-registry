@@ -1,63 +1,24 @@
-name: CI Build & Push Images
+name: CI Data Pipelines Image
 
 on:
   push:
     branches: [main]
+    paths:
+      - Dockerfile
+      - pyproject.toml
+      - uv.lock
+      - .github/workflows/ci-data-pipelines-image.yaml
+  workflow_dispatch:
 
 jobs:
-  changes:
-    name: "🔎 Detect Changes"
-    runs-on: ubuntu-latest
-    outputs:
-      training: ${{ steps.filter.outputs.training }}
-      serving: ${{ steps.filter.outputs.serving }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            training:
-              - 'Dockerfile'
-              - 'pyproject.toml'
-              - 'uv.lock'
-              - 'src/training/**'
-              - 'src/_utils/**'
-            serving:
-              - 'Dockerfile'
-              - 'pyproject.toml'
-              - 'uv.lock'
-              - 'src/serving/**'
-              - 'src/_utils/**'
-
-  # Build training only if training code changed
-  build-training:
-    needs: changes
-    if: ${{ needs.changes.outputs.training == 'true' }}
-    name: 🎓 Build Training Image
+  build-image:
+    name: 🐳 Build Data Pipelines Base Image
     uses: opencloudhub/.github/.github/workflows/shared-ci-docker-build-push.yaml@main
     with:
-      repo-name: "wine-classifier-training"
+      repo-name: "data-registry-pipelines"
       context: "."
       dockerfile: "Dockerfile"
-      target: "training"
-      push-on-pr: true
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
-
-
-  # Build serving only if serving code changed
-  build-serving:
-    needs: changes
-    if: ${{ needs.changes.outputs.serving == 'true' }}
-    name: 🚀 Build Serving Image
-    uses: opencloudhub/.github/.github/workflows/shared-ci-docker-build-push.yaml@main
-    with:
-      repo-name: "wine-classifier-serving"
-      context: "."
-      dockerfile: "Dockerfile"
-      target: "serving"
+      target: "prod"
       push-on-pr: true
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}

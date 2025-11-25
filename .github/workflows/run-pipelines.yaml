@@ -1,0 +1,102 @@
+name: Run Data Pipelines
+
+on:
+  workflow_dispatch:
+    inputs:
+      pipeline:
+        description: 'Pipeline to run (leave empty to run all)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - 'emotion'
+          - 'fashion-mnist'
+          - 'wine-quality'
+          - 'opencloudhub-readmes-download'
+          - 'opencloudhub-readmes-embeddings'
+        default: ''
+      bump_type:
+        description: 'Version bump type'
+        required: false
+        type: choice
+        options:
+          - 'patch'
+          - 'minor'
+          - 'major'
+        default: 'patch'
+  
+  schedule:
+    - cron: '0 2 * * *'
+
+env:
+  IMAGE_NAME: ghcr.io/opencloudhub/data-registry-pipelines:latest
+
+jobs:
+  run-pipelines:
+    name: 🔄 Run Data Pipelines
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/opencloudhub/data-registry-pipelines:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🔧 Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --global --add safe.directory /github/workspace
+      
+      - name: 🔐 Configure DVC
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID
+          dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY
+      
+      - name: 🚀 Run pipeline(s)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL: ${{ secrets.AWS_ENDPOINT_URL }}
+          POSTGRES_DEMO_APP_DB_PASSWORD: ${{ secrets.POSTGRES_DEMO_APP_DB_PASSWORD }}
+          BUMP_TYPE: ${{ inputs.bump_type || 'patch' }}
+          IS_CRON: ${{ github.event_name == 'schedule' }}
+        run: |
+          if [ -n "${{ inputs.pipeline }}" ]; then
+            echo "Running single pipeline: ${{ inputs.pipeline }}"
+            dvc repro pipelines/${{ inputs.pipeline }}/dvc.yaml
+          else
+            echo "Running all pipelines via script"
+            bash scripts/run-all.sh
+          fi
+      
+      - name: 💾 Commit and push changes
+        if: success()
+        run: |
+          git add .
+          git commit -m "chore: update datasets [skip ci]" || echo "No changes to commit"
+          git push origin main || echo "Nothing to push"
+          git push origin --tags || echo "No tags to push"
+      
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "## 🔄 Pipeline Execution" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Code:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Container:** \`${IMAGE_NAME}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Bump:** ${{ inputs.bump_type || 'patch' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🏷️ Latest Tags" >> $GITHUB_STEP_SUMMARY
+          git tag -l "*-v*" --sort=-version:refname | head -10 >> $GITHUB_STEP_SUMMARY
