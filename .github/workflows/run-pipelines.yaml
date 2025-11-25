@@ -34,7 +34,7 @@ env:
 jobs:
   run-pipelines:
     name: 🔄 Run Data Pipelines
-    runs-on: ubuntu-latest
+    runs-on: self-hosted-local
     container:
       image: opencloudhuborg/data-registry-pipelines:latest
       credentials:
