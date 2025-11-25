@@ -49,15 +49,10 @@ jobs:
             -e AWS_ENDPOINT_URL=${{ secrets.AWS_ENDPOINT_URL }} \
             -e PIPELINE="${{ inputs.pipeline }}" \
             opencloudhuborg/data-registry-pipelines:latest \
-            bash -c 'set -e
-              git config --global --add safe.directory /repo
-              dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID
-              dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY
-              if [ -n "$PIPELINE" ]; then
-                dvc repro pipelines/$PIPELINE/dvc.yaml
-              else
-                bash scripts/run-all.sh
-              fi'
+            bash -c 'git config --global --add safe.directory /repo && \
+              dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID && \
+              dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY && \
+              if [ -n "$PIPELINE" ]; then dvc repro pipelines/$PIPELINE/dvc.yaml; else bash scripts/run-all.sh; fi'
 
       - name: 💾 Commit and push
         if: success()
