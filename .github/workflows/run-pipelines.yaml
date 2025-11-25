@@ -42,16 +42,15 @@ jobs:
       - name: 🚀 Run pipeline(s)
         run: |
           docker run --rm \
-            --entrypoint bash \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
+            -v ${{ github.workspace }}:/repo \
+            -w /repo \
             -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_ENDPOINT_URL=${{ secrets.AWS_ENDPOINT_URL }} \
             -e PIPELINE="${{ inputs.pipeline }}" \
             opencloudhuborg/data-registry-pipelines:latest \
-            -c 'set -e
-              git config --global --add safe.directory /workspace
+            bash -c 'set -e
+              git config --global --add safe.directory /repo
               dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID
               dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY
               if [ -n "$PIPELINE" ]; then
