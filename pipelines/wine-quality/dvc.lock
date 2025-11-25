@@ -1,24 +1,5 @@
 schema: '2.0'
 stages:
-  download:
-    cmd: python scripts/download.py
-    deps:
-    - path: scripts/download.py
-      hash: md5
-      md5: 26f8cc6903bf5a15d6c66c0887faa525
-      size: 1172
-    params:
-      params.yaml:
-        download:
-          base_url: 
-            https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality
-          output_dir: ../../data/wine-quality/raw
-    outs:
-    - path: ../../data/wine-quality/raw
-      hash: md5
-      md5: f915efbc9aa1fc14335fbdbf859a890a.dir
-      size: 348625
-      nfiles: 2
   process:
     cmd: python scripts/process.py
     deps:
@@ -40,17 +21,19 @@ stages:
           test_size: 0.2
           random_state: 42
     outs:
-    - path: ../../data/wine-quality/processed/wine-quality.csv
+    - path: ../../data/wine-quality/processed
       hash: md5
-      md5: ef07e40c57c0640f3bd9c417b9e052d8
+      md5: 23dc04af3a6f9a27efff359a5a6849ea.dir
       size: 392245
+      nfiles: 1
   analyze:
     cmd: python scripts/analyze.py
     deps:
-    - path: ../../data/wine-quality/processed/wine-quality.csv
+    - path: ../../data/wine-quality/processed
       hash: md5
-      md5: ef07e40c57c0640f3bd9c417b9e052d8
+      md5: 23dc04af3a6f9a27efff359a5a6849ea.dir
       size: 392245
+      nfiles: 1
     - path: scripts/analyze.py
       hash: md5
       md5: 21cd08a3c35aaaf16a564a098f2d96fb
@@ -65,3 +48,22 @@ stages:
       hash: md5
       md5: 71d8a1bcc43e0768f3735424a5deb22e
       size: 4441
+  download:
+    cmd: python scripts/download.py
+    deps:
+    - path: scripts/download.py
+      hash: md5
+      md5: 26f8cc6903bf5a15d6c66c0887faa525
+      size: 1172
+    params:
+      params.yaml:
+        download:
+          base_url: 
+            https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality
+          output_dir: ../../data/wine-quality/raw
+    outs:
+    - path: ../../data/wine-quality/raw
+      hash: md5
+      md5: f915efbc9aa1fc14335fbdbf859a890a.dir
+      size: 348625
+      nfiles: 2

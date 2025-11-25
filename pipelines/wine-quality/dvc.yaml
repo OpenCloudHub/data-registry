@@ -23,7 +23,7 @@ stages:
     cmd: python scripts/analyze.py
     deps:
       - scripts/analyze.py
-      - ../../data/wine-quality/processed/wine-quality.csv
+      - ../../data/wine-quality/processed
     params:
       - analyze
     metrics:
