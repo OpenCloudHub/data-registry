@@ -35,6 +35,12 @@ jobs:
   run-pipelines:
     name: 🔄 Run Data Pipelines
     runs-on: ubuntu-latest
+    container:
+      image: opencloudhuborg/data-registry-pipelines:latest
+      credentials:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+      options: --user root
     
     steps:
       - name: 📥 Checkout code
@@ -43,45 +49,19 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: 🔐 Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-      
-      - name: 📦 Pull and cache container image
-        run: docker pull ${{ env.IMAGE_NAME }}
-      
       - name: 🔧 Configure Git
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            ${{ env.IMAGE_NAME }} \
-            bash -c "
-              git config --global user.name 'github-actions[bot]'
-              git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-              git config --global --add safe.directory /workspace
-            "
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --global --add safe.directory /github/workspace
       
       - name: 🔐 Configure DVC
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            -e AWS_ACCESS_KEY_ID \
-            -e AWS_SECRET_ACCESS_KEY \
-            ${{ env.IMAGE_NAME }} \
-            bash -c "
-              dvc remote modify minio access_key_id \$AWS_ACCESS_KEY_ID
-              dvc remote modify minio secret_access_key \$AWS_SECRET_ACCESS_KEY
-            "
+          dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID
+          dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY
       
       - name: 🚀 Run pipeline(s)
         env:
@@ -94,23 +74,11 @@ jobs:
         run: |
           if [ -n "${{ inputs.pipeline }}" ]; then
             echo "Running single pipeline: ${{ inputs.pipeline }}"
-            COMMAND="dvc repro pipelines/${{ inputs.pipeline }}/dvc.yaml"
+            dvc repro pipelines/${{ inputs.pipeline }}/dvc.yaml
           else
             echo "Running all pipelines via script"
-            COMMAND="bash scripts/run-all.sh"
+            bash scripts/run-all.sh
           fi
-          
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            -e AWS_ACCESS_KEY_ID \
-            -e AWS_SECRET_ACCESS_KEY \
-            -e AWS_ENDPOINT_URL \
-            -e POSTGRES_DEMO_APP_DB_PASSWORD \
-            -e BUMP_TYPE \
-            -e IS_CRON \
-            ${{ env.IMAGE_NAME }} \
-            bash -c "$COMMAND"
       
       - name: 💾 Commit and push changes
         if: success()
