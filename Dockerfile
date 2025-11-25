@@ -1,28 +1,33 @@
 # syntax=docker/dockerfile:1
-#==============================================================================#
-# Build arguments
-ARG RAY_VERSION=2.48.0
+# =============================================================================
+# Data Registry Pipelines - Multi-stage Dockerfile
+# =============================================================================
+#
+# Stages:
+#   - uv:   Base image with uv package manager and system dependencies
+#   - dev:  Development environment with all dependencies (for devcontainer)
+#   - prod: Production image for CI/CD pipeline execution
+#
+# Usage:
+#   Development:  docker build --target dev -t data-registry:dev .
+#   Production:   docker build --target prod -t data-registry:prod .
+#
+# =============================================================================
+
+# =============================================================================
+# Build Arguments
+# =============================================================================
 ARG PYTHON_MAJOR=3
 ARG PYTHON_MINOR=12
 ARG DISTRO=bookworm
-
-# Compose tags
-ARG RAY_PY_TAG=py${PYTHON_MAJOR}${PYTHON_MINOR}
 ARG UV_PY_TAG=python${PYTHON_MAJOR}.${PYTHON_MINOR}-${DISTRO}
 
-#==============================================================================#
-# Stage: UV binaries
+# =============================================================================
+# Stage: uv - Base image with uv and system dependencies
+# =============================================================================
 FROM ghcr.io/astral-sh/uv:${UV_PY_TAG} AS uv
 
-WORKDIR /workspace/project
-
-ENV UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/workspace/project/.venv/bin:$PATH" \
-    PYTHONPATH="/workspace/project"
-
+# System dependencies for building Python packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -30,34 +35,46 @@ RUN apt-get update && \
     curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-#==============================================================================#
-# Stage: Development environment
+# UV configuration
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# =============================================================================
+# Stage: dev - Development environment (for devcontainer)
+# =============================================================================
 FROM uv AS dev
-
-COPY pyproject.toml uv.lock ./
-
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-install-project --dev
-
-ENV ENVIRONMENT=development
-
-#==============================================================================#
-# Serves for executing pipelines in CI/CD or production environments. Could be seperated furthe rinto differnet images if needed.
-FROM rayproject/ray:${RAY_VERSION}-${RAY_PY_TAG} AS prod
 
 WORKDIR /workspace/project
 
-COPY --from=uv /usr/local/bin/uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock ./
-
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev
+    uv sync --no-install-project --dev
 
-ENV VIRTUAL_ENV="/workspace/project/.venv" \
-    PATH="/workspace/project/.venv/bin:$PATH" \
+ENV PATH="/workspace/project/.venv/bin:$PATH" \
+    PYTHONPATH="/workspace/project" \
+    ENVIRONMENT=development
+
+# =============================================================================
+# Stage: prod - Production image for CI/CD
+# =============================================================================
+FROM uv AS prod
+
+# Install dependencies to /opt/venv (separate from code mount point)
+COPY pyproject.toml uv.lock /tmp/
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv venv /opt/venv && \
+    VIRTUAL_ENV=/opt/venv uv sync --locked --no-dev --directory /tmp && \
+    rm /tmp/pyproject.toml /tmp/uv.lock
+
+# Environment: venv at /opt/venv, code will be mounted at /workspace/project
+ENV VIRTUAL_ENV="/opt/venv" \
+    PATH="/opt/venv/bin:$PATH" \
     PYTHONPATH="/workspace/project" \
     ENVIRONMENT=production
 
-# Entrypoint will run mounted code
-ENTRYPOINT ["uv", "run"]
+# Code gets mounted here at runtime
+WORKDIR /workspace/project
+
 CMD ["bash"]
