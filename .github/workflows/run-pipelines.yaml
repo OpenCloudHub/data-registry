@@ -41,26 +41,31 @@ jobs:
 
       - name: 🚀 Run pipeline(s)
         run: |
+          cat > /tmp/run-pipeline.sh << 'SCRIPT'
+          set -e
+          cd /workspace
+          git config --global --add safe.directory /workspace
+          dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID
+          dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY
+          
+          PIPELINE="${PIPELINE:-}"
+          if [ -n "$PIPELINE" ]; then
+            dvc repro pipelines/$PIPELINE/dvc.yaml
+          else
+            bash scripts/run-all.sh
+          fi
+          SCRIPT
+          
           docker run --rm \
+            --entrypoint bash \
             -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
+            -v /tmp/run-pipeline.sh:/run-pipeline.sh:ro \
             -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_ENDPOINT_URL=${{ secrets.AWS_ENDPOINT_URL }} \
-            -e POSTGRES_DEMO_APP_DB_PASSWORD=${{ secrets.POSTGRES_DEMO_APP_DB_PASSWORD }} \
-            -e BUMP_TYPE=${{ inputs.bump_type || 'patch' }} \
+            -e PIPELINE="${{ inputs.pipeline }}" \
             opencloudhuborg/data-registry-pipelines:latest \
-            bash -c '
-              git config --global --add safe.directory /workspace
-              dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID
-              dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY
-              
-              if [ -n "${{ inputs.pipeline }}" ]; then
-                dvc repro pipelines/${{ inputs.pipeline }}/dvc.yaml
-              else
-                bash scripts/run-all.sh
-              fi
-            '
+            /run-pipeline.sh
 
       - name: 💾 Commit and push
         if: success()
