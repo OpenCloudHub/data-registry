@@ -17,7 +17,7 @@ stages:
     params:
       - process
     outs:
-      - ../../data/wine-quality/processed/wine-quality.csv
+      - ../../data/wine-quality/processed
 
   analyze:
     cmd: python scripts/analyze.py

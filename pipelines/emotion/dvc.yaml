@@ -14,8 +14,8 @@ stages:
     params:
       - process
     outs:
-      - ../../data/emotion/processed/train/train.parquet
-      - ../../data/emotion/processed/val/val.parquet
+      - ../../data/emotion/processed/train
+      - ../../data/emotion/processed/val
 
   analyze:
     cmd: python scripts/analyze.py
