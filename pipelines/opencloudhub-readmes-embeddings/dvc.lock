@@ -30,8 +30,8 @@ stages:
     deps:
     - path: scripts/process.py
       hash: md5
-      md5: 1644d222dbd795bca6682694471b6108
-      size: 12808
+      md5: 84ad03b621a768b3bf6f50813093da36
+      size: 12878
     params:
       params.yaml:
         data:
