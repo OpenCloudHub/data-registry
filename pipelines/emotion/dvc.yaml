@@ -4,24 +4,22 @@ stages:
     params:
       - download
     outs:
-      - ../../data/emotion/raw/emotions.parquet
+      - ../../data/emotion/raw
 
   process:
     cmd: python scripts/process.py
     deps:
-      - ../../data/emotion/raw/emotions.parquet
+      - ../../data/emotion/raw
       - scripts/process.py
     params:
       - process
     outs:
-      - ../../data/emotion/processed/train
-      - ../../data/emotion/processed/val
+      - ../../data/emotion/processed
 
   analyze:
     cmd: python scripts/analyze.py
     deps:
-      - ../../data/emotion/processed/train/train.parquet
-      - ../../data/emotion/processed/val/val.parquet
+      - ../../data/emotion/processed
       - scripts/analyze.py
     params:
       - analyze

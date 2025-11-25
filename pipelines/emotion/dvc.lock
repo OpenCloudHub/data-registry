@@ -1,24 +1,13 @@
 schema: '2.0'
 stages:
-  download:
-    cmd: python scripts/download.py
-    params:
-      params.yaml:
-        download:
-          dataset_name: boltuix/emotions-dataset
-          output_dir: ../../data/emotion/raw
-    outs:
-    - path: ../../data/emotion/raw/emotions.parquet
-      hash: md5
-      md5: 051135d87a861b528e601044f6031722
-      size: 7293576
   process:
     cmd: python scripts/process.py
     deps:
-    - path: ../../data/emotion/raw/emotions.parquet
+    - path: ../../data/emotion/raw
       hash: md5
-      md5: 051135d87a861b528e601044f6031722
+      md5: ea7f1d0867688217d96d24f1cc0d8167.dir
       size: 7293576
+      nfiles: 1
     - path: scripts/process.py
       hash: md5
       md5: 6e9ef4c205f1121fc19491f74a7fa5b6
@@ -32,25 +21,19 @@ stages:
           train_split: 0.8
           random_seed: 42
     outs:
-    - path: ../../data/emotion/processed/train/train.parquet
+    - path: ../../data/emotion/processed
       hash: md5
-      md5: 1d63093bfea6cfa85505bd55ad34e4e8
-      size: 2930464
-    - path: ../../data/emotion/processed/val/val.parquet
-      hash: md5
-      md5: 0700b816e54ca33e56997272cf203767
-      size: 747463
+      md5: ba15732d4b423cffa949db6c85114d8e.dir
+      size: 3677927
+      nfiles: 2
   analyze:
     cmd: python scripts/analyze.py
     deps:
-    - path: ../../data/emotion/processed/train/train.parquet
+    - path: ../../data/emotion/processed
       hash: md5
-      md5: 1d63093bfea6cfa85505bd55ad34e4e8
-      size: 2930464
-    - path: ../../data/emotion/processed/val/val.parquet
-      hash: md5
-      md5: 0700b816e54ca33e56997272cf203767
-      size: 747463
+      md5: ba15732d4b423cffa949db6c85114d8e.dir
+      size: 3677927
+      nfiles: 2
     - path: scripts/analyze.py
       hash: md5
       md5: 637109c5d2c858cd513655631ca0c72e
@@ -65,3 +48,16 @@ stages:
       hash: md5
       md5: 0678f92b6f2a0899e4be8bbd8ddf8999
       size: 2338
+  download:
+    cmd: python scripts/download.py
+    params:
+      params.yaml:
+        download:
+          dataset_name: boltuix/emotions-dataset
+          output_dir: ../../data/emotion/raw
+    outs:
+    - path: ../../data/emotion/raw
+      hash: md5
+      md5: ea7f1d0867688217d96d24f1cc0d8167.dir
+      size: 7293576
+      nfiles: 1
