@@ -34,14 +34,7 @@ env:
 jobs:
   run-pipelines:
     name: 🔄 Run Data Pipelines
-    runs-on: self-hosted-local
-    container:
-      image: opencloudhuborg/data-registry-pipelines:latest
-      credentials:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_TOKEN }}
-      options: --user root
-    
+    runs-on: self-hosted-local    
     steps:
       - name: 📥 Checkout code (manual)
         run: |
@@ -60,30 +53,46 @@ jobs:
           dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID
           dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY
       
+      jobs:
+  run-pipelines:
+    name: 🔄 Run Data Pipelines
+    runs-on: self-hosted-local
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
       - name: 🚀 Run pipeline(s)
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_ENDPOINT_URL: ${{ secrets.AWS_ENDPOINT_URL }}
-          POSTGRES_DEMO_APP_DB_PASSWORD: ${{ secrets.POSTGRES_DEMO_APP_DB_PASSWORD }}
-          BUMP_TYPE: ${{ inputs.bump_type || 'patch' }}
-          IS_CRON: ${{ github.event_name == 'schedule' }}
         run: |
-          if [ -n "${{ inputs.pipeline }}" ]; then
-            echo "Running single pipeline: ${{ inputs.pipeline }}"
-            dvc repro pipelines/${{ inputs.pipeline }}/dvc.yaml
-          else
-            echo "Running all pipelines via script"
-            bash scripts/run-all.sh
-          fi
-      
-      - name: 💾 Commit and push changes
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            -e AWS_ENDPOINT_URL=${{ secrets.AWS_ENDPOINT_URL }} \
+            -e POSTGRES_DEMO_APP_DB_PASSWORD=${{ secrets.POSTGRES_DEMO_APP_DB_PASSWORD }} \
+            -e BUMP_TYPE=${{ inputs.bump_type || 'patch' }} \
+            opencloudhuborg/data-registry-pipelines:latest \
+            bash -c '
+              git config --global --add safe.directory /workspace
+              dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID
+              dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY
+              
+              if [ -n "${{ inputs.pipeline }}" ]; then
+                dvc repro pipelines/${{ inputs.pipeline }}/dvc.yaml
+              else
+                bash scripts/run-all.sh
+              fi
+            '
+
+      - name: 💾 Commit and push
         if: success()
         run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add .
-          git commit -m "chore: update datasets [skip ci]" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main || echo "Nothing to push"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git --tags || echo "No tags to push"
+          git commit -m "chore: update datasets [skip ci]" || echo "No changes"
+          git push || echo "Nothing to push"
+          git push --tags || echo "No tags"
       
       - name: 📊 Summary
         if: always()
