@@ -61,12 +61,12 @@ ENV PATH="/workspace/project/.venv/bin:$PATH" \
 # =============================================================================
 FROM uv AS prod
 
-# Install dependencies to /opt/venv (separate from code mount point)
-COPY pyproject.toml uv.lock /tmp/
+# Copy deps and install to /opt/venv
+WORKDIR /tmp/build
+COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv venv /opt/venv && \
-    VIRTUAL_ENV=/opt/venv uv sync --locked --no-dev --directory /tmp && \
-    rm /tmp/pyproject.toml /tmp/uv.lock
+    VIRTUAL_ENV=/opt/venv uv sync --locked --no-dev
 
 # Environment: venv at /opt/venv, code will be mounted at /workspace/project
 ENV VIRTUAL_ENV="/opt/venv" \
