@@ -29,17 +29,18 @@ on:
     - cron: '0 2 * * *'
 
 env:
-  IMAGE_NAME: opencloudhuborg/data-registry-pipelines:latest
+  IMAGE_NAME: opencloudhub/data-registry-pipelines:latest
 
 jobs:
   run-pipelines:
     name: 🔄 Run Data Pipelines
     runs-on: ubuntu-latest
     container:
-      image: opencloudhuborg/data-registry-pipelines:latest
+      image: opencloudhub/data-registry-pipelines:latest
       credentials:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_TOKEN }}
+      options: --user root
     
     steps:
       - name: 📥 Checkout code
