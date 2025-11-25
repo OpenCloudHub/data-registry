@@ -28,5 +28,6 @@ stages:
       - ../../data/fashion-mnist/processed/val
     params:
       - analyze
-    outs:
-      - ../../data/fashion-mnist/metadata.json
+    metrics:
+      - ../../data/fashion-mnist/metadata.json:
+          cache: false

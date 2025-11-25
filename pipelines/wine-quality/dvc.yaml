@@ -26,5 +26,6 @@ stages:
       - ../../data/wine-quality/processed/wine-quality.csv
     params:
       - analyze
-    outs:
-      - ../../data/wine-quality/metadata.json
+    metrics:
+      - ../../data/wine-quality/metadata.json:
+          cache: false
