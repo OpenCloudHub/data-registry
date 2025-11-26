@@ -73,6 +73,8 @@ jobs:
                   value: '${PIPELINES_JSON}'
                 - name: bump_type
                   value: "${BUMP_TYPE}"
+                - name: force
+                  value: "{force}"
                 - name: is_automated
                   value: "${IS_AUTOMATED}"
                 - name: trigger_embeddings
