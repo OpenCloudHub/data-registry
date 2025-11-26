@@ -1,5 +1,5 @@
 # .github/workflows/data-pipelines.yaml
-name: Run Data Pipelines
+name: Run Base Data Pipelines
 
 on:
   workflow_dispatch:
@@ -37,7 +37,6 @@ jobs:
       - name: 🚀 Run pipeline(s)
         id: run
         run: |
-          # Run and capture output
           docker run --rm \
             -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
@@ -46,12 +45,13 @@ jobs:
             -e IS_CRON=${{ github.event_name == 'schedule' }} \
             data-pipelines:local \
             bash -c '
+              dvc remote modify minio endpointurl $AWS_ENDPOINT_URL
               dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID
               dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY
               if [ -n "${{ inputs.pipeline }}" ]; then
                 dvc repro pipelines/${{ inputs.pipeline }}/dvc.yaml
               else
-                bash scripts/run-all-base.sh  # excludes embeddingsena
+                bash scripts/run-all-base.sh
               fi
             '
           
