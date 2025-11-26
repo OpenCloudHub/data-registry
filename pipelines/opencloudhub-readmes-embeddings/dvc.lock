@@ -16,7 +16,7 @@ stages:
           model_name: sentence-transformers/all-MiniLM-L6-v2
           chunk_size: 800
           chunk_overlap: 100
-          batch_size: 32
+          batch_size: 8
           device: cpu
     outs:
     - path: ../../data/opencloudhub-readmes-embeddings/metadata.json
@@ -28,8 +28,8 @@ stages:
     deps:
     - path: scripts/process.py
       hash: md5
-      md5: e13c3ad0a62a56f79c0b5c939c99f078
-      size: 13124
+      md5: f1ffae8264d943510dc8fd1eb5db4c18
+      size: 13229
     params:
       params.yaml:
         data:
@@ -39,7 +39,7 @@ stages:
           model_name: sentence-transformers/all-MiniLM-L6-v2
           chunk_size: 800
           chunk_overlap: 100
-          batch_size: 32
+          batch_size: 8
           device: cpu
         pgvector:
           port: 5432
