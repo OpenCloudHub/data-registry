@@ -5,8 +5,8 @@ stages:
     deps:
     - path: scripts/download.py
       hash: md5
-      md5: 35856a5e6a891b3a3fdcb7ef6e88ee04
-      size: 3864
+      md5: a4bfcbb2da6f7eb3468b453e78169215
+      size: 3848
     params:
       params.yaml:
         org_name: OpenCloudHub
@@ -14,6 +14,6 @@ stages:
     outs:
     - path: ../../data/opencloudhub-readmes/raw
       hash: md5
-      md5: 26549fc6cc8d58405578cbda6bff344d.dir
-      size: 96256
-      nfiles: 11
+      md5: d64cc322a5dac472645f908a5917a030.dir
+      size: 138479
+      nfiles: 12
