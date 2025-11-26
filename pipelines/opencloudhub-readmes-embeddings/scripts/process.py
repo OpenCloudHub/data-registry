@@ -317,6 +317,9 @@ def get_connection_string(params: dict) -> str:
 
 def main():
     """Main processing pipeline using Ray Data."""
+    # Connect to Ray cluster (when running as RayJob, this connects to existing cluster)
+    ray.init()
+
     # # Load environment variables
     # env_path = Path(__file__).parent.parent.parent / ".env"
     # load_dotenv(env_path)
