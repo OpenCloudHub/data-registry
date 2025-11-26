@@ -1,4 +1,3 @@
-# .github/workflows/run-embeddings-pipeline.yaml
 name: Run Embeddings Pipeline
 
 on:
@@ -22,6 +21,8 @@ jobs:
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: 🔧 Install kubectl
         run: |
@@ -39,9 +40,6 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
           kubectl cluster-info
 
-      - name: 🐳 Build image
-        run: docker build --target prod -t data-pipelines:local .
-
       - name: 📝 Update params.yaml
         run: |
           sed -i 's/version: ".*"/version: "${{ inputs.data_version }}"/' \
@@ -49,7 +47,7 @@ jobs:
 
       - name: 🧠 Submit Ray Job (process stage)
         run: |
-          cat <<EOF | kubectl apply -f -
+          cat <<EOF | kubectl create -f -
           apiVersion: ray.io/v1
           kind: RayJob
           metadata:
@@ -57,7 +55,6 @@ jobs:
             namespace: mlops
             labels:
               pipeline: embeddings
-              data-version: "${DATA_VERSION}"
           spec:
             entrypoint: "dvc repro pipelines/opencloudhub-readmes-embeddings/dvc.yaml --single-item process"
             shutdownAfterJobFinishes: true
@@ -144,8 +141,6 @@ jobs:
                                   name: demo-app-db-user
                                   key: password
           EOF
-        env:
-          DATA_VERSION: ${{ inputs.data_version }}
 
       - name: ⏳ Wait for Ray Job
         run: |
@@ -173,27 +168,63 @@ jobs:
             esac
           done
 
-      - name: 📊 Run analyze stage
+      - name: 📊 Run analyze stage (K8s Job)
         run: |
-          mkdir -p data/opencloudhub-readmes-embeddings
-          docker run --rm \
-            -v ${{ github.workspace }}/data/opencloudhub-readmes-embeddings:/app/data/opencloudhub-readmes-embeddings \
-            -e PGVECTOR_HOST=${{ secrets.PGVECTOR_HOST }} \
-            -e POSTGRES_DEMO_APP_DB_PASSWORD=${{ secrets.POSTGRES_DEMO_APP_DB_PASSWORD }} \
-            -e DATA_VERSION=${{ inputs.data_version }} \
-            data-pipelines:local \
-            python pipelines/opencloudhub-readmes-embeddings/scripts/analyze.py
+          cat <<EOF | kubectl create -f -
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            generateName: embeddings-analyze-
+            namespace: mlops
+          spec:
+            ttlSecondsAfterFinished: 300
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: analyze
+                    image: opencloudhuborg/data-registry-pipelines:latest
+                    command: ["python", "pipelines/opencloudhub-readmes-embeddings/scripts/analyze.py"]
+                    env:
+                      - name: DATA_VERSION
+                        value: "${{ inputs.data_version }}"
+                      - name: PGVECTOR_HOST
+                        value: "demo-app-db-rw.storage.svc.cluster.local"
+                      - name: POSTGRES_DEMO_APP_DB_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: demo-app-db-user
+                            key: password
+                    resources:
+                      requests:
+                        cpu: "200m"
+                        memory: "256Mi"
+                      limits:
+                        cpu: "500m"
+                        memory: "512Mi"
+          EOF
+
+          sleep 3
+          JOB_NAME=$(kubectl get jobs -n mlops --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1].metadata.name}')
+          echo "📋 Analyze Job: $JOB_NAME"
+
+          kubectl wait --for=condition=complete --timeout=10m job/$JOB_NAME -n mlops || {
+            echo "❌ Analyze job failed"
+            kubectl logs -n mlops job/$JOB_NAME --tail=100
+            exit 1
+          }
+
+          echo "✅ Analyze complete"
+          kubectl logs -n mlops job/$JOB_NAME
 
       - name: 💾 Commit and tag
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           
-          git add data/opencloudhub-readmes-embeddings/metadata.json
           git add pipelines/opencloudhub-readmes-embeddings/params.yaml
           git commit -m "chore: embeddings for ${{ inputs.data_version }} [skip ci]" || echo "No changes"
           
-          # Create embeddings tag matching source version
           VERSION=$(echo "${{ inputs.data_version }}" | grep -oP 'v[0-9]+\.[0-9]+\.[0-9]+')
           git tag -a "opencloudhub-readmes-embeddings-${VERSION}" \
             -m "Embeddings from ${{ inputs.data_version }}"
@@ -207,8 +238,3 @@ jobs:
           echo "## 🧠 Embeddings Pipeline" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Source data:** \`${{ inputs.data_version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f data/opencloudhub-readmes-embeddings/metadata.json ]; then
-            echo "### 📈 Results" >> $GITHUB_STEP_SUMMARY
-            cat data/opencloudhub-readmes-embeddings/metadata.json >> $GITHUB_STEP_SUMMARY
-          fi
