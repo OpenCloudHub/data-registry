@@ -11,7 +11,7 @@ dependencies = [
     "numpy>=2.3.4",
     "psycopg>=3.2.13",
     "pyarrow>=22.0.0",
-    "ray[data]>=2.51.1",
+    "ray[data,default]>=2.51.1",
     "scikit-learn>=1.7.2",
     "sentence-transformers>=5.1.2",
 ]

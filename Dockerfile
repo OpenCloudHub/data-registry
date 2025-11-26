@@ -35,6 +35,8 @@ RUN apt-get update && \
     build-essential \
     git \
     curl \
+    wget \
+    ca-certificates \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ENV UV_COMPILE_BYTECODE=1 \
