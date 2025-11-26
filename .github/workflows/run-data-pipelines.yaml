@@ -17,6 +17,10 @@ on:
         description: 'Run embeddings after base pipelines'
         type: boolean
         default: true
+      force:
+        description: 'Force re-run (ignore DVC cache)'
+        type: boolean
+        default: false
   schedule:
     - cron: '0 2 * * *'
 
