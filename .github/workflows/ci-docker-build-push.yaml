@@ -1,4 +1,4 @@
-name: CI Data Pipelines Image
+name: CI BUild Data Pipelines Image
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
       - pyproject.toml
       - uv.lock
       - .github/workflows/ci-data-pipelines-image.yaml
+      - src/**
   workflow_dispatch:
 
 jobs:
