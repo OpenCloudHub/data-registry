@@ -14,6 +14,6 @@ stages:
     outs:
     - path: ../../data/opencloudhub-readmes/raw
       hash: md5
-      md5: da793784547e0b3dd4d936fe651771fe.dir
+      md5: b14deaa467f2c5f0d5baff2c230b222c.dir
       size: 138479
       nfiles: 12
