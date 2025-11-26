@@ -4,6 +4,7 @@ Download README.md files from all public repositories in the GitHub organization
 
 import base64
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
@@ -93,11 +94,6 @@ def save_readmes(org_name: str, output_dir: Path, token: str = None):
         token: GitHub personal access token
     """
 
-    # Clean output directory
-    # if output_dir.exists():
-    #     for file in output_dir.glob("*.md"):
-    #         file.unlink()
-
     output_dir.mkdir(parents=True, exist_ok=True)
 
     repos = fetch_org_repos(org_name, token)
@@ -110,8 +106,9 @@ def save_readmes(org_name: str, output_dir: Path, token: str = None):
         readme_content = fetch_readme(repo_full_name, token)
 
         if readme_content:
-            # Save as {repo_name}_README.md
-            output_path = output_dir / f"{repo_name}_README.md"
+            # Save as {repo_name}_README_{timestamp}.md
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_path = output_dir / f"{repo_name}_README_{timestamp}.md"
             output_path.write_text(readme_content, encoding="utf-8")
             saved_count += 1
 
