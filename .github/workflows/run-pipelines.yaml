@@ -27,9 +27,6 @@ on:
   schedule:
     - cron: '0 2 * * *'
 
-env:
-  IMAGE_NAME: opencloudhuborg/data-registry-pipelines:latest
-
 jobs:
   run-pipelines:
     name: 🔄 Run Data Pipelines
@@ -39,27 +36,36 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
 
+      - name: 🐳 Build image
+        run: docker build -t data-pipelines:local .
+
       - name: 🚀 Run pipeline(s)
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace/project \
+          CONTAINER_ID=$(docker run -d \
             -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             -e AWS_ENDPOINT_URL=${{ secrets.AWS_ENDPOINT_URL }} \
             -e BUMP_TYPE=${{ inputs.bump_type || 'patch' }} \
             -e IS_CRON=${{ github.event_name == 'schedule' }} \
-            -e PIPELINE="${{ inputs.pipeline }}" \
-            ${{ env.IMAGE_NAME }} \
+            data-pipelines:local \
             bash -c '
-              git config --global --add safe.directory /workspace/project
               dvc remote modify minio access_key_id $AWS_ACCESS_KEY_ID
               dvc remote modify minio secret_access_key $AWS_SECRET_ACCESS_KEY
-              if [ -n "$PIPELINE" ]; then
-                dvc repro pipelines/$PIPELINE/dvc.yaml
+              if [ -n "${{ inputs.pipeline }}" ]; then
+                dvc repro pipelines/${{ inputs.pipeline }}/dvc.yaml
               else
                 bash scripts/run-all.sh
               fi
-            '
+            ')
+          
+          docker logs -f $CONTAINER_ID
+          EXIT_CODE=$(docker inspect $CONTAINER_ID --format='{{.State.ExitCode}}')
+          
+          # Copy results back
+          docker cp $CONTAINER_ID:/app/. .
+          docker rm $CONTAINER_ID
+          
+          exit $EXIT_CODE
 
       - name: 💾 Commit and push
         if: success()
@@ -70,16 +76,3 @@ jobs:
           git commit -m "chore: update datasets [skip ci]" || echo "No changes"
           git push || echo "Nothing to push"
           git push --tags || echo "No tags"
-
-      - name: 📊 Summary
-        if: always()
-        run: |
-          echo "## 🔄 Pipeline Execution" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Container:** \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Bump:** ${{ inputs.bump_type || 'patch' }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🏷️ Latest Tags" >> $GITHUB_STEP_SUMMARY
-          git tag -l "*-v*" --sort=-version:refname | head -10 >> $GITHUB_STEP_SUMMARY

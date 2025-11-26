@@ -68,6 +68,8 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-group dev
 
+COPY . .
+
 # Venv at /app/.venv, code mounts at /workspace/project
 ENV PATH="/app/.venv/bin:$PATH" \
     ENVIRONMENT=production
