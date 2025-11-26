@@ -1,4 +1,4 @@
-name: CI BUild Data Pipelines Image
+name: CI Build Data Pipelines Image
 
 on:
   push:
