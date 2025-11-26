@@ -8,3 +8,4 @@ stages:
       - output_dir
     outs:
       - ../../data/opencloudhub-readmes/raw
+    always_changed: true  # ALways run as we might have new readmes

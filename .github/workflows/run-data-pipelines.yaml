@@ -1,0 +1,86 @@
+# .github/workflows/run-data-pipelines.yaml
+name: Run Data Pipelines
+
+on:
+  workflow_dispatch:
+    inputs:
+      pipelines:
+        description: 'Pipelines to run (comma-separated)'
+        default: 'emotion,fashion-mnist,wine-quality,opencloudhub-readmes-download'
+        type: string
+      bump_type:
+        description: 'Version bump type'
+        type: choice
+        options: ['patch', 'minor', 'major']
+        default: 'patch'
+      trigger_embeddings:
+        description: 'Run embeddings after base pipelines'
+        type: boolean
+        default: true
+  schedule:
+    - cron: '0 2 * * *'
+
+jobs:
+  submit:
+    name: 🚀 Submit to Argo
+    runs-on: self-hosted-local
+
+    steps:
+      - name: 🔧 Setup kubectl
+        run: |
+          if ! command -v kubectl &> /dev/null; then
+            curl -sLO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            mkdir -p ~/.local/bin
+            mv kubectl ~/.local/bin/
+            echo "$HOME/.local/bin" >> $GITHUB_PATH
+          fi
+
+      - name: 🔐 Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+
+      - name: 🚀 Submit Workflow
+        run: |
+          # Convert comma-separated to JSON array
+          PIPELINES='${{ inputs.pipelines || 'emotion,fashion-mnist,wine-quality,opencloudhub-readmes-download' }}'
+          PIPELINES_JSON=$(echo "$PIPELINES" | tr ',' '\n' | jq -R . | jq -s -c .)
+          
+          IS_AUTOMATED="${{ github.event_name == 'schedule' }}"
+          BUMP_TYPE="${{ inputs.bump_type || 'patch' }}"
+          TRIGGER_EMB="${{ inputs.trigger_embeddings == '' && 'true' || inputs.trigger_embeddings }}"
+
+          WORKFLOW=$(kubectl create -f - -o jsonpath='{.metadata.name}' <<EOF
+          apiVersion: argoproj.io/v1alpha1
+          kind: Workflow
+          metadata:
+            generateName: data-pipeline-
+            namespace: mlops
+            labels:
+              trigger: github-actions
+              github-run-id: "${{ github.run_id }}"
+          spec:
+            workflowTemplateRef:
+              name: data-pipeline
+            arguments:
+              parameters:
+                - name: pipelines
+                  value: '${PIPELINES_JSON}'
+                - name: bump_type
+                  value: "${BUMP_TYPE}"
+                - name: is_automated
+                  value: "${IS_AUTOMATED}"
+                - name: trigger_embeddings
+                  value: "${TRIGGER_EMB}"
+          EOF
+          )
+
+          echo "## 🚀 Workflow Submitted" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Name:** \`${WORKFLOW}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Pipelines:** ${PIPELINES}" >> $GITHUB_STEP_SUMMARY
+          echo "**Bump:** ${BUMP_TYPE}" >> $GITHUB_STEP_SUMMARY
+          echo "**Embeddings:** ${TRIGGER_EMB}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View in [Argo UI](https://argo-workflows.internal.opencloudhub.org/workflows/mlops/${WORKFLOW})" >> $GITHUB_STEP_SUMMARY
