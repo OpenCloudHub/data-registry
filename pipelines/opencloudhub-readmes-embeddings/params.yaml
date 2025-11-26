@@ -1,6 +1,4 @@
 data:
-  dvc_repo: "https://github.com/OpenCloudHub/data-registry"
-  endpoint_url: "https://minio-api.internal.opencloudhub.org"
   version: "opencloudhub-readmes-v1.0.0"  # Git revision: tag, branch, or commit hash
   path: "data/opencloudhub-readmes/raw"  # Path in the repo
 
@@ -12,11 +10,10 @@ embedding:
   device: "cpu"
 
 pgvector:
-  host: "127.0.0.1" # "demo-app-db-cluster-rw.storage.svc.cluster.local"
   port: 5432
   database: "demo_app"
   user: "demo-app"
   table_name: "readme_embeddings"
 
 analyze:
-  output_file: "../../data/opencloudhub-readmes/metadata.json"
+  output_file: "../../data/opencloudhub-readmes-embeddings/metadata.json"

@@ -61,8 +61,8 @@ ENV PATH="/workspace/project/.venv/bin:$PATH" \
 # =============================================================================
 FROM uv AS prod
 
-# Install dependencies at /app (separate from code mount point)
-WORKDIR /app
+# Install dependencies at /workspace/project
+WORKDIR /workspace/project
 COPY pyproject.toml uv.lock ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -70,10 +70,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 COPY . .
 
-# Venv at /app/.venv, code mounts at /workspace/project
-ENV PATH="/app/.venv/bin:$PATH" \
+# Venv at /workspace/project/.venv, code mounts at /workspace/project
+ENV PATH="/workspace/project/.venv/bin:$PATH" \
     ENVIRONMENT=production
-
-WORKDIR /workspace/project
 
 CMD ["bash"]

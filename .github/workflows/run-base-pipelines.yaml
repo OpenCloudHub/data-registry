@@ -1,11 +1,11 @@
+# .github/workflows/data-pipelines.yaml
 name: Run Data Pipelines
 
 on:
   workflow_dispatch:
     inputs:
       pipeline:
-        description: 'Pipeline to run (leave empty to run all)'
-        required: false
+        description: 'Pipeline to run (empty = all base pipelines)'
         type: choice
         options:
           - ''
@@ -13,16 +13,10 @@ on:
           - 'fashion-mnist'
           - 'wine-quality'
           - 'opencloudhub-readmes-download'
-          - 'opencloudhub-readmes-embeddings'
         default: ''
       bump_type:
-        description: 'Version bump type'
-        required: false
         type: choice
-        options:
-          - 'patch'
-          - 'minor'
-          - 'major'
+        options: ['patch', 'minor', 'major']
         default: 'patch'
   schedule:
     - cron: '0 2 * * *'
@@ -31,16 +25,19 @@ jobs:
   run-pipelines:
     name: 🔄 Run Data Pipelines
     runs-on: self-hosted-local
+    outputs:
+      readmes_tag: ${{ steps.run.outputs.readmes_tag }}
 
     steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: 🐳 Build image
         run: docker build --target prod -t data-pipelines:local .
 
       - name: 🚀 Run pipeline(s)
+        id: run
         run: |
+          # Run and capture output
           docker run --rm \
             -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
             -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
@@ -54,12 +51,15 @@ jobs:
               if [ -n "${{ inputs.pipeline }}" ]; then
                 dvc repro pipelines/${{ inputs.pipeline }}/dvc.yaml
               else
-                bash scripts/run-all.sh
+                bash scripts/run-all-base.sh  # excludes embeddingsena
               fi
             '
+          
+          # Check if readmes tag was created
+          READMES_TAG=$(git tag -l "opencloudhub-readmes-v*" --sort=-version:refname | head -n1)
+          echo "readmes_tag=$READMES_TAG" >> $GITHUB_OUTPUT
 
       - name: 💾 Commit and push
-        if: success()
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
@@ -67,3 +67,12 @@ jobs:
           git commit -m "chore: update datasets [skip ci]" || echo "No changes"
           git push || echo "Nothing to push"
           git push --tags || echo "No tags"
+
+  trigger-embeddings:
+    name: 🧠 Trigger Embeddings
+    needs: run-pipelines
+    if: needs.run-pipelines.outputs.readmes_tag != ''
+    uses: ./.github/workflows/run-embeddings-pipeline.yaml
+    with:
+      data_version: ${{ needs.run-pipelines.outputs.readmes_tag }}
+    secrets: inherit

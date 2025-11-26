@@ -103,7 +103,7 @@ def main():
 
     # Build metadata
     metadata = {
-        "data_version": data_version,
+        "source_data_version": data_version,
         "embedding_model": params["embedding"]["model_name"],
         "chunk_size": params["embedding"]["chunk_size"],
         "chunk_overlap": params["embedding"]["chunk_overlap"],

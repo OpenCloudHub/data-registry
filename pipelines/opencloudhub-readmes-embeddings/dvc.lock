@@ -5,13 +5,11 @@ stages:
     deps:
     - path: scripts/analyze.py
       hash: md5
-      md5: b80d20e311d09a94fb5735de374d9da3
-      size: 3991
+      md5: 7cf2823f7331219787f5d1cbc5a294d4
+      size: 3998
     params:
       params.yaml:
         data:
-          dvc_repo: https://github.com/OpenCloudHub/data-registry
-          endpoint_url: https://minio-api.internal.opencloudhub.org
           version: opencloudhub-readmes-v1.0.0
           path: data/opencloudhub-readmes/raw
         embedding:
@@ -21,22 +19,20 @@ stages:
           batch_size: 32
           device: cpu
     outs:
-    - path: ../../data/opencloudhub-readmes/metadata.json
+    - path: ../../data/opencloudhub-readmes-embeddings/metadata.json
       hash: md5
-      md5: 42e98dbe20d6aed6b68c2c1ed8e11ee1
-      size: 694
+      md5: 9bbed9edc5c65c4a46a7c904e028e1cd
+      size: 701
   process:
     cmd: python scripts/process.py
     deps:
     - path: scripts/process.py
       hash: md5
-      md5: 84ad03b621a768b3bf6f50813093da36
-      size: 12878
+      md5: e13c3ad0a62a56f79c0b5c939c99f078
+      size: 13124
     params:
       params.yaml:
         data:
-          dvc_repo: https://github.com/OpenCloudHub/data-registry
-          endpoint_url: https://minio-api.internal.opencloudhub.org
           version: opencloudhub-readmes-v1.0.0
           path: data/opencloudhub-readmes/raw
         embedding:
@@ -46,7 +42,6 @@ stages:
           batch_size: 32
           device: cpu
         pgvector:
-          host: 127.0.0.1
           port: 5432
           database: demo_app
           user: demo-app

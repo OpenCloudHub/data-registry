@@ -14,7 +14,6 @@ import ray
 import s3fs
 import torch
 import yaml
-from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 
@@ -298,34 +297,41 @@ class PGVectorWriter:
 
 def get_connection_string(params: dict) -> str:
     """Build PostgreSQL connection string from params."""
-    # Load environment variables
-    env_path = Path(__file__).parent.parent.parent / ".env"
-    load_dotenv(env_path)
 
     pg_config = params["pgvector"]
-    password = os.getenv("POSTGRES_DEMO_APP_DB_PASSWORD")
 
+    # Get host from environment variable (required)
+    host = os.getenv("PGVECTOR_HOST")
+    if not host:
+        raise ValueError("Environment variable PGVECTOR_HOST not set")
+
+    password = os.getenv("POSTGRES_DEMO_APP_DB_PASSWORD")
     if not password:
-        raise ValueError(
-            "Environment variable POSTGRES_DEMO_APP_DB_PASSWORD not set. "
-            f"Checked .env file at: {env_path}"
-        )
+        raise ValueError("Environment variable POSTGRES_DEMO_APP_DB_PASSWORD not set")
 
     return (
         f"postgresql://{pg_config['user']}:{password}"
-        f"@{pg_config['host']}:{pg_config['port']}/{pg_config['database']}"
+        f"@{host}:{pg_config['port']}/{pg_config['database']}"
     )
 
 
 def main():
     """Main processing pipeline using Ray Data."""
+    # # Load environment variables
+    # env_path = Path(__file__).parent.parent.parent / ".env"
+    # load_dotenv(env_path)
     params = load_params()
 
     # Get data version and path from params
-    repo = params["data"]["dvc_repo"]
     data_version = params["data"]["version"]
     data_path = params["data"]["path"]
-    endpoint_url = params["data"]["endpoint_url"]
+
+    repo = os.getenv("DVC_REPO")
+    if not repo:
+        raise ValueError("Environment variable DVC_REPO not set")
+    endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+    if not endpoint_url:
+        raise ValueError("Environment variable AWS_ENDPOINT_URL not set")
 
     # Load embedding params
     emb_params = params["embedding"]

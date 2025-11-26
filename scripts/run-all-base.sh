@@ -2,7 +2,7 @@
 set -e
 
 # ==============================================================================
-# Run all data pipelines and create versioned tags
+# Run base data pipelines (excludes embeddings - that runs on Ray)
 # ==============================================================================
 
 BUMP_TYPE="${BUMP_TYPE:-patch}"
@@ -10,14 +10,14 @@ IS_CRON="${IS_CRON:-false}"
 
 echo ""
 echo "════════════════════════════════════════════════════════════════════════════════"
-echo "🚀 Data Registry Pipeline Execution"
+echo "🚀 Data Registry Pipeline Execution (Base Pipelines)"
 echo "════════════════════════════════════════════════════════════════════════════════"
 echo "Bump type: ${BUMP_TYPE}"
 echo "Is cron: ${IS_CRON}"
 echo ""
 
 # ------------------------------------------------------------------------------
-# Run all pipelines
+# Run base pipelines (NOT embeddings - that needs Ray cluster)
 # ------------------------------------------------------------------------------
 echo "📊 Running data processing pipelines..."
 echo "────────────────────────────────────────────────────────────────────────────────"
@@ -35,14 +35,10 @@ for pipeline in "${PIPELINES[@]}"; do
   echo "     ✓ ${pipeline} complete"
 done
 
-echo "  → Adding RAG evaluation questions..."
-dvc add data/opencloudhub-readmes/rag-evaluation/questions.csv 2>/dev/null || echo "     ℹ️  Already tracked"
-echo "     ✓ RAG evaluation questions processed"
-
 echo ""
 
 # ------------------------------------------------------------------------------
-# Detect which datasets changed using dvc diff
+# Detect which datasets changed
 # ------------------------------------------------------------------------------
 echo "🔍 Detecting changed datasets..."
 echo "────────────────────────────────────────────────────────────────────────────────"
@@ -81,7 +77,6 @@ if [ -z "$CHANGED_DATASETS" ]; then
   exit 0
 fi
 
-# Show what changed
 while IFS= read -r dataset; do
   [ -n "$dataset" ] && echo "  ✓ Changes detected: ${dataset}"
 done <<< "$CHANGED_DATASETS"
@@ -98,7 +93,7 @@ echo "   ✓ Data pushed to MinIO"
 echo ""
 
 # ------------------------------------------------------------------------------
-# Create tags only for changed datasets
+# Create tags for changed datasets
 # ------------------------------------------------------------------------------
 echo "🏷️  Creating tags for changed datasets..."
 echo "────────────────────────────────────────────────────────────────────────────────"
@@ -123,23 +118,17 @@ while IFS= read -r dataset; do
   
   if [ "$IS_CRON" = "true" ]; then
     TAG_NAME="${dataset}-v${NEW_VERSION}-automated"
-    TAG_MESSAGE="${dataset} v${NEW_VERSION} (automated)"
   else
     TAG_NAME="${dataset}-v${NEW_VERSION}"
-    TAG_MESSAGE="${dataset} v${NEW_VERSION}"
   fi
   
-  git tag -a "${TAG_NAME}" -m "${TAG_MESSAGE}"
+  git tag -a "${TAG_NAME}" -m "${dataset} v${NEW_VERSION}"
   echo "   ✓ Created: ${TAG_NAME}"
 done <<< "$CHANGED_DATASETS"
 
 echo ""
-
-# ------------------------------------------------------------------------------
-# Summary
-# ------------------------------------------------------------------------------
 echo "════════════════════════════════════════════════════════════════════════════════"
-echo "✅ Pipeline execution complete!"
+echo "✅ Base pipelines complete!"
 echo "════════════════════════════════════════════════════════════════════════════════"
 echo ""
 echo "📦 Tagged datasets:"
@@ -149,4 +138,6 @@ while IFS= read -r dataset; do
     echo "   • ${LATEST_TAG}"
   }
 done <<< "$CHANGED_DATASETS"
+echo ""
+echo "ℹ️  Embeddings pipeline runs separately on Ray cluster"
 echo ""
