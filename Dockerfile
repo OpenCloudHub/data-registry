@@ -12,6 +12,9 @@
 #   Development:  docker build --target dev -t data-registry:dev .
 #   Production:   docker build --target prod -t data-registry:prod .
 #
+# Runtime (prod):
+#   docker run --rm -v $(pwd):/workspace/project <image> bash -c 'dvc repro ...'
+#
 # =============================================================================
 
 # =============================================================================
@@ -27,7 +30,6 @@ ARG UV_PY_TAG=python${PYTHON_MAJOR}.${PYTHON_MINOR}-${DISTRO}
 # =============================================================================
 FROM ghcr.io/astral-sh/uv:${UV_PY_TAG} AS uv
 
-# System dependencies for building Python packages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -35,7 +37,6 @@ RUN apt-get update && \
     curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# UV configuration
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     PYTHONUNBUFFERED=1 \
@@ -47,13 +48,12 @@ ENV UV_COMPILE_BYTECODE=1 \
 FROM uv AS dev
 
 WORKDIR /workspace/project
-
 COPY pyproject.toml uv.lock ./
+
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-install-project --dev
+    uv sync --no-install-project
 
 ENV PATH="/workspace/project/.venv/bin:$PATH" \
-    PYTHONPATH="/workspace/project" \
     ENVIRONMENT=development
 
 # =============================================================================
@@ -61,20 +61,17 @@ ENV PATH="/workspace/project/.venv/bin:$PATH" \
 # =============================================================================
 FROM uv AS prod
 
-# Copy deps and install to /opt/venv
-WORKDIR /tmp/build
+# Install dependencies at /app (separate from code mount point)
+WORKDIR /app
 COPY pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv venv /opt/venv && \
-    VIRTUAL_ENV=/opt/venv uv sync --locked --no-dev
 
-# Environment: venv at /opt/venv, code will be mounted at /workspace/project
-ENV VIRTUAL_ENV="/opt/venv" \
-    PATH="/opt/venv/bin:$PATH" \
-    PYTHONPATH="/workspace/project" \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-group dev
+
+# Venv at /app/.venv, code mounts at /workspace/project
+ENV PATH="/app/.venv/bin:$PATH" \
     ENVIRONMENT=production
 
-# Code gets mounted here at runtime
 WORKDIR /workspace/project
 
 CMD ["bash"]
