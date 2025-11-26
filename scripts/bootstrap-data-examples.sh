@@ -52,6 +52,10 @@ for pipeline in "${PIPELINES[@]}"; do
   echo "     ✓ done"
 done
 
+echo "  → Adding RAG evaluation questions..."
+dvc add data/opencloudhub-readmes/rag-evaluation/questions.csv
+echo "     ✓ done"
+
 echo ""
 
 # ------------------------------------------------------------------------------
@@ -69,7 +73,7 @@ echo ""
 echo "🏷️  Creating v1.0.0 tags..."
 echo "────────────────────────────────────────────────────────────────────────────────"
 
-DATASETS=("emotion" "fashion-mnist" "wine-quality" "opencloudhub-readmes")
+DATASETS=("emotion" "fashion-mnist" "wine-quality" "opencloudhub-readmes" "opencloudhub-readmes-rag-evaluation")
 
 for dataset in "${DATASETS[@]}"; do
   TAG="${dataset}-v1.0.0"
