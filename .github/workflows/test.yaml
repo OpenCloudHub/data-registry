@@ -151,7 +151,7 @@ jobs:
           verify-remote: ${{ inputs.verify-dvc-remote }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-endpoint-url: ${{ vars.AWS_ENDPOINT_URL }}
+          aws-endpoint-url: ${{ secrets.AWS_ENDPOINT_URL }}
 
       - name: ✅ Verify outputs
         run: |
