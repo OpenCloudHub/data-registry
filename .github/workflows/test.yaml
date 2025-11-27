@@ -245,7 +245,7 @@ jobs:
     name: 📋 Test Summary
     runs-on: self-hosted-local
     if: always()
-    needs: [test-kubectl, test-argo, test-docker-tag, test-dvc-version, test-integration]
+    needs: [test-kubectl, test-docker-tag, test-dvc-version, test-integration]
     steps:
       - name: 📋 Generate Summary
         run: |
