@@ -149,9 +149,9 @@ jobs:
           version: ${{ inputs.dvc-version }}
           dvc-repo: ${{ vars.DVC_REPO_URL }}
           verify-remote: ${{ inputs.verify-dvc-remote }}
-          aws-access-key-id: ${{ inputs.verify-dvc-remote && secrets.AWS_ACCESS_KEY_ID || '' }}
-          aws-secret-access-key: ${{ inputs.verify-dvc-remote && secrets.AWS_SECRET_ACCESS_KEY || '' }}
-          aws-endpoint-url: ${{ inputs.verify-dvc-remote && vars.AWS_ENDPOINT_URL || '' }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-endpoint-url: ${{ vars.AWS_ENDPOINT_URL }}
 
       - name: ✅ Verify outputs
         run: |
