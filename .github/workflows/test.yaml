@@ -64,7 +64,7 @@ jobs:
 
       - name: 🧪 Run setup-kubectl action
         id: kubectl
-        uses: OpenCloudHub/.github/actions/setup-kubectl@main
+        uses: OpenCloudHub/.github/.github/actions/setup-kubectl@main
         with:
           kube-config: ${{ secrets.KUBE_CONFIG }}
           verify: 'true'
@@ -99,14 +99,14 @@ jobs:
 
       # Need kubectl first
       - name: 🔧 Setup kubectl (prerequisite)
-        uses: OpenCloudHub/.github/actions/setup-kubectl@main
+        uses: OpenCloudHub/.github/.github/actions/setup-kubectl@main
         with:
           kube-config: ${{ secrets.KUBE_CONFIG }}
           verify: 'false'  # Already tested above
 
       - name: 🧪 Run setup-argo action
         id: argo
-        uses: OpenCloudHub/.github/actions/setup-argo@main
+        uses: OpenCloudHub/.github/.github/actions/setup-argo@main
         with:
           namespace: mlops
           verify: 'true'
@@ -145,7 +145,7 @@ jobs:
 
       - name: 🧪 Run resolve-docker-tag action
         id: docker
-        uses: OpenCloudHub/.github/actions/resolve-docker-tag@main
+        uses: OpenCloudHub/.github/.github/actions/resolve-docker-tag@main
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           token: ${{ secrets.DOCKER_TOKEN }}
@@ -187,7 +187,7 @@ jobs:
 
       - name: 🧪 Run resolve-dvc-version action
         id: dvc
-        uses: OpenCloudHub/.github/actions/resolve-dvc-version@main
+        uses: OpenCloudHub/.github/.github/actions/resolve-dvc-version@main
         with:
           dataset: ${{ inputs.dvc-dataset }}
           version: ${{ inputs.dvc-version }}
@@ -226,19 +226,19 @@ jobs:
 
       # Setup infrastructure
       - name: 🔧 Setup kubectl
-        uses: OpenCloudHub/.github/actions/setup-kubectl@main
+        uses: OpenCloudHub/.github/.github/actions/setup-kubectl@main
         with:
           kube-config: ${{ secrets.KUBE_CONFIG }}
 
       - name: 🔄 Setup argo
-        uses: OpenCloudHub/.github/actions/setup-argo@main
+        uses: OpenCloudHub/.github/.github/actions/setup-argo@main
         with:
           namespace: mlops
 
       # Resolve versions
       - name: 🐳 Resolve Docker image
         id: image
-        uses: OpenCloudHub/.github/actions/resolve-docker-tag@main
+        uses: OpenCloudHub/.github/.github/actions/resolve-docker-tag@main
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           token: ${{ secrets.DOCKER_TOKEN }}
@@ -248,7 +248,7 @@ jobs:
 
       - name: 📊 Resolve DVC version
         id: data
-        uses: OpenCloudHub/.github/actions/resolve-dvc-version@main
+        uses: OpenCloudHub/.github/.github/actions/resolve-dvc-version@main
         with:
           dataset: ${{ inputs.dvc-dataset }}
           version: ${{ inputs.dvc-version }}
