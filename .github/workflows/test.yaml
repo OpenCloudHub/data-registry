@@ -83,46 +83,6 @@ jobs:
           echo "- kubectl path: \`${{ steps.kubectl.outputs.kubectl-path }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Cluster connection: verified" >> $GITHUB_STEP_SUMMARY
 
-  # ==========================================================================
-  # Test: setup-argo
-  # ==========================================================================
-  test-argo:
-    name: 🔄 Test setup-argo
-    runs-on: self-hosted-local
-    if: inputs.test-argo
-    needs: test-kubectl  # Argo needs kubectl configured first
-    steps:
-      - name: 📋 Test Info
-        run: |
-          echo "## 🔄 Testing setup-argo" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-      # Need kubectl first
-      - name: 🔧 Setup kubectl (prerequisite)
-        uses: OpenCloudHub/.github/.github/actions/setup-kubectl@main
-        with:
-          kube-config: ${{ secrets.KUBE_CONFIG }}
-          verify: 'false'  # Already tested above
-
-      - name: 🧪 Run setup-argo action
-        id: argo
-        uses: OpenCloudHub/.github/.github/actions/setup-argo@main
-        with:
-          namespace: mlops
-          verify: 'true'
-
-      - name: ✅ Verify argo works
-        run: |
-          echo "argo path: ${{ steps.argo.outputs.argo-path }}"
-          echo "argo version: ${{ steps.argo.outputs.argo-version }}"
-          echo ""
-          echo "Recent workflows in mlops namespace:"
-          argo list -n mlops --limit 5 || echo "(no workflows or empty)"
-          echo ""
-          echo "### ✅ setup-argo passed" >> $GITHUB_STEP_SUMMARY
-          echo "- argo path: \`${{ steps.argo.outputs.argo-path }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- argo version: \`${{ steps.argo.outputs.argo-version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Argo connection: verified" >> $GITHUB_STEP_SUMMARY
 
   # ==========================================================================
   # Test: resolve-docker-tag
@@ -229,11 +189,6 @@ jobs:
         uses: OpenCloudHub/.github/.github/actions/setup-kubectl@main
         with:
           kube-config: ${{ secrets.KUBE_CONFIG }}
-
-      - name: 🔄 Setup argo
-        uses: OpenCloudHub/.github/.github/actions/setup-argo@main
-        with:
-          namespace: mlops
 
       # Resolve versions
       - name: 🐳 Resolve Docker image
