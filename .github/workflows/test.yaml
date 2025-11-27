@@ -172,8 +172,8 @@ jobs:
   test-integration:
     name: 🔗 Integration Test
     runs-on: self-hosted-local
-    if: inputs.test-kubectl && inputs.test-argo && inputs.test-docker-tag && inputs.test-dvc-version
-    needs: [test-kubectl, test-argo, test-docker-tag, test-dvc-version]
+    if: inputs.test-kubectl && && inputs.test-docker-tag && inputs.test-dvc-version
+    needs: [test-kubectl, test-docker-tag, test-dvc-version]
     steps:
       - name: 📋 Integration Test
         run: |
