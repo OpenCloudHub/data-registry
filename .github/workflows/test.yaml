@@ -11,10 +11,6 @@ on:
         description: 'Test setup-kubectl action'
         type: boolean
         default: true
-      test-argo:
-        description: 'Test setup-argo action'
-        type: boolean
-        default: true
       test-docker-tag:
         description: 'Test resolve-docker-tag action'
         type: boolean
