@@ -10,7 +10,6 @@ stages:
       - embedding
       - pgvector
     # No outs - data goes directly to pgvector
-    
   analyze:
     cmd: python scripts/analyze.py
     deps:

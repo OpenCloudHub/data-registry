@@ -5,8 +5,8 @@ stages:
     deps:
     - path: scripts/analyze.py
       hash: md5
-      md5: 7cf2823f7331219787f5d1cbc5a294d4
-      size: 3998
+      md5: 4f1bed490c05c6d9c1d5b4df2f966cf6
+      size: 4301
     params:
       params.yaml:
         data:

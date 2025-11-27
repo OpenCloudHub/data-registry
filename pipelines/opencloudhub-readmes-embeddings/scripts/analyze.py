@@ -4,6 +4,7 @@ Fetches data from a specific DVC version for reproducibility.
 """
 
 import json
+import os
 from pathlib import Path
 
 import dvc.api
@@ -16,7 +17,7 @@ def load_params() -> dict:
     return yaml.safe_load(open(params_path))
 
 
-def fetch_readme_list(data_version: str, data_path: str) -> list:
+def fetch_readme_list(repo: str, data_version: str, data_path: str) -> list:
     """
     Get list of README files from DVC version.
 
@@ -27,7 +28,7 @@ def fetch_readme_list(data_version: str, data_path: str) -> list:
     Returns:
         List of (filename, content) tuples
     """
-    fs = dvc.api.DVCFileSystem(rev=data_version)
+    fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version)
 
     readmes = []
     for entry in fs.ls(data_path, detail=False):
@@ -90,6 +91,13 @@ def main():
     data_path = params["data"]["path"]
     output_file = Path(params["analyze"]["output_file"])
 
+    repo = os.getenv("DVC_REPO")
+    if not repo:
+        raise ValueError("Environment variable DVC_REPO not set")
+    endpoint_url = os.getenv("AWS_ENDPOINT_URL")
+    if not endpoint_url:
+        raise ValueError("Environment variable AWS_ENDPOINT_URL not set")
+
     print(f"\n{'=' * 60}")
     print("Analyzing READMEs from DVC version")
     print(f"{'=' * 60}")
@@ -98,7 +106,7 @@ def main():
     print(f"{'=' * 60}\n")
 
     # Fetch and analyze data
-    readmes = fetch_readme_list(data_version, data_path)
+    readmes = fetch_readme_list(repo, data_version, data_path)
     stats = analyze_readmes(readmes)
 
     # Build metadata
