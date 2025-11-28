@@ -5,29 +5,18 @@ Fetches data from a specific DVC version for reproducibility.
 
 import json
 import os
+import sys
 from pathlib import Path
 
 import dvc.api
-import yaml
 
-
-def load_params() -> dict:
-    """Load parameters from params.yaml"""
-    params_path = Path(__file__).parent.parent / "params.yaml"
-    return yaml.safe_load(open(params_path))
+# Add parent directory to path to import params
+sys.path.insert(0, str(Path(__file__).parent.parent))
+import params
 
 
 def fetch_readme_list(repo: str, data_version: str, data_path: str) -> list:
-    """
-    Get list of README files from DVC version.
-
-    Args:
-        data_version: Git revision
-        data_path: Path to data in repo
-
-    Returns:
-        List of (filename, content) tuples
-    """
+    """Get list of README files from DVC version."""
     fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version)
 
     readmes = []
@@ -35,7 +24,7 @@ def fetch_readme_list(repo: str, data_version: str, data_path: str) -> list:
         if entry.endswith(".md"):
             try:
                 content = dvc.api.read(
-                    path=entry, rev=data_version, mode="r", encoding="utf-8"
+                    path=entry, repo=repo, rev=data_version, mode="r", encoding="utf-8"
                 )
                 filename = Path(entry).name
                 readmes.append((filename, content))
@@ -46,19 +35,10 @@ def fetch_readme_list(repo: str, data_version: str, data_path: str) -> list:
 
 
 def analyze_readmes(readmes: list) -> dict:
-    """
-    Analyze README files and generate statistics.
-
-    Args:
-        readmes: List of (filename, content) tuples
-
-    Returns:
-        Dictionary with analysis metadata
-    """
+    """Analyze README files and generate statistics."""
     total_files = len(readmes)
     repo_names = [Path(fname).stem.replace("_README", "") for fname, _ in readmes]
 
-    # Calculate sizes and counts
     file_sizes = [len(content.encode("utf-8")) for _, content in readmes]
     total_size = sum(file_sizes)
     avg_size = total_size / total_files if total_files > 0 else 0
@@ -84,19 +64,13 @@ def analyze_readmes(readmes: list) -> dict:
 
 def main():
     """Generate metadata for README embeddings."""
-    params = load_params()
-
-    # Get data version from params
-    data_version = params["data"]["version"]
-    data_path = params["data"]["path"]
-    output_file = Path(params["analyze"]["output_file"])
+    data_version = params.DATA_VERSION
+    data_path = params.DATA_PATH
+    output_file = Path(params.ANALYZE_OUTPUT_FILE)
 
     repo = os.getenv("DVC_REPO")
     if not repo:
         raise ValueError("Environment variable DVC_REPO not set")
-    endpoint_url = os.getenv("AWS_ENDPOINT_URL")
-    if not endpoint_url:
-        raise ValueError("Environment variable AWS_ENDPOINT_URL not set")
 
     print(f"\n{'=' * 60}")
     print("Analyzing READMEs from DVC version")
@@ -105,20 +79,17 @@ def main():
     print(f"Data path: {data_path}")
     print(f"{'=' * 60}\n")
 
-    # Fetch and analyze data
     readmes = fetch_readme_list(repo, data_version, data_path)
     stats = analyze_readmes(readmes)
 
-    # Build metadata
     metadata = {
         "source_data_version": data_version,
-        "embedding_model": params["embedding"]["model_name"],
-        "chunk_size": params["embedding"]["chunk_size"],
-        "chunk_overlap": params["embedding"]["chunk_overlap"],
+        "embedding_model": params.EMBEDDING_MODEL_NAME,
+        "chunk_size": params.EMBEDDING_CHUNK_SIZE,
+        "chunk_overlap": params.EMBEDDING_CHUNK_OVERLAP,
         "statistics": stats,
     }
 
-    # Save metadata
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, "w") as f:
         json.dump(metadata, f, indent=2)

@@ -3,21 +3,32 @@ stages:
     cmd: python scripts/process.py
     deps:
       - scripts/process.py
-      # Remove dependency on local data since we fetch via dvc.api
     params:
-      - data
-      - data
-      - embedding
-      - pgvector
-    # No outs - data goes directly to pgvector
+      - params.py:
+          - DATA_VERSION
+          - DATA_PATH
+          - EMBEDDING_MODEL_NAME
+          - EMBEDDING_CHUNK_SIZE
+          - EMBEDDING_CHUNK_OVERLAP
+          - EMBEDDING_BATCH_SIZE
+          - EMBEDDING_DEVICE
+          - PGVECTOR_PORT
+          - PGVECTOR_DATABASE
+          - PGVECTOR_USER
+          - PGVECTOR_TABLE_NAME
+
   analyze:
     cmd: python scripts/analyze.py
     deps:
       - scripts/analyze.py
     params:
-      - data
-      - data
-      - embedding
+      - params.py:
+          - DATA_VERSION
+          - DATA_PATH
+          - EMBEDDING_MODEL_NAME
+          - EMBEDDING_CHUNK_SIZE
+          - EMBEDDING_CHUNK_OVERLAP
+          - ANALYZE_OUTPUT_FILE
     metrics:
       - ../../data/opencloudhub-readmes-embeddings/metadata.json:
           cache: false

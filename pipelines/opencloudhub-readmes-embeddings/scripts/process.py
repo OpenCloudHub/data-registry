@@ -4,6 +4,7 @@ Reads data directly from DVC without intermediate local storage.
 """
 
 import os
+import sys
 import uuid
 from pathlib import Path
 from typing import Dict, List
@@ -13,53 +14,29 @@ import psycopg
 import ray
 import s3fs
 import torch
-import yaml
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 
-
-def load_params() -> dict:
-    """Load parameters from params.yaml"""
-    params_path = Path(__file__).parent.parent / "params.yaml"
-    return yaml.safe_load(open(params_path))
+# Add parent directory to path to import params
+sys.path.insert(0, str(Path(__file__).parent.parent))
+import params
 
 
 def get_s3_filesystem(endpoint_url: str) -> s3fs.S3FileSystem:
-    """
-    Create S3 filesystem for MinIO with SSL verification disabled.
-
-    Args:
-        endpoint_url: MinIO endpoint URL
-
-    Returns:
-        Configured S3FileSystem instance
-    """
+    """Create S3 filesystem for MinIO with SSL verification disabled."""
     return s3fs.S3FileSystem(
         anon=False,
         endpoint_url=endpoint_url,
         key=os.getenv("AWS_ACCESS_KEY_ID"),
         secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
-        client_kwargs={
-            "verify": False,  # Disable SSL verification for self-signed certs
-        },
+        client_kwargs={"verify": False},
     )
 
 
 def get_readme_urls(repo: str, data_version: str, data_path: str) -> List[str]:
-    """
-    Get URLs for all README files from DVC.
-
-    Args:
-        repo: DVC repository URL
-        data_version: Git revision (tag, branch, commit)
-        data_path: Path to data directory in the repo
-
-    Returns:
-        List of S3 URLs to README files
-    """
+    """Get URLs for all README files from DVC."""
     print(f"Fetching README URLs from DVC version: {data_version}")
 
-    # List files in the directory
     fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version)
     readme_paths = []
 
@@ -72,7 +49,6 @@ def get_readme_urls(repo: str, data_version: str, data_path: str) -> List[str]:
 
     print(f"Found {len(readme_paths)} README files")
 
-    # Get URLs for each file
     urls = []
     for path in readme_paths:
         try:
@@ -86,23 +62,14 @@ def get_readme_urls(repo: str, data_version: str, data_path: str) -> List[str]:
 
 
 def initialize_table(connection_string: str, table_name: str):
-    """
-    Create the pgvector table compatible with LangChain.
-
-    Args:
-        connection_string: PostgreSQL connection string
-        table_name: Name of the table to create
-    """
+    """Create the pgvector table compatible with LangChain."""
     with psycopg.connect(connection_string) as conn:
         with conn.cursor() as cur:
-            # Drop existing table if it exists (clean slate)
             cur.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")
             print(f"✓ Dropped existing table '{table_name}' (if any)")
 
-            # Ensure vector extension is enabled
             cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
-            # Create table with LangChain's EXACT expected schema
             cur.execute(f"""
                 CREATE TABLE {table_name} (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -113,14 +80,12 @@ def initialize_table(connection_string: str, table_name: str):
                 )
             """)
 
-            # Create HNSW index for fast similarity search
             cur.execute(f"""
                 CREATE INDEX {table_name}_embedding_idx 
                 ON {table_name} 
                 USING hnsw (embedding vector_cosine_ops)
             """)
 
-            # Create index on id for faster lookups
             cur.execute(f"""
                 CREATE INDEX {table_name}_id_idx 
                 ON {table_name} (id)
@@ -139,23 +104,12 @@ class Chunker:
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
             length_function=len,
-            add_start_index=True,  # track index in original document
+            add_start_index=True,
         )
 
     def __call__(self, row: Dict) -> List[Dict]:
-        """
-        Process a single markdown file into chunks.
-
-        Args:
-            row: Dict with 'path' and 'text' keys
-
-        Returns:
-            List of chunk dicts with metadata
-        """
         path = Path(row["path"])
         text = row["text"]
-
-        # Extract repo name from filename (e.g., "repo_README.md" -> "repo")
         repo_name = path.stem.replace("_README", "")
         doc_id = str(uuid.uuid4())
 
@@ -189,15 +143,6 @@ class Embedder:
         print(f"Loaded embedding model: {model_name} on {self.model.device}")
 
     def __call__(self, batch: Dict) -> Dict:
-        """
-        Generate embeddings for a batch of text chunks.
-
-        Args:
-            batch: Dict with 'text' key containing list of strings
-
-        Returns:
-            Dict with embeddings and all original fields
-        """
         embeddings = self.model.encode(
             batch["text"], convert_to_numpy=True, show_progress_bar=False
         )
@@ -230,43 +175,26 @@ class PGVectorWriter:
         self._conn = None
 
     def _init_connection(self):
-        """Initialize database connection."""
         if self._conn is None:
             self._conn = psycopg.connect(self.connection_string)
 
     def __getstate__(self):
-        """Exclude connection from pickle state."""
         state = self.__dict__.copy()
         state.pop("_conn", None)
         return state
 
     def __setstate__(self, state):
-        """Restore state and reinitialize connection."""
         self.__dict__.update(state)
         self._conn = None
 
     def __call__(self, batch: Dict) -> Dict:
-        """
-        Write a batch of embeddings to pgvector in LangChain format.
-
-        Args:
-            batch: Dict with embeddings and metadata
-
-        Returns:
-            Empty dict (data is written to database)
-        """
         self._init_connection()
 
         with self._conn.cursor() as cur:
-            # Prepare data for batch insert
             for i in range(len(batch["chunk_id"])):
-                # Use chunk_id as UUID
                 record_id = batch["chunk_id"][i]
-
-                # Store text as content (LangChain expects this column name)
                 content = batch["text"][i]
 
-                # Store all metadata in JSONB
                 metadata = {
                     "source_repo": batch["source_repo"][i],
                     "source_file": batch["source_file"][i],
@@ -295,12 +223,8 @@ class PGVectorWriter:
         return {}
 
 
-def get_connection_string(params: dict) -> str:
+def get_connection_string() -> str:
     """Build PostgreSQL connection string from params."""
-
-    pg_config = params["pgvector"]
-
-    # Get host from environment variable (required)
     host = os.getenv("PGVECTOR_HOST")
     if not host:
         raise ValueError("Environment variable PGVECTOR_HOST not set")
@@ -310,24 +234,17 @@ def get_connection_string(params: dict) -> str:
         raise ValueError("Environment variable POSTGRES_DEMO_APP_DB_PASSWORD not set")
 
     return (
-        f"postgresql://{pg_config['user']}:{password}"
-        f"@{host}:{pg_config['port']}/{pg_config['database']}"
+        f"postgresql://{params.PGVECTOR_USER}:{password}"
+        f"@{host}:{params.PGVECTOR_PORT}/{params.PGVECTOR_DATABASE}"
     )
 
 
 def main():
     """Main processing pipeline using Ray Data."""
-    # Connect to Ray cluster (when running as RayJob, this connects to existing cluster)
     ray.init()
 
-    # # Load environment variables
-    # env_path = Path(__file__).parent.parent.parent / ".env"
-    # load_dotenv(env_path)
-    params = load_params()
-
-    # Get data version and path from params
-    data_version = params["data"]["version"]
-    data_path = params["data"]["path"]
+    data_version = params.DATA_VERSION
+    data_path = params.DATA_PATH
 
     repo = os.getenv("DVC_REPO")
     if not repo:
@@ -336,25 +253,20 @@ def main():
     if not endpoint_url:
         raise ValueError("Environment variable AWS_ENDPOINT_URL not set")
 
-    # Load embedding params
-    emb_params = params["embedding"]
-    model_name = emb_params["model_name"]
-    chunk_size = emb_params["chunk_size"]
-    chunk_overlap = emb_params["chunk_overlap"]
-    batch_size = emb_params["batch_size"]
-    device = emb_params["device"]
+    model_name = params.EMBEDDING_MODEL_NAME
+    chunk_size = params.EMBEDDING_CHUNK_SIZE
+    chunk_overlap = params.EMBEDDING_CHUNK_OVERLAP
+    batch_size = params.EMBEDDING_BATCH_SIZE
+    device = params.EMBEDDING_DEVICE
+    table_name = params.PGVECTOR_TABLE_NAME
 
-    # Get database connection
-    conn_string = get_connection_string(params)
-    table_name = params["pgvector"]["table_name"]
+    conn_string = get_connection_string()
 
-    # Initialize table (create if not exists)
     print(f"\n{'=' * 60}")
     print("Initializing database table")
     print(f"{'=' * 60}")
     initialize_table(conn_string, table_name)
 
-    # Get URLs for README files from DVC (async but wrapped in sync call)
     print(f"\n{'=' * 60}")
     print("Fetching README URLs from DVC")
     print(f"{'=' * 60}")
@@ -379,12 +291,9 @@ def main():
     print(f"Target table: {table_name}")
     print(f"{'=' * 60}\n")
 
-    # Build Ray Data pipeline - read directly from S3 URLs
     ds = ray.data.read_text(readme_urls, filesystem=s3_fs, include_paths=True)
-
     print(f"Loaded {ds.count()} README files")
 
-    # Chunk documents
     ds = ds.flat_map(
         Chunker,
         fn_constructor_kwargs={
@@ -392,11 +301,8 @@ def main():
             "chunk_overlap": chunk_overlap,
         },
     )
-
     print(f"Created {ds.count()} text chunks")
 
-    # Generate embeddings
-    # Here we coul utilize the power of ray resource management and distrubuted workloads
     ds = ds.map_batches(
         Embedder,
         fn_constructor_kwargs={"model_name": model_name, "device": device},
@@ -404,7 +310,6 @@ def main():
         num_cpus=4,
     )
 
-    # Write to pgvector
     ds = ds.map_batches(
         PGVectorWriter,
         fn_constructor_kwargs={
@@ -417,7 +322,6 @@ def main():
         num_cpus=1,
     )
 
-    # Execute pipeline
     ds.take_all()
 
     print(f"\n{'=' * 60}")
