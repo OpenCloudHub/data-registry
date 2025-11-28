@@ -5,7 +5,7 @@ on:
     inputs:
       pipelines:
         description: 'Pipelines to run (comma-separated)'
-        default: 'opencloudhub-readmes-download'
+        default: 'opencloudhub-readmes-download,wine-quality-fashion-mnist'
         type: string
       force:
         description: 'Force re-run (ignore DVC cache)'
