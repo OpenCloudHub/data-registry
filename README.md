@@ -38,8 +38,6 @@ ______________________________________________________________________
   </ol>
 </details>
 
-# TODO: different realease tags for different datasets or pipelines?
-
 ______________________________________________________________________
 
 <h2 id="about">📊 About</h2>
@@ -115,7 +113,7 @@ ______________________________________________________________________
    > **Note:** `.dvc/config.local` is gitignored and stores sensitive credentials locally.
    > Each team member needs to configure their own credentials.
 
-### Running the Pipeline
+### Running an example Pipeline
 
 ```bash
 cd pipelines/fashion-mnist
@@ -164,8 +162,8 @@ dvc repro
 dvc push
 git add .
 git commit -m "Add my-dataset v1.0.0"
-git tag v1.0.0
-git push origin main v1.0.0
+git tag my-dataset-v1.0.0
+git push origin main my-dataset-v1.0.0
 ```
 
 **Update existing dataset:**
@@ -180,10 +178,10 @@ git tag fashion-mnist-v1.1.0 && git push origin main fashion-mnist-v1.1.0
 
 
 ### ML Engineer: Using Datasets
-
+<!-- TODO: make better -->
 **Setup in training repo:**
 ```bash
-uv add dvc
+uv add dvc[s3]
 
 # Configure local or MinIO remote
 dvc remote add -d local /workspace/shared-data/dvcstore

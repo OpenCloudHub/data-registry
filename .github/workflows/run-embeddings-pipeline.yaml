@@ -57,7 +57,7 @@ jobs:
         id: data
         uses: OpenCloudHub/.github/.github/actions/resolve-dvc-version@main
         with:
-          dataset: opencloudhub-readmes
+          dataset: opencloudhub-readmes-download
           version: ${{ inputs.dvc_data_version }}
           dvc-repo: ${{ vars.DVC_REPO_URL }}
 
