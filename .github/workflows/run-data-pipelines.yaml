@@ -16,15 +16,6 @@ on:
         type: choice
         options: ['patch', 'minor', 'major']
         default: 'patch'
-      compute_type:
-        description: 'Compute configuration'
-        required: true
-        type: choice
-        options:
-          - 'cpu-small'
-          - 'cpu-medium'
-          - 'cpu-large'
-        default: 'cpu-small'
       is_automated:
         description: 'Mark as automated run (adds -automated suffix to tags)'
         type: boolean
@@ -94,8 +85,6 @@ jobs:
                 value: "${{ inputs.bump_type || 'patch' }}"
               - name: is_automated
                 value: "${{ steps.params.outputs.is_automated }}"
-              - name: compute_type
-                value: "${{ inputs.compute_type || 'cpu-small' }}"
           EOF
 
           # Get the actual workflow name
