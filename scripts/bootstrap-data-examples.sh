@@ -6,7 +6,8 @@ set -e
 # ==============================================================================
 #
 # Initializes all example datasets with fixed version tags (v1.0.0) so that
-# demo applications can reference a consistent data version.
+# demo applications can reference a consistent data version. Run this if you are unable
+# to test via GH action workflows
 #
 # This script:
 #   1. Force-runs all data pipelines (ignores DVC cache)
@@ -104,9 +105,16 @@ if [ "$WITH_EMBEDDINGS" = true ]; then
   sed -i 's/version: ".*"/version: "opencloudhub-readmes-v1.0.0"/' pipelines/opencloudhub-readmes-embeddings/params.yaml
   dvc repro --force pipelines/opencloudhub-readmes-embeddings/dvc.yaml
   
+  # Create embeddings tag
+  TAG="opencloudhub-readmes-embeddings-v1.0.0"
+  git tag -d "$TAG" 2>/dev/null || true
+  git tag -a "$TAG" -m "opencloudhub-readmes-embeddings v1.0.0 (bootstrap)"
+  echo "   ✓ Created tag: ${TAG}"
+  
   git add .
   git commit -m "chore: embeddings for v1.0.0 [skip ci]" || true
   git push origin main --force || true
+  git push origin --tags --force || true
   echo "   ✓ Embeddings done"
   echo ""
 fi

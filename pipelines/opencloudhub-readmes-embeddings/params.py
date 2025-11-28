@@ -4,8 +4,8 @@ DATA_PATH = "data/opencloudhub-readmes/raw"
 
 # Embedding configuration
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-EMBEDDING_CHUNK_SIZE = 800
-EMBEDDING_CHUNK_OVERLAP = 100
+EMBEDDING_CHUNK_SIZE = 1500
+EMBEDDING_CHUNK_OVERLAP = 200
 EMBEDDING_BATCH_SIZE = 4
 EMBEDDING_DEVICE = "cpu"
 

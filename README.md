@@ -38,6 +38,8 @@ ______________________________________________________________________
   </ol>
 </details>
 
+<!-- TODO: try Semantic chunking - split by markdown headers instead of character count or
+Hierarchical indexing - store both summaries and detailed chunks -->
 ______________________________________________________________________
 
 <h2 id="about">📊 About</h2>

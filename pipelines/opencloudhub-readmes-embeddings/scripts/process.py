@@ -167,11 +167,15 @@ class PGVectorWriter:
         table_name: str,
         data_version: str,
         embedding_model: str,
+        docker_image: str | None = None,
+        argo_workflow_uid: str | None = None,
     ):
         self.connection_string = connection_string
         self.table_name = table_name
         self.data_version = data_version
         self.embedding_model = embedding_model
+        self.docker_image = docker_image
+        self.argo_workflow_uid = argo_workflow_uid
         self._conn = None
 
     def _init_connection(self):
@@ -202,6 +206,8 @@ class PGVectorWriter:
                     "doc_id": batch["doc_id"][i],
                     "data_version": self.data_version,
                     "embedding_model": self.embedding_model,
+                    "docker_image": self.docker_image,
+                    "argo_workflow_uid": self.argo_workflow_uid,
                 }
 
                 cur.execute(
@@ -253,6 +259,10 @@ def main():
     if not endpoint_url:
         raise ValueError("Environment variable AWS_ENDPOINT_URL not set")
 
+    # Workflow metadata for lineage tracking
+    docker_image = os.getenv("DOCKER_IMAGE")
+    argo_workflow_uid = os.getenv("ARGO_WORKFLOW_UID")
+
     model_name = params.EMBEDDING_MODEL_NAME
     chunk_size = params.EMBEDDING_CHUNK_SIZE
     chunk_overlap = params.EMBEDDING_CHUNK_OVERLAP
@@ -288,6 +298,8 @@ def main():
     print(f"Embedding model: {model_name}")
     print(f"Chunk size: {chunk_size}, Overlap: {chunk_overlap}")
     print(f"Data version: {data_version}")
+    print(f"Docker image: {docker_image}")
+    print(f"Workflow UID: {argo_workflow_uid}")
     print(f"Target table: {table_name}")
     print(f"{'=' * 60}\n")
 
@@ -317,6 +329,8 @@ def main():
             "table_name": table_name,
             "data_version": data_version,
             "embedding_model": model_name,
+            "docker_image": docker_image,
+            "argo_workflow_uid": argo_workflow_uid,
         },
         batch_size=100,
         num_cpus=1,
