@@ -23,6 +23,7 @@
 ARG PYTHON_MAJOR=3
 ARG PYTHON_MINOR=12
 ARG DISTRO=bookworm
+ARG RAY_PY_TAG=py${PYTHON_MAJOR}${PYTHON_MINOR}
 ARG UV_PY_TAG=python${PYTHON_MAJOR}.${PYTHON_MINOR}-${DISTRO}
 
 # =============================================================================
@@ -61,19 +62,26 @@ ENV PATH="/workspace/project/.venv/bin:$PATH" \
 # =============================================================================
 # Stage: prod - Production image for CI/CD
 # =============================================================================
-FROM uv AS prod
-
-# Install dependencies at /workspace/project
+FROM rayproject/ray:${RAY_VERSION}-${RAY_PY_TAG} AS prod
 WORKDIR /workspace/project
-COPY pyproject.toml uv.lock ./
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-group dev
+# Switch to ray user for all operations
+USER ray
 
-COPY . .
+# Copy UV binary
+COPY --from=uv_base /usr/local/bin/uv /usr/local/bin/uv
 
-# Venv at /workspace/project/.venv, code mounts at /workspace/project
-ENV PATH="/workspace/project/.venv/bin:$PATH" \
+# Copy dependency files with proper ownership
+COPY --chown=ray:ray pyproject.toml uv.lock ./
+
+# Install dependencies with caching
+RUN --mount=type=cache,target=/home/ray/.cache/uv,uid=1000,gid=1000 \
+    uv sync --extra training --no-dev --no-install-project
+
+# Copy source code
+COPY --chown=ray:ray src/ ./src/
+
+ENV VIRTUAL_ENV="/workspace/project/.venv" \
+    PATH="/workspace/project/.venv/bin:$PATH" \
+    PYTHONPATH="/workspace/project" \
     ENVIRONMENT=production
-
-CMD ["bash"]
