@@ -1,5 +1,5 @@
 data:
-  version: "opencloudhub-readmes-v1.0.0"  # Git revision: tag, branch, or commit hash
+  version: "opencloudhub-readmes-download-v1.0.0"  # Git revision: tag, branch, or commit hash
   path: "data/opencloudhub-readmes/raw"  # Path in the repo
 
 embedding:
