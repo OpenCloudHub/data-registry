@@ -4,9 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       dvc_data_version:
-        description: 'DVC data version (e.g., "latest" or "opencloudhub-readmes-download-v1.0.0")'
+        description: 'DVC data version (e.g., "latest" or "opencloudhub-readmes-v1.0.0")'
         default: 'latest'
         type: string
+      force:
+        description: 'Force re-run (ignore DVC cache)'
+        type: boolean
+        default: false
       image_tag:
         description: 'Docker image tag (e.g., "latest" or "main-abc1234")'
         default: 'latest'
@@ -53,7 +57,7 @@ jobs:
         id: data
         uses: OpenCloudHub/.github/.github/actions/resolve-dvc-version@main
         with:
-          dataset: opencloudhub-readmes-download
+          dataset: opencloudhub-readmes
           version: ${{ inputs.dvc_data_version }}
           dvc-repo: ${{ vars.DVC_REPO_URL }}
 
@@ -90,6 +94,8 @@ jobs:
               parameters:
               - name: data_version
                 value: "${{ steps.data.outputs.full-tag }}"
+              - name: force
+                value: "${{ inputs.force }}"
               - name: compute_type
                 value: "${{ inputs.compute_type }}"
               - name: image
@@ -119,6 +125,7 @@ jobs:
           echo "Workflow:      ${WORKFLOW_NAME}"
           echo "Data Version:  ${{ steps.data.outputs.full-tag }}"
           echo "Image:         ${{ steps.image.outputs.full-image }}"
+          echo "Force:         ${{ inputs.force }}"
           echo "Compute:       ${{ inputs.compute_type }}"
           echo "Bump Type:     ${{ inputs.bump_type }}"
           echo "Automated:     ${{ inputs.is_automated }}"
@@ -135,6 +142,7 @@ jobs:
           | **Workflow** | \`${WORKFLOW_NAME}\` |
           | **Data Version** | \`${{ steps.data.outputs.full-tag }}\` |
           | **Image** | \`${{ steps.image.outputs.full-image }}\` |
+          | **Force** | \`${{ inputs.force }}\` |
           | **Compute** | \`${{ inputs.compute_type }}\` |
           | **Bump Type** | \`${{ inputs.bump_type }}\` |
           | **Automated** | \`${{ inputs.is_automated }}\` |
