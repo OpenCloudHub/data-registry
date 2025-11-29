@@ -11,12 +11,6 @@ stages:
           - EMBEDDING_CHUNK_SIZE
           - EMBEDDING_CHUNK_OVERLAP
           - EMBEDDING_BATCH_SIZE
-          - EMBEDDING_DEVICE
-          - PGVECTOR_PORT
-          - PGVECTOR_DATABASE
-          - PGVECTOR_USER
-          - PGVECTOR_TABLE_NAME
-
   analyze:
     cmd: python scripts/analyze.py
     deps:

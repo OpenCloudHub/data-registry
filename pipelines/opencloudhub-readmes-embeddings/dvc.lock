@@ -12,15 +12,15 @@ stages:
         ANALYZE_OUTPUT_FILE: 
           ../../data/opencloudhub-readmes-embeddings/metadata.json
         DATA_PATH: data/opencloudhub-readmes/raw
-        DATA_VERSION:
+        DATA_VERSION: opencloudhub-readmes-v1.0.0
         EMBEDDING_CHUNK_OVERLAP: 200
         EMBEDDING_CHUNK_SIZE: 1500
         EMBEDDING_MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
     outs:
     - path: ../../data/opencloudhub-readmes-embeddings/metadata.json
       hash: md5
-      md5: 6dfc3b4171575b007756de267a7442a9
-      size: 942
+      md5: 1d8fdbbba94bc219a089f5dbc8f309b2
+      size: 967
   process:
     cmd: python scripts/process.py
     deps:

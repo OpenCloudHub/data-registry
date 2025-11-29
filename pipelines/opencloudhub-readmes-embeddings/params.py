@@ -9,5 +9,4 @@ EMBEDDING_CHUNK_OVERLAP = 200
 EMBEDDING_BATCH_SIZE = 4
 
 # Output configuration
-PGVECTOR_TABLE_NAME = "readme_embeddings"
 ANALYZE_OUTPUT_FILE = "../../data/opencloudhub-readmes-embeddings/metadata.json"

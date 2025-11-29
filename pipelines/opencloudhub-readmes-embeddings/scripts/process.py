@@ -120,7 +120,7 @@ class Chunker:
             length_function=len,
         )
 
-    def _clean_header(h: str) -> str:
+    def _clean_header(self, h: str) -> str:
         # Remove anchor tags like <a id="..."></a>
         return re.sub(r"<a[^>]*></a>", "", h).strip()
 
@@ -333,7 +333,7 @@ def main():
     chunk_overlap = params.EMBEDDING_CHUNK_OVERLAP
     batch_size = params.EMBEDDING_BATCH_SIZE
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    table_name = params.PGVECTOR_TABLE_NAME
+    table_name = os.getenv("PGVECTOR_TABLE_NAME")
 
     conn_string = get_connection_string()
 
