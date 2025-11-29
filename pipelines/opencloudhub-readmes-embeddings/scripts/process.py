@@ -417,9 +417,9 @@ def get_connection_string() -> str:
     if not host:
         raise ValueError("Environment variable PGVECTOR_HOST not set")
 
-    password = os.getenv("POSTGRES_DEMO_APP_DB_PASSWORD")
+    password = os.getenv("PGVECTOR_PASSWORD")
     if not password:
-        raise ValueError("Environment variable POSTGRES_DEMO_APP_DB_PASSWORD not set")
+        raise ValueError("Environment variable PGVECTOR_PASSWORD not set")
 
     return (
         f"postgresql://{params.PGVECTOR_USER}:{password}"
