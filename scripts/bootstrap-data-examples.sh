@@ -6,8 +6,8 @@ set -e
 # ==============================================================================
 #
 # Initializes all example datasets with fixed version tags (v1.0.0) so that
-# demo applications can reference a consistent data version. Run this if you are unable
-# to test via GH action workflows
+# demo applications can reference a consistent data version. Run this locally as alternative
+# to using GitHub action to trigger argo data pipeline workflows running on cluster.
 #
 # This script:
 #   1. Force-runs all data pipelines (ignores DVC cache)
