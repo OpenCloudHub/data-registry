@@ -100,47 +100,6 @@ def initialize_table(connection_string: str, table_name: str):
     print(f"✓ Table '{table_name}' initialized with LangChain-compatible schema")
 
 
-# class Chunker:
-#     """Chunk markdown text into smaller pieces with metadata."""
-
-#     def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
-#         self.splitter = RecursiveCharacterTextSplitter(
-#             chunk_size=chunk_size,
-#             chunk_overlap=chunk_overlap,
-#             length_function=len,
-#             add_start_index=True,
-#         )
-
-#     def __call__(self, row: Dict) -> List[Dict]:
-#         path = Path(row["path"])
-#         text = row["text"]
-#         repo_name = path.stem.replace("_README", "")
-#         doc_id = str(uuid.uuid4())
-
-#         chunks = []
-#         texts = self.splitter.split_text(text)
-
-#         for chunk_index, chunk_text in enumerate(texts):
-#             chunks.append(
-#                 {
-#                     "text": chunk_text,
-#                     "source_repo": repo_name,
-#                     "source_file": path.name,
-#                     "chunk_index": chunk_index,
-#                     "doc_id": doc_id,
-#                     "chunk_id": str(uuid.uuid4()),
-#                 }
-#             )
-
-
-#         return chunks
-
-
-def clean_header(h: str) -> str:
-    # Remove anchor tags like <a id="..."></a>
-    return re.sub(r"<a[^>]*></a>", "", h).strip()
-
-
 class Chunker:
     """Chunk markdown text by headers first, then by size if needed."""
 
@@ -160,6 +119,10 @@ class Chunker:
             chunk_overlap=chunk_overlap,
             length_function=len,
         )
+
+    def _clean_header(h: str) -> str:
+        # Remove anchor tags like <a id="..."></a>
+        return re.sub(r"<a[^>]*></a>", "", h).strip()
 
     def __call__(self, row: Dict) -> List[Dict]:
         path = Path(row["path"])
@@ -193,7 +156,7 @@ class Chunker:
                         "doc_id": doc_id,
                         "chunk_id": str(uuid.uuid4()),
                         # Add header context to metadata
-                        "section_h1": clean_header(section_headers.get("h1", "")),
+                        "section_h1": self._clean_header(section_headers.get("h1", "")),
                         "section_h2": section_headers.get("h2", ""),
                         "section_h3": section_headers.get("h3", ""),
                     }
@@ -206,12 +169,12 @@ class Chunker:
 class Embedder:
     """Generate embeddings for text chunks using sentence-transformers."""
 
-    def __init__(self, model_name: str, device: str = "cpu"):
+    def __init__(self, model_name: str, device: str | None = None):
         self.model_name = model_name
-        self.model = SentenceTransformer(
-            model_name,
-            device=device if torch.cuda.is_available() and device == "cuda" else "cpu",
-        )
+        # Auto-detect device if not specified
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model = SentenceTransformer(model_name, device=device)
         print(f"Loaded embedding model: {model_name} on {self.model.device}")
 
     def __call__(self, batch: Dict) -> Dict:
@@ -227,98 +190,12 @@ class Embedder:
             "chunk_index": batch["chunk_index"],
             "doc_id": batch["doc_id"],
             "chunk_id": batch["chunk_id"],
-            # Pass through header fields
             "section_h1": batch.get("section_h1", ""),
             "section_h2": batch.get("section_h2", ""),
             "section_h3": batch.get("section_h3", ""),
         }
 
-    # def __call__(self, batch: Dict) -> Dict:
-    #     embeddings = self.model.encode(
-    #         batch["text"], convert_to_numpy=True, show_progress_bar=False
-    #     )
 
-    #     return {
-    #         "embeddings": embeddings,
-    #         "text": batch["text"],
-    #         "source_repo": batch["source_repo"],
-    #         "source_file": batch["source_file"],
-    #         "chunk_index": batch["chunk_index"],
-    #         "doc_id": batch["doc_id"],
-    #         "chunk_id": batch["chunk_id"],
-    #     }
-
-
-# class PGVectorWriter:
-#     """Write embeddings to pgvector database in LangChain-compatible format."""
-
-#     def __init__(
-#         self,
-#         connection_string: str,
-#         table_name: str,
-#         data_version: str,
-#         embedding_model: str,
-#         docker_image: str | None = None,
-#         argo_workflow_uid: str | None = None,
-#     ):
-#         self.connection_string = connection_string
-#         self.table_name = table_name
-#         self.data_version = data_version
-#         self.embedding_model = embedding_model
-#         self.docker_image = docker_image
-#         self.argo_workflow_uid = argo_workflow_uid
-#         self._conn = None
-
-#     def _init_connection(self):
-#         if self._conn is None:
-#             self._conn = psycopg.connect(self.connection_string)
-
-#     def __getstate__(self):
-#         state = self.__dict__.copy()
-#         state.pop("_conn", None)
-#         return state
-
-#     def __setstate__(self, state):
-#         self.__dict__.update(state)
-#         self._conn = None
-
-#     def __call__(self, batch: Dict) -> Dict:
-#         self._init_connection()
-
-#         with self._conn.cursor() as cur:
-#             for i in range(len(batch["chunk_id"])):
-#                 record_id = batch["chunk_id"][i]
-#                 content = batch["text"][i]
-
-#                 metadata = {
-#                     "source_repo": batch["source_repo"][i],
-#                     "source_file": batch["source_file"][i],
-#                     "chunk_index": int(batch["chunk_index"][i]),
-#                     "doc_id": batch["doc_id"][i],
-#                     "data_version": self.data_version,
-#                     "embedding_model": self.embedding_model,
-#                     "docker_image": self.docker_image,
-#                     "argo_workflow_uid": self.argo_workflow_uid,
-#                 }
-
-#                 cur.execute(
-#                     f"""
-#                     INSERT INTO {self.table_name}
-#                     (id, content, embedding, metadata)
-#                     VALUES (%s, %s, %s, %s)
-#                     """,
-#                     (
-#                         record_id,
-#                         content,
-#                         batch["embeddings"][i].tolist(),
-#                         psycopg.types.json.Jsonb(metadata),
-#                     ),
-#                 )
-
-#             self._conn.commit()
-
-
-#         return {}
 class PGVectorWriter:
     """Write embeddings to pgvector database in LangChain-compatible format."""
 
@@ -354,7 +231,7 @@ class PGVectorWriter:
                     pass
                 self._conn = None
 
-        # Create new connection with reasonable timeouts
+        # Create new connection with timeouts
         self._conn = psycopg.connect(
             self.connection_string,
             connect_timeout=20,
@@ -412,7 +289,7 @@ class PGVectorWriter:
 
 
 def get_connection_string() -> str:
-    """Build PostgreSQL connection string from params."""
+    """Build PostgreSQL connection string from environment variables."""
     host = os.getenv("PGVECTOR_HOST")
     if not host:
         raise ValueError("Environment variable PGVECTOR_HOST not set")
@@ -421,10 +298,16 @@ def get_connection_string() -> str:
     if not password:
         raise ValueError("Environment variable PGVECTOR_PASSWORD not set")
 
-    return (
-        f"postgresql://{params.PGVECTOR_USER}:{password}"
-        f"@{host}:{params.PGVECTOR_PORT}/{params.PGVECTOR_DATABASE}"
-    )
+    port = os.getenv("PGVECTOR_PORT", "5432")
+    database = os.getenv("PGVECTOR_DATABASE")
+    if not database:
+        raise ValueError("Environment variable PGVECTOR_DATABASE not set")
+
+    user = os.getenv("PGVECTOR_USER")
+    if not user:
+        raise ValueError("Environment variable PGVECTOR_USER not set")
+
+    return f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
 
 def main():
@@ -449,7 +332,7 @@ def main():
     chunk_size = params.EMBEDDING_CHUNK_SIZE
     chunk_overlap = params.EMBEDDING_CHUNK_OVERLAP
     batch_size = params.EMBEDDING_BATCH_SIZE
-    device = params.EMBEDDING_DEVICE
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     table_name = params.PGVECTOR_TABLE_NAME
 
     conn_string = get_connection_string()
