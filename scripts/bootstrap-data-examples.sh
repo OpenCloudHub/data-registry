@@ -102,7 +102,7 @@ echo ""
 if [ "$WITH_EMBEDDINGS" = true ]; then
   echo "🧠 Running embeddings pipeline..."
   echo "────────────────────────────────────────────────────────────────────────────────"
-  sed -i 's/version: ".*"/version: "opencloudhub-readmes-v1.0.0"/' pipelines/opencloudhub-readmes-embeddings/params.yaml
+  sed -i 's/version: ".*"/version: "opencloudhub-readmes-v1.0.0"/' pipelines/opencloudhub-readmes-embeddings/params.py
   dvc repro --force pipelines/opencloudhub-readmes-embeddings/dvc.yaml
   
   # Create embeddings tag
