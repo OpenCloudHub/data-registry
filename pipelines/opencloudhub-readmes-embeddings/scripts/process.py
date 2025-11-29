@@ -4,6 +4,7 @@ Reads data directly from DVC without intermediate local storage.
 """
 
 import os
+import re
 import sys
 import uuid
 from pathlib import Path
@@ -14,7 +15,10 @@ import psycopg
 import ray
 import s3fs
 import torch
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import (
+    MarkdownHeaderTextSplitter,
+    RecursiveCharacterTextSplitter,
+)
 from sentence_transformers import SentenceTransformer
 
 # Add parent directory to path to import params
@@ -96,15 +100,65 @@ def initialize_table(connection_string: str, table_name: str):
     print(f"✓ Table '{table_name}' initialized with LangChain-compatible schema")
 
 
-class Chunker:
-    """Chunk markdown text into smaller pieces with metadata."""
+# class Chunker:
+#     """Chunk markdown text into smaller pieces with metadata."""
 
-    def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
-        self.splitter = RecursiveCharacterTextSplitter(
+#     def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
+#         self.splitter = RecursiveCharacterTextSplitter(
+#             chunk_size=chunk_size,
+#             chunk_overlap=chunk_overlap,
+#             length_function=len,
+#             add_start_index=True,
+#         )
+
+#     def __call__(self, row: Dict) -> List[Dict]:
+#         path = Path(row["path"])
+#         text = row["text"]
+#         repo_name = path.stem.replace("_README", "")
+#         doc_id = str(uuid.uuid4())
+
+#         chunks = []
+#         texts = self.splitter.split_text(text)
+
+#         for chunk_index, chunk_text in enumerate(texts):
+#             chunks.append(
+#                 {
+#                     "text": chunk_text,
+#                     "source_repo": repo_name,
+#                     "source_file": path.name,
+#                     "chunk_index": chunk_index,
+#                     "doc_id": doc_id,
+#                     "chunk_id": str(uuid.uuid4()),
+#                 }
+#             )
+
+
+#         return chunks
+
+
+def clean_header(h: str) -> str:
+    # Remove anchor tags like <a id="..."></a>
+    return re.sub(r"<a[^>]*></a>", "", h).strip()
+
+
+class Chunker:
+    """Chunk markdown text by headers first, then by size if needed."""
+
+    def __init__(self, chunk_size: int = 1500, chunk_overlap: int = 200):
+        # Split by markdown headers first
+        self.header_splitter = MarkdownHeaderTextSplitter(
+            headers_to_split_on=[
+                ("#", "h1"),
+                ("##", "h2"),
+                ("###", "h3"),
+            ],
+            strip_headers=False,  # Keep headers in the text
+        )
+        # Then split large sections by size
+        self.size_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
             length_function=len,
-            add_start_index=True,
         )
 
     def __call__(self, row: Dict) -> List[Dict]:
@@ -114,19 +168,37 @@ class Chunker:
         doc_id = str(uuid.uuid4())
 
         chunks = []
-        texts = self.splitter.split_text(text)
 
-        for chunk_index, chunk_text in enumerate(texts):
-            chunks.append(
-                {
-                    "text": chunk_text,
-                    "source_repo": repo_name,
-                    "source_file": path.name,
-                    "chunk_index": chunk_index,
-                    "doc_id": doc_id,
-                    "chunk_id": str(uuid.uuid4()),
-                }
-            )
+        # First split by headers
+        header_splits = self.header_splitter.split_text(text)
+
+        chunk_index = 0
+        for split in header_splits:
+            section_text = split.page_content
+            section_headers = split.metadata  # {"h1": "Title", "h2": "Section"}
+
+            # If section is too large, split further by size
+            if len(section_text) > self.size_splitter._chunk_size:
+                sub_texts = self.size_splitter.split_text(section_text)
+            else:
+                sub_texts = [section_text]
+
+            for sub_text in sub_texts:
+                chunks.append(
+                    {
+                        "text": sub_text,
+                        "source_repo": repo_name,
+                        "source_file": path.name,
+                        "chunk_index": chunk_index,
+                        "doc_id": doc_id,
+                        "chunk_id": str(uuid.uuid4()),
+                        # Add header context to metadata
+                        "section_h1": clean_header(section_headers.get("h1", "")),
+                        "section_h2": section_headers.get("h2", ""),
+                        "section_h3": section_headers.get("h3", ""),
+                    }
+                )
+                chunk_index += 1
 
         return chunks
 
@@ -155,9 +227,98 @@ class Embedder:
             "chunk_index": batch["chunk_index"],
             "doc_id": batch["doc_id"],
             "chunk_id": batch["chunk_id"],
+            # Pass through header fields
+            "section_h1": batch.get("section_h1", ""),
+            "section_h2": batch.get("section_h2", ""),
+            "section_h3": batch.get("section_h3", ""),
         }
 
+    # def __call__(self, batch: Dict) -> Dict:
+    #     embeddings = self.model.encode(
+    #         batch["text"], convert_to_numpy=True, show_progress_bar=False
+    #     )
 
+    #     return {
+    #         "embeddings": embeddings,
+    #         "text": batch["text"],
+    #         "source_repo": batch["source_repo"],
+    #         "source_file": batch["source_file"],
+    #         "chunk_index": batch["chunk_index"],
+    #         "doc_id": batch["doc_id"],
+    #         "chunk_id": batch["chunk_id"],
+    #     }
+
+
+# class PGVectorWriter:
+#     """Write embeddings to pgvector database in LangChain-compatible format."""
+
+#     def __init__(
+#         self,
+#         connection_string: str,
+#         table_name: str,
+#         data_version: str,
+#         embedding_model: str,
+#         docker_image: str | None = None,
+#         argo_workflow_uid: str | None = None,
+#     ):
+#         self.connection_string = connection_string
+#         self.table_name = table_name
+#         self.data_version = data_version
+#         self.embedding_model = embedding_model
+#         self.docker_image = docker_image
+#         self.argo_workflow_uid = argo_workflow_uid
+#         self._conn = None
+
+#     def _init_connection(self):
+#         if self._conn is None:
+#             self._conn = psycopg.connect(self.connection_string)
+
+#     def __getstate__(self):
+#         state = self.__dict__.copy()
+#         state.pop("_conn", None)
+#         return state
+
+#     def __setstate__(self, state):
+#         self.__dict__.update(state)
+#         self._conn = None
+
+#     def __call__(self, batch: Dict) -> Dict:
+#         self._init_connection()
+
+#         with self._conn.cursor() as cur:
+#             for i in range(len(batch["chunk_id"])):
+#                 record_id = batch["chunk_id"][i]
+#                 content = batch["text"][i]
+
+#                 metadata = {
+#                     "source_repo": batch["source_repo"][i],
+#                     "source_file": batch["source_file"][i],
+#                     "chunk_index": int(batch["chunk_index"][i]),
+#                     "doc_id": batch["doc_id"][i],
+#                     "data_version": self.data_version,
+#                     "embedding_model": self.embedding_model,
+#                     "docker_image": self.docker_image,
+#                     "argo_workflow_uid": self.argo_workflow_uid,
+#                 }
+
+#                 cur.execute(
+#                     f"""
+#                     INSERT INTO {self.table_name}
+#                     (id, content, embedding, metadata)
+#                     VALUES (%s, %s, %s, %s)
+#                     """,
+#                     (
+#                         record_id,
+#                         content,
+#                         batch["embeddings"][i].tolist(),
+#                         psycopg.types.json.Jsonb(metadata),
+#                     ),
+#                 )
+
+#             self._conn.commit()
+
+
+#         return {}
 class PGVectorWriter:
     """Write embeddings to pgvector database in LangChain-compatible format."""
 
@@ -178,9 +339,27 @@ class PGVectorWriter:
         self.argo_workflow_uid = argo_workflow_uid
         self._conn = None
 
-    def _init_connection(self):
-        if self._conn is None:
-            self._conn = psycopg.connect(self.connection_string)
+    def _get_connection(self):
+        """Get a fresh connection, reconnecting if needed."""
+        if self._conn is not None:
+            try:
+                # Test if connection is still alive
+                self._conn.execute("SELECT 1")
+                return self._conn
+            except Exception:
+                # Connection is dead, close and reconnect
+                try:
+                    self._conn.close()
+                except Exception:
+                    pass
+                self._conn = None
+
+        # Create new connection with reasonable timeouts
+        self._conn = psycopg.connect(
+            self.connection_string,
+            connect_timeout=20,
+        )
+        return self._conn
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -192,39 +371,42 @@ class PGVectorWriter:
         self._conn = None
 
     def __call__(self, batch: Dict) -> Dict:
-        self._init_connection()
+        # Fresh connection for each batch - no reuse, no stale connection issues
+        with psycopg.connect(self.connection_string, connect_timeout=30) as conn:
+            with conn.cursor() as cur:
+                for i in range(len(batch["chunk_id"])):
+                    record_id = batch["chunk_id"][i]
+                    content = batch["text"][i]
 
-        with self._conn.cursor() as cur:
-            for i in range(len(batch["chunk_id"])):
-                record_id = batch["chunk_id"][i]
-                content = batch["text"][i]
+                    metadata = {
+                        "source_repo": batch["source_repo"][i],
+                        "source_file": batch["source_file"][i],
+                        "chunk_index": int(batch["chunk_index"][i]),
+                        "doc_id": batch["doc_id"][i],
+                        "data_version": self.data_version,
+                        "embedding_model": self.embedding_model,
+                        "docker_image": self.docker_image,
+                        "argo_workflow_uid": self.argo_workflow_uid,
+                        "section_h1": batch["section_h1"][i],
+                        "section_h2": batch["section_h2"][i],
+                        "section_h3": batch["section_h3"][i],
+                    }
 
-                metadata = {
-                    "source_repo": batch["source_repo"][i],
-                    "source_file": batch["source_file"][i],
-                    "chunk_index": int(batch["chunk_index"][i]),
-                    "doc_id": batch["doc_id"][i],
-                    "data_version": self.data_version,
-                    "embedding_model": self.embedding_model,
-                    "docker_image": self.docker_image,
-                    "argo_workflow_uid": self.argo_workflow_uid,
-                }
+                    cur.execute(
+                        f"""
+                        INSERT INTO {self.table_name} 
+                        (id, content, embedding, metadata)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (
+                            record_id,
+                            content,
+                            batch["embeddings"][i].tolist(),
+                            psycopg.types.json.Jsonb(metadata),
+                        ),
+                    )
 
-                cur.execute(
-                    f"""
-                    INSERT INTO {self.table_name} 
-                    (id, content, embedding, metadata)
-                    VALUES (%s, %s, %s, %s)
-                    """,
-                    (
-                        record_id,
-                        content,
-                        batch["embeddings"][i].tolist(),
-                        psycopg.types.json.Jsonb(metadata),
-                    ),
-                )
-
-            self._conn.commit()
+                conn.commit()
 
         return {}
 

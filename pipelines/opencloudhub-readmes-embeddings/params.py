@@ -1,5 +1,5 @@
 # Data source configuration
-DATA_VERSION = "opencloudhub-readmes-download-v1.0.0"
+DATA_VERSION = None
 DATA_PATH = "data/opencloudhub-readmes/raw"
 
 # Embedding configuration

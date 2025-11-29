@@ -5,44 +5,39 @@ stages:
     deps:
     - path: scripts/analyze.py
       hash: md5
-      md5: 4f1bed490c05c6d9c1d5b4df2f966cf6
-      size: 4301
+      md5: 8066db812d9f06b21e1aebdcd2edc65b
+      size: 3616
     params:
-      params.yaml:
-        data:
-          version: opencloudhub-readmes-v1.0.0
-          path: data/opencloudhub-readmes/raw
-        embedding:
-          model_name: sentence-transformers/all-MiniLM-L6-v2
-          chunk_size: 800
-          chunk_overlap: 100
-          batch_size: 8
-          device: cpu
+      params.py:
+        ANALYZE_OUTPUT_FILE: 
+          ../../data/opencloudhub-readmes-embeddings/metadata.json
+        DATA_PATH: data/opencloudhub-readmes/raw
+        DATA_VERSION:
+        EMBEDDING_CHUNK_OVERLAP: 200
+        EMBEDDING_CHUNK_SIZE: 1500
+        EMBEDDING_MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
     outs:
     - path: ../../data/opencloudhub-readmes-embeddings/metadata.json
       hash: md5
-      md5: 56a0a5f940cde30df1414770335a9de5
-      size: 928
+      md5: 6dfc3b4171575b007756de267a7442a9
+      size: 942
   process:
     cmd: python scripts/process.py
     deps:
     - path: scripts/process.py
       hash: md5
-      md5: f1ffae8264d943510dc8fd1eb5db4c18
-      size: 13229
+      md5: 0af22810cc16968f004dcb12595ed426
+      size: 17371
     params:
-      params.yaml:
-        data:
-          version: opencloudhub-readmes-v1.0.0
-          path: data/opencloudhub-readmes/raw
-        embedding:
-          model_name: sentence-transformers/all-MiniLM-L6-v2
-          chunk_size: 800
-          chunk_overlap: 100
-          batch_size: 8
-          device: cpu
-        pgvector:
-          port: 5432
-          database: demo_app
-          user: demo-app
-          table_name: readme_embeddings
+      params.py:
+        DATA_PATH: data/opencloudhub-readmes/raw
+        DATA_VERSION:
+        EMBEDDING_BATCH_SIZE: 4
+        EMBEDDING_CHUNK_OVERLAP: 200
+        EMBEDDING_CHUNK_SIZE: 1500
+        EMBEDDING_DEVICE: cpu
+        EMBEDDING_MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
+        PGVECTOR_DATABASE: demo_app
+        PGVECTOR_PORT: 5432
+        PGVECTOR_TABLE_NAME: readme_embeddings
+        PGVECTOR_USER: demo-app
