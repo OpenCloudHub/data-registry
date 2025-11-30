@@ -191,6 +191,9 @@ dvc repro
 dvc repro download
 dvc repro process
 dvc repro analyze
+
+# Bootstrap all pipelines locally with version 1.0.0 for all
+bash /workspace/project/scripts/bootstrap-data-examples.sh
 ```
 
 ### Verifying Results

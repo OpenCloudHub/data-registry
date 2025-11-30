@@ -1,31 +1,31 @@
 {
-	"source_data_version": "opencloudhub-readmes-v1.0.0",
-	"embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-	"chunk_size": 1500,
-	"chunk_overlap": 200,
-	"statistics": {
-		"total_files": 13,
-		"total_repositories": 13,
-		"repository_names": [
-			".github_20251129_160957",
-			"ai-dl-bert_20251129_160959",
-			"ai-dl-lightning_20251129_161000",
-			"ai-generative-qwen_20251129_160959",
-			"ai-ml-sklearn_20251129_160959",
-			"api-testing_20251129_161001",
-			"data-registry_20251129_161000",
-			"demo-app-genai-backend_20251129_161000",
-			"docs_20251129_160958",
-			"gh-actions-local-runner_20251129_160959",
-			"gitops_20251129_160958",
-			"infra-live_20251129_160958",
-			"infra-modules_20251129_160957"
-		],
-		"total_size_bytes": 184453,
-		"average_size_bytes": 14188.69,
-		"total_characters": 174250,
-		"average_characters": 13403.85,
-		"total_lines": 5169,
-		"average_lines": 397.62
-	}
+  "source_data_version": "opencloudhub-readmes-v1.0.0",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "chunk_size": 1500,
+  "chunk_overlap": 200,
+  "statistics": {
+    "total_files": 13,
+    "total_repositories": 13,
+    "repository_names": [
+      ".github_20251129_163326",
+      "ai-dl-bert_20251129_163327",
+      "ai-dl-lightning_20251129_163328",
+      "ai-generative-qwen_20251129_163327",
+      "ai-ml-sklearn_20251129_163327",
+      "api-testing_20251129_163328",
+      "data-registry_20251129_163328",
+      "demo-app-genai-backend_20251129_163328",
+      "docs_20251129_163326",
+      "gh-actions-local-runner_20251129_163327",
+      "gitops_20251129_163326",
+      "infra-live_20251129_163326",
+      "infra-modules_20251129_163325"
+    ],
+    "total_size_bytes": 184453,
+    "average_size_bytes": 14188.69,
+    "total_characters": 174250,
+    "average_characters": 13403.85,
+    "total_lines": 5169,
+    "average_lines": 397.62
+  }
 }
