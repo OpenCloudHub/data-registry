@@ -1,0 +1,93 @@
+schema: '2.0'
+stages:
+  download:
+    cmd: python scripts/download.py
+    deps:
+    - path: scripts/download.py
+      hash: md5
+      md5: a990e76126ce6e8ee82950137482678d
+      size: 2096
+    params:
+      params.yaml:
+        download:
+          dataset_name: unsloth/Radiology_mini
+          output_dir: ../../data/radiology-mini/raw
+          num_samples: 500
+    outs:
+    - path: ../../data/radiology-mini/raw/captions.json
+      hash: md5
+      md5: 5f063b8c23d6ad4fc1bf75a289b5e748
+      size: 101273
+    - path: ../../data/radiology-mini/raw/images
+      hash: md5
+      md5: 94872ba3b72188f4fdfeaba4bd28b4f2.dir
+      size: 41276501
+      nfiles: 500
+  process:
+    cmd: python scripts/process.py
+    deps:
+    - path: ../../data/radiology-mini/raw
+      hash: md5
+      md5: ec0ed7a4d3a135cc034544c5f9a37b12.dir
+      size: 41377797
+      nfiles: 502
+    - path: scripts/process.py
+      hash: md5
+      md5: 47abac8de26a93c709a7ce59eaafca6a
+      size: 3752
+    params:
+      params.yaml:
+        process:
+          raw_dir: ../../data/radiology-mini/raw
+          output_dir: ../../data/radiology-mini/processed
+          stats_file: ../../data/radiology-mini/processed/process_stats.json
+          train_split: 0.8
+          prompt_name: radiology-vlm-prompt
+          prompt_version: 2
+    outs:
+    - path: ../../data/radiology-mini/processed/process_stats.json
+      hash: md5
+      md5: d576768b3f5aa18644f84d4b74d0e8e1
+      size: 312
+    - path: ../../data/radiology-mini/processed/test
+      hash: md5
+      md5: 75547aa26006b1620d6e91e1f37036f2.dir
+      size: 8856639
+      nfiles: 101
+    - path: ../../data/radiology-mini/processed/train
+      hash: md5
+      md5: 2f874256cd0382fb8fdeab60061fd9bf.dir
+      size: 32636037
+      nfiles: 401
+  analyze:
+    cmd: python scripts/analyze.py
+    deps:
+    - path: ../../data/radiology-mini/processed/process_stats.json
+      hash: md5
+      md5: d576768b3f5aa18644f84d4b74d0e8e1
+      size: 312
+    - path: ../../data/radiology-mini/processed/test
+      hash: md5
+      md5: 75547aa26006b1620d6e91e1f37036f2.dir
+      size: 8856639
+      nfiles: 101
+    - path: ../../data/radiology-mini/processed/train
+      hash: md5
+      md5: 2f874256cd0382fb8fdeab60061fd9bf.dir
+      size: 32636037
+      nfiles: 401
+    - path: scripts/analyze.py
+      hash: md5
+      md5: 0b46975c24802dc30deea6a75dc21b67
+      size: 3018
+    params:
+      params.yaml:
+        analyze:
+          data_dir: ../../data/radiology-mini/processed
+          stats_file: ../../data/radiology-mini/processed/process_stats.json
+          output_file: ../../data/radiology-mini/metadata.json
+    outs:
+    - path: ../../data/radiology-mini/metadata.json
+      hash: md5
+      md5: 69d5ca1c0f4bc69ab5dd95639226d7c8
+      size: 962

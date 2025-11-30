@@ -1,4 +1,3 @@
-# src/fashion-mnist/scripts/download.py
 """Download FashionMNIST dataset."""
 
 import urllib.request

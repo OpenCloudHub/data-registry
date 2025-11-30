@@ -380,13 +380,13 @@ def main():
     )
     print(f"Created {ds.count()} text chunks")
 
+    # Embed and store in pgvector
     ds = ds.map_batches(
         Embedder,
         fn_constructor_kwargs={"model_name": model_name, "device": device},
         batch_size=batch_size,
         num_cpus=4,
     )
-
     ds = ds.map_batches(
         PGVectorWriter,
         fn_constructor_kwargs={
@@ -401,6 +401,7 @@ def main():
         num_cpus=1,
     )
 
+    # Trigger execution of all stages
     ds.take_all()
 
     print(f"\n{'=' * 60}")
