@@ -1,4 +1,5 @@
 <!-- filepath: /workspace/project/README.md -->
+
 <a id="readme-top"></a>
 
 <!-- PROJECT LOGO & TITLE -->
@@ -13,10 +14,10 @@
   </picture>
   </a>
 
-<h1 align="center">Data Registry</h1>
+<h1 align="center">Data Registry MLOps Demo</h1>
 
 <p align="center">
-    Versioned datasets for reproducible ML training using DVC.<br />
+    Versioned datasets for reproducible ML training using <a href="https://dvc.org/"><medium>DVC</medium></a>.<br />
     <a href="https://github.com/opencloudhub"><strong>Explore OpenCloudHub »</strong></a>
   </p>
 </div>
@@ -27,9 +28,12 @@ ______________________________________________________________________
   <summary>📑 Table of Contents</summary>
   <ol>
     <li><a href="#about">About</a></li>
+    <li><a href="#why-dvc">Why DVC</a></li>
+    <li><a href="#available-datasets">Available Datasets</a></li>
     <li><a href="#features">Features</a></li>
     <li><a href="#getting-started">Getting Started</a></li>
     <li><a href="#workflows">Workflows</a></li>
+    <li><a href="#production-architecture">Production Architecture</a></li>
     <li><a href="#project-structure">Project Structure</a></li>
     <li><a href="#storage-backends">Storage Backends</a></li>
     <li><a href="#contributing">Contributing</a></li>
@@ -38,28 +42,100 @@ ______________________________________________________________________
   </ol>
 </details>
 
-<!-- TODO: try Semantic chunking - split by markdown headers instead of character count or
-Hierarchical indexing - store both summaries and detailed chunks -->
 ______________________________________________________________________
 
 <h2 id="about">📊 About</h2>
 
-This repository manages dataset preparation, versioning, and distribution for ML training pipelines. It demonstrates automated data pipelines with DVC (Data Version Control) for reproducible machine learning workflows.
+This repository manages dataset preparation, versioning, and distribution for ML training pipelines. It demonstrates automated data pipelines with [DVC](https://dvc.org/) (Data Version Control) for reproducible machine learning workflows.
 
 **Architecture:**
+
 ```
 Data Registry (DVC) → Storage (Local/MinIO) → Training Repos (Ray Data)
+       ↓                                              ↓
+   Git Tags (e.g., fashion-mnist-v1.0.0)    →    MLflow Tracking
 ```
+
+______________________________________________________________________
+
+<h2 id="why-dvc">🤔 Why DVC?</h2>
+
+> *"What exact samples were in the training data for model v2.3 that we deployed two weeks ago?"*
+
+DVC (Data Version Control) answers this question. It solves a fundamental problem in ML: **tracking which exact data was used to train a model**.
+
+### The Problem
+
+- Raw data changes over time (new samples, corrections, augmentations)
+- Training results become unreproducible
+- No way to rollback to a known-good dataset state
+- Large files don't belong in Git
+
+### The Solution
+
+DVC creates **git-like versioning for data**:
+
+```bash
+# Data versions are tied to git tags
+git tag fashion-mnist-v1.0.0   # Points to specific dvc.lock
+git tag fashion-mnist-v1.1.0   # New data version
+
+# Training code references exact version
+dvc get https://github.com/OpenCloudHub/data-registry \
+    data/fashion-mnist/processed \
+    --rev fashion-mnist-v1.0.0
+```
+
+### Data Lineage Through the ML Lifecycle
+
+The data version tag flows through the entire ML pipeline:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        DATA REGISTRY                             │
+│  fashion-mnist-v1.0.0 → MinIO (s3://dvcstore/files/md5/...)     │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                      TRAINING JOB                                │
+│  Input: data_version=fashion-mnist-v1.0.0                       │
+│  Output: model artifact + MLflow run                            │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                       MLFLOW TRACKING                            │
+│  Params:                                                         │
+│    - data_version: fashion-mnist-v1.0.0                         │
+│    - data_pixel_mean: 0.2860                                    │
+│    - data_pixel_std: 0.3530                                     │
+│  → Full reproducibility: same data + same code = same model     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+______________________________________________________________________
+
+<h2 id="available-datasets">📦 Available Datasets</h2>
+
+| Dataset                           | Description                        | Format                    | Use Case                     |
+| --------------------------------- | ---------------------------------- | ------------------------- | ---------------------------- |
+| `fashion-mnist`                   | Fashion product images             | Parquet (images + labels) | Image classification         |
+| `emotion`                         | Text emotion dataset               | Parquet (text + labels)   | Text classification          |
+| `wine-quality`                    | Wine quality ratings               | CSV                       | Tabular regression           |
+| `radiology-mini`                  | Medical X-ray images with captions | Images + JSON annotations | Vision-Language Models (VLM) |
+| `opencloudhub-readmes`            | Repository README files            | Markdown files            | RAG / Embeddings             |
+| `opencloudhub-readmes-embeddings` | Vectorized READMEs                 | pgvector database         | Semantic search              |
 
 ______________________________________________________________________
 
 <h2 id="features">✨ Features</h2>
 
-- 📊 **Automated Data Pipelines**: Download → prepare → analyze workflow
+- 📊 **Automated Data Pipelines**: Download → process → analyze workflow
 - 🔄 **Version Control**: Git tags + DVC for dataset versioning
-- 📈 **Automatic Metrics**: Mean, std, distribution computation
-- 🔀 **Flexible Storage**: Local devcontainer or MinIO cluster
-- 🚀 **Easy Integration**: Seamless use in training repos
+- 📈 **Automatic Metrics**: Statistics computed and tracked per dataset
+- 🔀 **Flexible Storage**: Local Docker Compose or MinIO cluster
+- 🚀 **Easy Integration**: Seamless use in training repos via `dvc get` or Python API
+- ☸️ **Production Patterns**: GitHub Actions + Argo Workflows for cluster execution
+- ⚡ **Ray Data Integration**: Distributed processing for large datasets
 - 🧪 **Development Environment**: VS Code DevContainer setup
 
 ______________________________________________________________________
@@ -80,42 +156,30 @@ ______________________________________________________________________
    cd data-registry
    ```
 
-2. **Open in DevContainer** (Recommended)
+1. **Open in DevContainer** (Recommended)
 
    VSCode: `Ctrl+Shift+P` → `Dev Containers: Rebuild and Reopen in Container`
 
-3. **Configure DVC Remote**
+1. **Configure environment**
 
-   **For local development:**
-   We mounted a shared volume to the `DevContainer` so that during local development one could easily without the need for a Cluster
+   **For local Docker Compose setup:**
+
    ```bash
-   dvc remote add -d local /workspace/shared-data/dvcstore
-   dvc remote modify local mkdir true
-   git add .dvc/config
-   git commit -m "Configure local DVC remote"
+   # Source environment variables
+   set -a && source .env.docker && set +a
+
+   # DVC is pre-configured to use local remote pointing to MinIO
+   dvc remote default local
    ```
 
-   **For production (MinIO cluster):**
+   **For Minikube/Kubernetes setup:**
 
-   Configure DVC remote (tracked in git):
    ```bash
-   dvc remote add -d minio s3://dvcstore
-   dvc remote modify minio endpointurl https://minio-api.internal.opencloudhub.org
-   dvc remote modify minio ssl_verify false
-   git add .dvc/config
-   git commit -m "Configure MinIO remote"
+   set -a && source .env.minikube && set +a
+   dvc remote default minio
    ```
 
-   Add credentials to `.dvc/config.local` (NOT tracked in git):
-   ```bash
-   dvc remote modify minio --local access_key_id admin
-   dvc remote modify minio --local secret_access_key 12345678
-   ```
-
-   > **Note:** `.dvc/config.local` is gitignored and stores sensitive credentials locally.
-   > Each team member needs to configure their own credentials.
-
-### Running an example Pipeline
+### Running a Pipeline Locally
 
 ```bash
 cd pipelines/fashion-mnist
@@ -125,7 +189,7 @@ dvc repro
 
 # Or run individually
 dvc repro download
-dvc repro prepare
+dvc repro process
 dvc repro analyze
 ```
 
@@ -149,6 +213,7 @@ ______________________________________________________________________
 ### Data Engineer: Adding/Updating Datasets
 
 **Create new dataset:**
+
 ```bash
 # 1. Create structure
 mkdir -p data/my-dataset/{raw,processed}
@@ -168,127 +233,180 @@ git tag my-dataset-v1.0.0
 git push origin main my-dataset-v1.0.0
 ```
 
-**Update existing dataset:**
-```bash
-cd pipelines/fashion-mnist
-vim params.yaml  # Modify parameters
-dvc repro        # Re-run pipeline
-dvc push
-git add . && git commit -m "Update FashionMNIST v1.1.0"
-git tag fashion-mnist-v1.1.0 && git push origin main fashion-mnist-v1.1.0
-```
-
-
 ### ML Engineer: Using Datasets
-<!-- TODO: make better -->
-**Setup in training repo:**
+
+#### Option 1: Download with DVC CLI
+
 ```bash
-uv add dvc[s3]
-
-# Configure local or MinIO remote
-dvc remote add -d local /workspace/shared-data/dvcstore
-# OR
-dvc remote add -d minio s3://dvcstore
-dvc remote modify minio endpointurl https://minio-api.internal.opencloudhub.org
-dvc remote modify minio ssl_verify false
-
-# Add credentials to .dvc/config.local (if using MinIO)
-cat > .dvc/config.local <<EOF
-['remote "minio"']
-    access_key_id = YOUR_ACCESS_KEY
-    secret_access_key = YOUR_SECRET_KEY
-EOF
-```
-
-#### Option 1: Download Data with DVC CLI
-
-**Download specific dataset version:**
-```bash
-# Download to local directory
+# Download specific dataset version
 dvc get https://github.com/OpenCloudHub/data-registry \
     data/fashion-mnist/processed \
     -o ./data/fashion-mnist \
     --rev fashion-mnist-v1.0.0
 
-# Download just the metadata
+# Download radiology dataset for VLM training
 dvc get https://github.com/OpenCloudHub/data-registry \
-    data/fashion-mnist/metadata.json \
-    -o ./data/fashion-mnist/metadata.json \
-    --rev fashion-mnist-v1.0.0
+    data/radiology-mini/processed \
+    -o ./data/radiology-mini \
+    --rev radiology-mini-v1.0.0
 ```
 
-**Import and track dataset in your repo:**
-```bash
-# Import creates a .dvc file to track the dataset
-dvc import https://github.com/OpenCloudHub/data-registry \
-    data/fashion-mnist/processed \
-    -o data/fashion-mnist \
-    --rev fashion-mnist-v1.0.0
+#### Option 2: Python API (Recommended for Training Code)
 
-# Later update to new version
-dvc update data/fashion-mnist.dvc --rev fashion-mnist-v1.1.0
-```
-
-**Pull from configured remote:**
-```bash
-# If you've imported the dataset
-dvc pull data/fashion-mnist.dvc
-```
-
-#### Option 2: Load Data in Python Code
-
-**Load data in training code:**
 ```python
 import dvc.api
-import ray
 import json
 
-def load_versioned_data(dataset_name, version="fashion-mnist-v1.0.0"):
-    """Load specific dataset version."""
-    repo = "https://github.com/OpenCloudHub/data-registry"
-    
-    train_path = dvc.api.get_url(
-        f"data/{dataset_name}/processed/train/train.parquet",
-        repo=repo, rev=version
-    )
-    val_path = dvc.api.get_url(
-        f"data/{dataset_name}/processed/val/val.parquet",
-        repo=repo, rev=version
-    )
-    
-    metadata_content = dvc.api.read(
-        f"data/{dataset_name}/metadata.json",
-        repo=repo, rev=version
-    )
-    metadata = json.loads(metadata_content)
-    
-    train_ds = ray.data.read_parquet(train_path)
-    val_ds = ray.data.read_parquet(val_path)
-    
-    return train_ds, val_ds, metadata
+REPO = "https://github.com/OpenCloudHub/data-registry"
+VERSION = "fashion-mnist-v1.0.0"
 
-# Usage
-train_ds, val_ds, metadata = load_versioned_data("fashion-mnist", "fashion-mnist-v0.0.2")
+# Get S3 URLs for direct loading with Ray Data
+train_url = dvc.api.get_url(
+    "data/fashion-mnist/processed/train/train.parquet", repo=REPO, rev=VERSION
+)
 
-# Log to MLflow
+# Load metadata for normalization params
+metadata = json.loads(
+    dvc.api.read("data/fashion-mnist/metadata.json", repo=REPO, rev=VERSION)
+)
+
+# Log to MLflow for reproducibility
 import mlflow
-mlflow.log_params({
-    "data_version": "fashion-mnist-v0.0.2",
-    "data_pixel_mean": metadata["metrics"]["train"]["pixel_mean"],
-    "data_pixel_std": metadata["metrics"]["train"]["pixel_std"],
-})
+
+mlflow.log_params(
+    {
+        "data_version": VERSION,
+        "data_pixel_mean": metadata["metrics"]["train"]["pixel_mean"],
+    }
+)
 ```
 
-#### Option 3: Direct Access (Local Development)
+#### Option 3: Ray Data Integration
 
-**Use mounted shared storage:**
-```bash
-# If using shared devcontainer storage
-ls /workspace/shared-data/dvcstore/data/fashion-mnist/processed/
+```python
+import ray
+import dvc.api
+import s3fs
 
-# Use directly in training
-python train.py --data-path /workspace/shared-data/dvcstore/data/fashion-mnist/processed
+# Get URLs from DVC
+train_url = dvc.api.get_url(
+    "data/radiology-mini/processed/train", repo=REPO, rev="radiology-mini-v1.0.0"
+)
+
+# Create S3 filesystem for MinIO
+fs = s3fs.S3FileSystem(
+    endpoint_url=os.getenv("AWS_ENDPOINT_URL"),
+    key=os.getenv("AWS_ACCESS_KEY_ID"),
+    secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
+)
+
+# Load with Ray Data for distributed processing
+ds = ray.data.read_images(train_url, filesystem=fs)
 ```
+
+______________________________________________________________________
+
+<h2 id="production-architecture">🏭 Production Architecture</h2>
+
+In production, pipelines run on a Kubernetes cluster via GitHub Actions and Argo Workflows—not manually.
+
+### Pipeline Execution Options
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     EXECUTION OPTIONS                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. LOCAL (Development)                                         │
+│     └─ dvc repro pipelines/fashion-mnist/dvc.yaml               │
+│                                                                  │
+│  2. GITHUB ACTIONS → ARGO WORKFLOWS (Production)                │
+│     └─ Trigger via workflow_dispatch or schedule                │
+│     └─ Submits to Argo Workflow on cluster                      │
+│                                                                  │
+│  3. RAY DATA (Distributed Processing)                           │
+│     └─ For compute-heavy pipelines (embeddings, large datasets) │
+│     └─ Scales across Ray cluster workers                        │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### GitHub Actions Integration
+
+Pipelines are triggered via GitHub Actions which submit jobs to the cluster:
+
+```yaml
+# .github/workflows/run-data-pipelines.yaml
+on:
+  workflow_dispatch:
+    inputs:
+      pipelines:
+        description: 'Pipelines to run (comma-separated)'
+        default: 'opencloudhub-readmes-download,fashion-mnist'
+  schedule:
+    - cron: '0 2 * * *'  # Nightly automated runs
+```
+
+The workflow submits an Argo Workflow that:
+
+1. Clones the repo
+1. Runs `dvc repro` for each pipeline
+1. Pushes data to MinIO
+1. Auto-tags with semantic versioning (e.g., `fashion-mnist-v1.2.3`)
+1. Commits updated `dvc.lock` files
+
+### Argo Workflow Templates
+
+We maintain reusable workflow templates in the [gitops repo](https://github.com/OpenCloudHub/gitops/tree/main/src/platform/mlops/argo-workflows/workflow-templates/data):
+
+#### Pure DVC Pipeline (CPU-bound)
+
+```yaml
+# For standard download/process/analyze pipelines
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: data-pipeline
+spec:
+  entrypoint: main
+  templates:
+    - name: single-pipeline
+      script:
+        image: opencloudhuborg/data-registry-pipelines:latest
+        source: |
+          dvc repro pipelines/${PIPELINE}/dvc.yaml
+          dvc push
+          # Auto-version and tag...
+```
+
+#### Ray Data Pipeline (Distributed)
+
+```yaml
+# For compute-heavy pipelines like embeddings
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: embeddings-pipeline
+spec:
+  templates:
+    - name: create-rayjob
+      # Creates a RayJob resource for distributed processing
+      # Scales across Ray cluster workers
+```
+
+### Scaling Considerations
+
+| Pipeline Type            | Execution Method        | When to Use                   |
+| ------------------------ | ----------------------- | ----------------------------- |
+| Simple download/process  | DVC in single container | Small datasets, I/O bound     |
+| Large dataset processing | Ray Data on cluster     | CPU-intensive, parallelizable |
+| Embedding generation     | Ray + GPU workers       | GPU-accelerated inference     |
+
+**Future improvements:**
+
+- Separate container images per pipeline for faster cold starts
+- Pipeline-specific resource limits
+- Caching of intermediate artifacts
 
 ______________________________________________________________________
 
@@ -297,90 +415,100 @@ ______________________________________________________________________
 ```
 data-registry/
 ├── data/
-│   └── fashion-mnist/
-│       ├── raw/                # Downloaded files (DVC-tracked)
-│       ├── processed/          # Parquet files (DVC-tracked)
-│       │   ├── train/
-│       │   │   └── train.parquet
-│       │   └── val/
-│       │       └── val.parquet
-│       └── metadata.json       # Dataset metadata (git-tracked)
+│   ├── fashion-mnist/          # Image classification dataset
+│   │   ├── raw/                # Downloaded files (DVC-tracked)
+│   │   ├── processed/          # Parquet files (DVC-tracked)
+│   │   └── metadata.json       # Dataset stats (git-tracked)
+│   ├── emotion/                # Text emotion dataset
+│   ├── wine-quality/           # Tabular regression dataset
+│   ├── radiology-mini/         # VLM training dataset
+│   │   ├── raw/
+│   │   │   ├── images/         # X-ray images
+│   │   │   └── captions.json   # Image descriptions
+│   │   └── processed/
+│   │       ├── train/
+│   │       │   ├── images/
+│   │       │   └── annotations.json
+│   │       └── test/
+│   ├── opencloudhub-readmes/   # README markdown files
+│   └── opencloudhub-readmes-embeddings/  # Embeddings metadata
+│
 ├── pipelines/
-│   └── fashion-mnist/
-│       ├── dvc.yaml           # Pipeline definition
-│       ├── params.yaml        # Pipeline parameters
+│   ├── fashion-mnist/
+│   │   ├── dvc.yaml            # Pipeline stages definition
+│   │   ├── params.yaml         # Pipeline parameters
+│   │   └── scripts/
+│   │       ├── download.py     # Stage 1: Download
+│   │       ├── process.py      # Stage 2: Transform
+│   │       └── analyze.py      # Stage 3: Compute stats
+│   ├── roco-radiology/         # Radiology VLM dataset pipeline
+│   ├── opencloudhub-readmes-download/
+│   └── opencloudhub-readmes-embeddings/  # Ray Data pipeline
+│       ├── dvc.yaml
+│       ├── params.py           # Python-based config
 │       └── scripts/
-│           ├── download.py    # Stage 1: Download raw data
-│           ├── process.py     # Stage 2: Convert to Parquet
-│           └── analyze.py     # Stage 3: Compute metadata
-├── .devcontainer/             # VS Code DevContainer config
+│           └── process.py      # Ray Data distributed processing
+│
+├── .github/workflows/
+│   ├── run-data-pipelines.yaml      # Trigger DVC pipelines
+│   └── run-embeddings-pipeline.yaml # Trigger Ray embeddings
+│
 ├── .dvc/
-│   ├── config                 # DVC remote configuration (git-tracked)
-│   └── config.local           # Local credentials (gitignored)
-└── .github/workflows/         # CI/CD workflows (future)
+│   └── config                  # DVC remote configuration
+│
+├── .env.docker                 # Local Docker Compose env
+└── .env.minikube              # Minikube/K8s env
 ```
 
 ______________________________________________________________________
 
 <h2 id="storage-backends">💾 Storage Backends</h2>
 
-### Local Shared Storage (Development)
+### Local Docker Compose (Development)
 
-Make sure the mounted path exists locally and that you adjust the name in the
-[devcontainer.json](.devcontainer/devcontainer.json) `mounts` section.
+Use when developing locally with Docker Compose infrastructure:
 
-**Configuration:**
+```bash
+# Source environment
+set -a && source .env.docker && set +a
+
+# DVC config points to localhost MinIO
+dvc remote default local
 ```
-Host: ~/Development/projects/opencloudhub/dev/shared-data/dvcstore/
-Container: /workspace/shared-data/dvcstore/
-```
 
-**Benefits:** Fast, no infrastructure, shared across devcontainers  
-**Limitations:** Single machine only, no backup
+**Configuration in `.dvc/config`:**
 
-### MinIO (Production)
-
-**Prerequisites:**
-- MinIO cluster with S3 API accessible
-- HTTPRoute configured for S3 API endpoint (not console)
-- Valid credentials from MinIO secret
-
-**Configuration:**
-
-`.dvc/config` (git-tracked):
 ```ini
-[core]
-    remote = minio
 ['remote "local"']
-    url = /workspace/shared-data/dvcstore
+    url = s3://dvcstore
+    endpointurl = http://localhost:9000
+```
+
+### MinIO on Kubernetes (Production)
+
+For minikube or production cluster:
+
+```bash
+set -a && source .env.minikube && set +a
+dvc remote default minio
+```
+
+**Configuration:**
+
+```ini
 ['remote "minio"']
     url = s3://dvcstore
     endpointurl = https://minio-api.internal.opencloudhub.org
     ssl_verify = false
 ```
 
-`.dvc/config.local` (gitignored):
-```ini
-['remote "minio"']
-    access_key_id = admin
-    secret_access_key = 12345678
-```
-
-**Benefits:** Centralized, accessible across cluster, production-ready  
-**Note:** Each developer needs their own `.dvc/config.local` with credentials
-
-### Switching Between Remotes
+### Switching Remotes
 
 ```bash
-# List remotes
-dvc remote list
-
-# Switch default
-dvc remote default local   # For dev
-dvc remote default minio   # For production
-
-# Push to specific remote
-dvc push -r minio
+dvc remote list           # Show available remotes
+dvc remote default local  # Switch to local
+dvc remote default minio  # Switch to production
+dvc push -r minio         # Push to specific remote
 ```
 
 ______________________________________________________________________
@@ -411,6 +539,7 @@ ______________________________________________________________________
 
 - [DVC](https://dvc.org/) - Data version control
 - [Ray Data](https://docs.ray.io/en/latest/data/data.html) - Distributed data loading
+- [Argo Workflows](https://argoproj.github.io/workflows/) - Kubernetes workflow orchestration
 - [MinIO](https://min.io/) - S3-compatible object storage
 - [MLflow](https://mlflow.org/) - ML lifecycle management
 

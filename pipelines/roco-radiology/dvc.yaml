@@ -1,0 +1,37 @@
+stages:
+  download:
+    cmd: python scripts/download.py
+    deps:
+      - scripts/download.py
+    params:
+      - download
+    outs:
+      - ../../data/roco-radiology/raw/images
+      - ../../data/roco-radiology/raw/captions.json
+
+  process:
+    cmd: python scripts/process.py
+    deps:
+      - scripts/process.py
+      - ../../data/roco-radiology/raw
+    params:
+      - process
+    outs:
+      - ../../data/roco-radiology/processed/train
+      - ../../data/roco-radiology/processed/test
+    metrics:
+      - ../../data/roco-radiology/processed/process_stats.json:
+          cache: false
+
+  analyze:
+    cmd: python scripts/analyze.py
+    deps:
+      - scripts/analyze.py
+      - ../../data/roco-radiology/processed/train
+      - ../../data/roco-radiology/processed/test
+      - ../../data/roco-radiology/processed/process_stats.json
+    params:
+      - analyze
+    metrics:
+      - ../../data/roco-radiology/metadata.json:
+          cache: false

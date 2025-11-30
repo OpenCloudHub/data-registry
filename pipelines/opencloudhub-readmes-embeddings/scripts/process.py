@@ -85,13 +85,13 @@ def initialize_table(connection_string: str, table_name: str):
             """)
 
             cur.execute(f"""
-                CREATE INDEX {table_name}_embedding_idx 
-                ON {table_name} 
+                CREATE INDEX {table_name}_embedding_idx
+                ON {table_name}
                 USING hnsw (embedding vector_cosine_ops)
             """)
 
             cur.execute(f"""
-                CREATE INDEX {table_name}_id_idx 
+                CREATE INDEX {table_name}_id_idx
                 ON {table_name} (id)
             """)
 
@@ -271,7 +271,7 @@ class PGVectorWriter:
 
                     cur.execute(
                         f"""
-                        INSERT INTO {self.table_name} 
+                        INSERT INTO {self.table_name}
                         (id, content, embedding, metadata)
                         VALUES (%s, %s, %s, %s)
                         """,

@@ -74,7 +74,7 @@ echo ""
 echo "🏷️  Creating v1.0.0 tags..."
 echo "────────────────────────────────────────────────────────────────────────────────"
 
-DATASETS=("emotion" "fashion-mnist" "wine-quality" "opencloudhub-readmes" "opencloudhub-readmes-rag-evaluation")
+DATASETS=("emotion" "fashion-mnist" "wine-quality" "opencloudhub-readmes" "opencloudhub-readmes-rag-evaluation" "roco-radiology")
 
 for dataset in "${DATASETS[@]}"; do
   TAG="${dataset}-v1.0.0"
@@ -104,13 +104,13 @@ if [ "$WITH_EMBEDDINGS" = true ]; then
   echo "────────────────────────────────────────────────────────────────────────────────"
   sed -i 's/^DATA_VERSION = .*/DATA_VERSION = "opencloudhub-readmes-v1.0.0"/' pipelines/opencloudhub-readmes-embeddings/params.py
   dvc repro --force pipelines/opencloudhub-readmes-embeddings/dvc.yaml
-  
+
   # Create embeddings tag
   TAG="opencloudhub-readmes-embeddings-v1.0.0"
   git tag -d "$TAG" 2>/dev/null || true
   git tag -a "$TAG" -m "opencloudhub-readmes-embeddings v1.0.0 (bootstrap)"
   echo "   ✓ Created tag: ${TAG}"
-  
+
   git add .
   git commit -m "chore: embeddings for v1.0.0 [skip ci]" || true
   git push origin main --force || true

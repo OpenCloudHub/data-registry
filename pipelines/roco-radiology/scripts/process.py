@@ -12,7 +12,7 @@ import yaml
 
 def load_prompt_from_mlflow(prompt_name: str, version: int) -> tuple[str, dict]:
     """Load prompt from MLflow registry."""
-    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000"))
+    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
 
     prompt_uri = f"prompts:/{prompt_name}/{version}"
     print(f"📝 Loading prompt: {prompt_uri}")

@@ -5,8 +5,8 @@ stages:
     deps:
     - path: scripts/download.py
       hash: md5
-      md5: accebc5228e8a3695be4b84775b4afa8
-      size: 1089
+      md5: ad8e79075771eb55d7bb3aeb600b5c78
+      size: 1049
     params:
       params.yaml:
         download.base_url: 

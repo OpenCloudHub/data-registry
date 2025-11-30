@@ -48,7 +48,7 @@ jobs:
           JSON_ARRAY=$(echo "$PIPELINES" | tr ',' '\n' | sed 's/^/"/;s/$/"/' | tr '\n' ',' | sed 's/,$//' | sed 's/^/[/;s/$/]/')
           echo "pipelines_json=${JSON_ARRAY}" >> $GITHUB_OUTPUT
           echo "📦 Pipelines: ${JSON_ARRAY}"
-          
+
           # For scheduled runs, mark as automated
           IS_AUTOMATED="${{ inputs.is_automated || 'false' }}"
           if [ "${{ github.event_name }}" = "schedule" ]; then
