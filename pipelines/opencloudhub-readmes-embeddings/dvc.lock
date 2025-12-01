@@ -9,7 +9,7 @@ stages:
       size: 3616
     params:
       params.py:
-        ANALYZE_OUTPUT_FILE: 
+        ANALYZE_OUTPUT_FILE:
           ../../data/opencloudhub-readmes-embeddings/metadata.json
         DATA_PATH: data/opencloudhub-readmes/raw
         DATA_VERSION: opencloudhub-readmes-v1.0.0
