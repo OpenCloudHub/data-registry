@@ -44,7 +44,8 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-<!-- TODO: describe working local with config.local -->
+<!-- TODO: describe working local with config.local and switching the remote-->
+<!-- TODO: add info that when u wanna run the embeddings pipeline from repo and use cluser u need forward db like kubectl port-forward -n storage svc/demo-app-db-pooler 5433:5432 -->
 
 <h2 id="about">📊 About</h2>
 

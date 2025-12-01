@@ -314,8 +314,8 @@ def main():
     """Main processing pipeline using Ray Data."""
     ray.init()
 
-    data_version = params.DATA_VERSION
-    data_path = params.DATA_PATH
+    data_version = params.DVC_DATA_VERSION
+    data_path = params.DVC_DATA_PATH
 
     repo = os.getenv("DVC_REPO")
     if not repo:

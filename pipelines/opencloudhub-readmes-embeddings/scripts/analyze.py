@@ -17,6 +17,7 @@ import params
 
 def fetch_readme_list(repo: str, data_version: str, data_path: str) -> list:
     """Get list of README files from DVC version."""
+    print(f"Fetching README files from DVC repo at version: {data_version}")
     fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version)
 
     readmes = []
@@ -64,8 +65,8 @@ def analyze_readmes(readmes: list) -> dict:
 
 def main():
     """Generate metadata for README embeddings."""
-    data_version = params.DATA_VERSION
-    data_path = params.DATA_PATH
+    data_version = params.DVC_DATA_VERSION
+    data_path = params.DVC_DATA_PATH
     output_file = Path(params.ANALYZE_OUTPUT_FILE)
 
     repo = os.getenv("DVC_REPO")

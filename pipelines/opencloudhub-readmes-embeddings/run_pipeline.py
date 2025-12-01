@@ -30,18 +30,18 @@ def file_hash(path: str) -> str | None:
 
 def main():
     # Read configuration from environment
-    data_version = os.environ.get("DATA_VERSION")
+    data_version = os.environ.get("DVC_DATA_VERSION")
     force = os.environ.get("FORCE_RUN", "false").lower() == "true"
 
     if not data_version:
-        print("ERROR: DATA_VERSION environment variable not set")
+        print("ERROR: DVC_DATA_VERSION environment variable not set")
         print("##DVC_CHANGED=error##")
         sys.exit(1)
 
     print("=" * 60)
     print("DVC Pipeline Runner")
     print("=" * 60)
-    print(f"DATA_VERSION: {data_version}")
+    print(f"DVC_DATA_VERSION: {data_version}")
     print(f"FORCE_RUN:    {force}")
     print("=" * 60)
 
@@ -51,7 +51,9 @@ def main():
     )
     with open(params_file, "r") as f:
         content = f.read()
-    content = re.sub(r"DATA_VERSION = .*", f'DATA_VERSION = "{data_version}"', content)
+    content = re.sub(
+        r"DVC_DATA_VERSION = .*", f'DVC_DATA_VERSION = "{data_version}"', content
+    )
     with open(params_file, "w") as f:
         f.write(content)
     print(f"Updated {params_file}")

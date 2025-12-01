@@ -1,6 +1,6 @@
 # Data source configuration
-DATA_VERSION = "opencloudhub-readmes-v1.0.0"
-DATA_PATH = "data/opencloudhub-readmes/raw"
+DVC_DATA_VERSION = "opencloudhub-readmes-v1.0.0"
+DVC_DATA_PATH = "data/opencloudhub-readmes/raw"
 
 # Embedding model configuration
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"

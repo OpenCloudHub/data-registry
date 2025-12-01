@@ -5,8 +5,8 @@ stages:
       - scripts/process.py
     params:
       - params.py:
-          - DATA_VERSION
-          - DATA_PATH
+          - DVC_DATA_VERSION
+          - DVC_DATA_PATH
           - EMBEDDING_MODEL_NAME
           - EMBEDDING_CHUNK_SIZE
           - EMBEDDING_CHUNK_OVERLAP
@@ -17,8 +17,8 @@ stages:
       - scripts/analyze.py
     params:
       - params.py:
-          - DATA_VERSION
-          - DATA_PATH
+          - DVC_DATA_VERSION
+          - DVC_DATA_PATH
           - EMBEDDING_MODEL_NAME
           - EMBEDDING_CHUNK_SIZE
           - EMBEDDING_CHUNK_OVERLAP
