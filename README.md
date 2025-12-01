@@ -44,6 +44,8 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
+<!-- TODO: describe working local with config.local -->
+
 <h2 id="about">📊 About</h2>
 
 This repository manages dataset preparation, versioning, and distribution for ML training pipelines. It demonstrates automated data pipelines with [DVC](https://dvc.org/) (Data Version Control) for reproducible machine learning workflows.
