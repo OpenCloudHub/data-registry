@@ -1,8 +1,5 @@
 [core]
-    remote = local
-['remote "local"']
-    url = s3://dvcstore
-    endpointurl = http://localhost:9000
+    remote = minio
 ['remote "minio"']
     url = s3://dvcstore
     endpointurl = https://minio-api.internal.opencloudhub.org
