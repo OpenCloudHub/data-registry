@@ -1,6 +1,6 @@
 [core]
-    remote = minio
-['remote "minio"']
+    remote = minikube
+['remote "minikube"']
     url = s3://dvcstore
     endpointurl = https://minio-api.internal.opencloudhub.org
     ssl_verify = false
