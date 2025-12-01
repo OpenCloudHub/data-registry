@@ -58,7 +58,7 @@ stages:
     params:
       params.yaml:
         download:
-          base_url:
+          base_url: 
             https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality
           output_dir: ../../data/wine-quality/raw
     outs:
