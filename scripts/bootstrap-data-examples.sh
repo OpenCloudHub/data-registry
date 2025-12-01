@@ -16,8 +16,8 @@ set -e
 #   4. Optionally runs embeddings pipeline
 #
 # Prerequisites:
-#   - Environment variables: source .env
-#   - Port-forward pgvector (for embeddings):
+#   - Environment variables: source .env.mikikube (or .env.local)
+#   - Port-forward pgvector if using minikube(for embeddings):
 #       kubectl port-forward -n storage svc/demo-app-db-cluster-rw 5432:5432
 #
 # Usage:
@@ -102,7 +102,7 @@ echo ""
 if [ "$WITH_EMBEDDINGS" = true ]; then
   echo "🧠 Running embeddings pipeline..."
   echo "────────────────────────────────────────────────────────────────────────────────"
-  sed -i 's/^DATA_VERSION = .*/DATA_VERSION = "opencloudhub-readmes-v1.0.0"/' pipelines/opencloudhub-readmes-embeddings/params.py
+  sed -i 's/^DVC_DATA_VERSION = .*/DVC_DATA_VERSION = "opencloudhub-readmes-v1.0.0"/' pipelines/opencloudhub-readmes-embeddings/params.py
   dvc repro --force pipelines/opencloudhub-readmes-embeddings/dvc.yaml
 
   # Create embeddings tag

@@ -260,7 +260,7 @@ class PGVectorWriter:
                         "source_file": batch["source_file"][i],
                         "chunk_index": int(batch["chunk_index"][i]),
                         "doc_id": batch["doc_id"][i],
-                        "data_version": self.data_version,
+                        "dvc_data_version": self.data_version,
                         "embedding_model": self.embedding_model,
                         "docker_image": self.docker_image,
                         "argo_workflow_uid": self.argo_workflow_uid,
@@ -392,7 +392,7 @@ def main():
         fn_constructor_kwargs={
             "connection_string": conn_string,
             "table_name": table_name,
-            "data_version": data_version,
+            "dvc_data_version": data_version,
             "embedding_model": model_name,
             "docker_image": docker_image,
             "argo_workflow_uid": argo_workflow_uid,

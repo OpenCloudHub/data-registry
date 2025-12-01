@@ -3,8 +3,8 @@
 Wrapper script to run DVC pipeline with runtime parameters from env vars.
 
 This script:
-1. Reads DATA_VERSION and FORCE_RUN from environment variables
-2. Updates params.py with the new DATA_VERSION
+1. Reads DVC_DATA_VERSION and FORCE_RUN from environment variables
+2. Updates params.py with the new DVC_DATA_VERSION
 3. Runs dvc repro
 4. Detects if DVC produced new outputs by comparing dvc.lock hash
 5. Outputs a marker (##DVC_CHANGED=true/false##) for Argo to parse
