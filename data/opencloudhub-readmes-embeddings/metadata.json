@@ -1,0 +1,24 @@
+{
+  "source_data_version": "opencloudhub-readmes-v1.0.0",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "chunk_size": 1500,
+  "chunk_overlap": 200,
+  "statistics": {
+    "total_files": 6,
+    "total_repositories": 6,
+    "repository_names": [
+      ".github_20251201_230250",
+      "ai-ml-sklearn_20251201_230251",
+      "docs_20251201_230250",
+      "gitops_20251201_230250",
+      "infra-live_20251201_230250",
+      "infra-modules_20251201_230249"
+    ],
+    "total_size_bytes": 84800,
+    "average_size_bytes": 14133.33,
+    "total_characters": 81910,
+    "average_characters": 13651.67,
+    "total_lines": 2253,
+    "average_lines": 375.5
+  }
+}

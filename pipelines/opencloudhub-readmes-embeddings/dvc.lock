@@ -5,22 +5,22 @@ stages:
     deps:
     - path: scripts/analyze.py
       hash: md5
-      md5: 8066db812d9f06b21e1aebdcd2edc65b
-      size: 3616
+      md5: 4aeaaac70814d71724cfb191c5497bc5
+      size: 3701
     params:
       params.py:
         ANALYZE_OUTPUT_FILE: 
           ../../data/opencloudhub-readmes-embeddings/metadata.json
-        DATA_PATH: data/opencloudhub-readmes/raw
-        DATA_VERSION: opencloudhub-readmes-v1.0.0
+        DVC_DATA_PATH: data/opencloudhub-readmes/raw
+        DVC_DATA_VERSION: opencloudhub-readmes-v1.0.0
         EMBEDDING_CHUNK_OVERLAP: 200
         EMBEDDING_CHUNK_SIZE: 1500
         EMBEDDING_MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
     outs:
     - path: ../../data/opencloudhub-readmes-embeddings/metadata.json
       hash: md5
-      md5: 46d62794bb28548cbcd1c43747b34f94
-      size: 967
+      md5: 18180abf809c5c490b39bd431272ffbf
+      size: 668
   process:
     cmd: python scripts/process.py
     deps:

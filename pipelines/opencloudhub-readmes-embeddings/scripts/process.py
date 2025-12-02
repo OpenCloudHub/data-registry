@@ -392,7 +392,7 @@ def main():
         fn_constructor_kwargs={
             "connection_string": conn_string,
             "table_name": table_name,
-            "dvc_data_version": data_version,
+            "data_version": data_version,
             "embedding_model": model_name,
             "docker_image": docker_image,
             "argo_workflow_uid": argo_workflow_uid,
