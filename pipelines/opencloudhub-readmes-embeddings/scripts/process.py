@@ -325,7 +325,7 @@ def main():
         raise ValueError("Environment variable AWS_ENDPOINT_URL not set")
 
     # Workflow metadata for lineage tracking
-    docker_image = os.getenv("DOCKER_IMAGE")
+    docker_image = os.getenv("DOCKER_IMAGE_TAG")
     argo_workflow_uid = os.getenv("ARGO_WORKFLOW_UID")
 
     model_name = params.EMBEDDING_MODEL_NAME
