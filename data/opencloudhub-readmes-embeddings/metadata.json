@@ -4,21 +4,30 @@
   "chunk_size": 1500,
   "chunk_overlap": 200,
   "statistics": {
-    "total_files": 6,
-    "total_repositories": 6,
+    "total_files": 15,
+    "total_repositories": 15,
     "repository_names": [
-      ".github_20251201_230250",
-      "ai-ml-sklearn_20251201_230251",
-      "docs_20251201_230250",
-      "gitops_20251201_230250",
-      "infra-live_20251201_230250",
-      "infra-modules_20251201_230249"
+      ".github_20251202_000059",
+      "ai-dl-bert_20251202_000100",
+      "ai-dl-lightning_20251202_000101",
+      "ai-generative-qwen_20251202_000100",
+      "ai-ml-sklearn_20251202_000100",
+      "ai-radiology-qwen_20251202_000102",
+      "api-testing_20251202_000101",
+      "data-registry_20251202_000101",
+      "demo-app-genai-backend_20251202_000101",
+      "docs_20251202_000059",
+      "gh-actions-local-runner_20251202_000100",
+      "gitops_20251202_000059",
+      "infra-live_20251202_000059",
+      "infra-modules_20251202_000058",
+      "local-compose-stack_20251202_000102"
     ],
-    "total_size_bytes": 84800,
-    "average_size_bytes": 14133.33,
-    "total_characters": 81910,
-    "average_characters": 13651.67,
-    "total_lines": 2253,
-    "average_lines": 375.5
+    "total_size_bytes": 219522,
+    "average_size_bytes": 14634.8,
+    "total_characters": 205594,
+    "average_characters": 13706.27,
+    "total_lines": 6022,
+    "average_lines": 401.47
   }
 }

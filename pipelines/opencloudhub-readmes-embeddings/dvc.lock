@@ -19,19 +19,19 @@ stages:
     outs:
     - path: ../../data/opencloudhub-readmes-embeddings/metadata.json
       hash: md5
-      md5: 18180abf809c5c490b39bd431272ffbf
-      size: 668
+      md5: 61d7777f2c1e574c20b5aaf5e6f9efd3
+      size: 1054
   process:
     cmd: python scripts/process.py
     deps:
     - path: scripts/process.py
       hash: md5
-      md5: f164fc50b32376957f782da55824c90b
-      size: 13824
+      md5: a72ad4e30d645f214e3a68ade15e187a
+      size: 13836
     params:
       params.py:
-        DATA_PATH: data/opencloudhub-readmes/raw
-        DATA_VERSION: opencloudhub-readmes-v1.0.0
+        DVC_DATA_PATH: data/opencloudhub-readmes/raw
+        DVC_DATA_VERSION: opencloudhub-readmes-v1.0.0
         EMBEDDING_BATCH_SIZE: 4
         EMBEDDING_CHUNK_OVERLAP: 200
         EMBEDDING_CHUNK_SIZE: 1500
