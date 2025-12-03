@@ -7,18 +7,19 @@ stages:
       hash: md5
       md5: a990e76126ce6e8ee82950137482678d
       size: 2096
+      isexec: true
     params:
       params.yaml:
         download:
           dataset_name: unsloth/Radiology_mini
-          output_dir: ../../data/radiology-mini/raw
+          output_dir: ../../data/roco-radiology/raw
           num_samples: 500
     outs:
-    - path: ../../data/radiology-mini/raw/captions.json
+    - path: ../../data/roco-radiology/raw/captions.json
       hash: md5
       md5: 5f063b8c23d6ad4fc1bf75a289b5e748
       size: 101273
-    - path: ../../data/radiology-mini/raw/images
+    - path: ../../data/roco-radiology/raw/images
       hash: md5
       md5: 94872ba3b72188f4fdfeaba4bd28b4f2.dir
       size: 41276501
@@ -26,68 +27,70 @@ stages:
   process:
     cmd: python scripts/process.py
     deps:
-    - path: ../../data/radiology-mini/raw
+    - path: ../../data/roco-radiology/raw
       hash: md5
-      md5: ec0ed7a4d3a135cc034544c5f9a37b12.dir
-      size: 41377797
-      nfiles: 502
+      md5: 496728497bae5799e26cd170d7de88f0.dir
+      size: 41377774
+      nfiles: 501
     - path: scripts/process.py
       hash: md5
-      md5: 47abac8de26a93c709a7ce59eaafca6a
-      size: 3752
+      md5: 88d7794a946e139f12b4e13613526ffb
+      size: 3727
+      isexec: true
     params:
       params.yaml:
         process:
-          raw_dir: ../../data/radiology-mini/raw
-          output_dir: ../../data/radiology-mini/processed
-          stats_file: ../../data/radiology-mini/processed/process_stats.json
+          raw_dir: ../../data/roco-radiology/raw
+          output_dir: ../../data/roco-radiology/processed
+          stats_file: ../../data/roco-radiology/processed/process_stats.json
           train_split: 0.8
           prompt_name: radiology-vlm-prompt
-          prompt_version: 2
+          prompt_version: 3
     outs:
-    - path: ../../data/radiology-mini/processed/process_stats.json
+    - path: ../../data/roco-radiology/processed/process_stats.json
       hash: md5
-      md5: d576768b3f5aa18644f84d4b74d0e8e1
-      size: 312
-    - path: ../../data/radiology-mini/processed/test
+      md5: 89d8a01bdc8741bb757881a2b9ccd995
+      size: 528
+    - path: ../../data/roco-radiology/processed/test
       hash: md5
-      md5: 75547aa26006b1620d6e91e1f37036f2.dir
-      size: 8856639
+      md5: 45f86f00a917c88c5ee7c34fc2654318.dir
+      size: 8878239
       nfiles: 101
-    - path: ../../data/radiology-mini/processed/train
+    - path: ../../data/roco-radiology/processed/train
       hash: md5
-      md5: 2f874256cd0382fb8fdeab60061fd9bf.dir
-      size: 32636037
+      md5: 1b6561f57a5656b0da028329aa4690cf.dir
+      size: 32722437
       nfiles: 401
   analyze:
     cmd: python scripts/analyze.py
     deps:
-    - path: ../../data/radiology-mini/processed/process_stats.json
+    - path: ../../data/roco-radiology/processed/process_stats.json
       hash: md5
-      md5: d576768b3f5aa18644f84d4b74d0e8e1
-      size: 312
-    - path: ../../data/radiology-mini/processed/test
+      md5: 89d8a01bdc8741bb757881a2b9ccd995
+      size: 528
+    - path: ../../data/roco-radiology/processed/test
       hash: md5
-      md5: 75547aa26006b1620d6e91e1f37036f2.dir
-      size: 8856639
+      md5: 45f86f00a917c88c5ee7c34fc2654318.dir
+      size: 8878239
       nfiles: 101
-    - path: ../../data/radiology-mini/processed/train
+    - path: ../../data/roco-radiology/processed/train
       hash: md5
-      md5: 2f874256cd0382fb8fdeab60061fd9bf.dir
-      size: 32636037
+      md5: 1b6561f57a5656b0da028329aa4690cf.dir
+      size: 32722437
       nfiles: 401
     - path: scripts/analyze.py
       hash: md5
       md5: 0b46975c24802dc30deea6a75dc21b67
       size: 3018
+      isexec: true
     params:
       params.yaml:
         analyze:
-          data_dir: ../../data/radiology-mini/processed
-          stats_file: ../../data/radiology-mini/processed/process_stats.json
-          output_file: ../../data/radiology-mini/metadata.json
+          data_dir: ../../data/roco-radiology/processed
+          stats_file: ../../data/roco-radiology/processed/process_stats.json
+          output_file: ../../data/roco-radiology/metadata.json
     outs:
-    - path: ../../data/radiology-mini/metadata.json
+    - path: ../../data/roco-radiology/metadata.json
       hash: md5
-      md5: 69d5ca1c0f4bc69ab5dd95639226d7c8
-      size: 962
+      md5: 3b997291d0a341d57e42864ca525df46
+      size: 1178

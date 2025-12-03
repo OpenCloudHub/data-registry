@@ -9,7 +9,7 @@ process:
   stats_file: "../../data/roco-radiology/processed/process_stats.json"
   train_split: 0.8
   prompt_name: "radiology-vlm-prompt"
-  prompt_version: 2
+  prompt_version: 3
 
 analyze:
   data_dir: "../../data/roco-radiology/processed"
