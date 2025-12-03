@@ -29,9 +29,9 @@ stages:
     deps:
     - path: ../../data/roco-radiology/raw
       hash: md5
-      md5: 496728497bae5799e26cd170d7de88f0.dir
-      size: 41377774
-      nfiles: 501
+      md5: ec0ed7a4d3a135cc034544c5f9a37b12.dir
+      size: 41377797
+      nfiles: 502
     - path: scripts/process.py
       hash: md5
       md5: 88d7794a946e139f12b4e13613526ffb
