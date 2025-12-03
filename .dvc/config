@@ -4,3 +4,6 @@
     url = s3://dvcstore
     endpointurl = https://minio-api.internal.opencloudhub.org
     ssl_verify = false
+['remote "docker"']
+    url = s3://dvcstore
+    endpointurl = http://localhost:9000
