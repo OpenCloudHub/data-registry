@@ -13,26 +13,28 @@ stages:
           ../../data/opencloudhub-readmes-embeddings/metadata.json
         DVC_DATA_PATH: data/opencloudhub-readmes/raw
         DVC_DATA_VERSION: opencloudhub-readmes-v1.0.0
-        EMBEDDING_CHUNK_OVERLAP: 200
-        EMBEDDING_CHUNK_SIZE: 1500
+        EMBEDDING_CHUNK_OVERLAP: 100
+        EMBEDDING_CHUNK_SIZE: 800
         EMBEDDING_MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
     outs:
     - path: ../../data/opencloudhub-readmes-embeddings/metadata.json
       hash: md5
-      md5: 48c82194134a414e4b3cb8fae5430fad
-      size: 1055
+      md5: 83e19098c96a01cba702f6b9bcb6b622
+      size: 1054
   process:
     cmd: python scripts/process.py
     deps:
     - path: scripts/process.py
       hash: md5
-      md5: 9cd8e125a7d8d89f370300a4f06e4499
-      size: 15634
+      md5: 2c2c06f8252896c3ade5ce779dce85a6
+      size: 22135
     params:
       params.py:
         DVC_DATA_PATH: data/opencloudhub-readmes/raw
         DVC_DATA_VERSION: opencloudhub-readmes-v1.0.0
-        EMBEDDING_BATCH_SIZE: 4
-        EMBEDDING_CHUNK_OVERLAP: 200
-        EMBEDDING_CHUNK_SIZE: 1500
+        EMBEDDING_BATCH_SIZE: 8
+        EMBEDDING_CHUNK_OVERLAP: 100
+        EMBEDDING_CHUNK_SIZE: 800
         EMBEDDING_MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
+        MAX_NOISE_RATIO: 0.3
+        MIN_CHUNK_SIZE: 50

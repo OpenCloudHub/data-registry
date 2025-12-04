@@ -139,9 +139,28 @@ def initialize_table(connection_string: str, table_name: str):
 
 
 class Chunker:
-    """Chunk markdown text by headers first, then by size if needed."""
+    """Chunk markdown text by headers first, then by size if needed.
 
-    def __init__(self, chunk_size: int = 1500, chunk_overlap: int = 200):
+    Improvements over naive chunking:
+    - Removes ASCII art boxes (├─│└┌┐┘┬┴) that add no semantic value
+    - Filters out chunks that are mostly whitespace or too short
+    - Normalizes excessive whitespace
+    - Enforces minimum chunk size to avoid single-line fragments
+    """
+
+    # Pattern to detect ASCII box drawing characters (tables, diagrams)
+    ASCII_BOX_PATTERN = re.compile(r"[┌┐└┘├┤┬┴┼│─═║╔╗╚╝╠╣╦╩╬▌▐█▀▄]+")
+
+    def __init__(
+        self,
+        chunk_size: int = 800,
+        chunk_overlap: int = 100,
+        min_chunk_size: int = 50,
+        max_noise_ratio: float = 0.3,
+    ):
+        self.min_chunk_size = min_chunk_size
+        self.max_noise_ratio = max_noise_ratio
+
         # Split by markdown headers first
         self.header_splitter = MarkdownHeaderTextSplitter(
             headers_to_split_on=[
@@ -157,16 +176,150 @@ class Chunker:
             chunk_overlap=chunk_overlap,
             length_function=len,
         )
+        self.chunk_size = chunk_size
 
     def _clean_header(self, h: str) -> str:
-        # Remove anchor tags like <a id="..."></a>
+        """Remove anchor tags like <a id="..."></a>."""
         return re.sub(r"<a[^>]*></a>", "", h).strip()
 
+    def _extract_filename_from_path(self, path_str: str) -> str:
+        """Extract actual filename from S3 URL or path.
+
+        Handles paths like:
+        - s3://bucket/files/md5/ab/cdef123... -> tries to find README name
+        - /path/to/repo_README_date.md -> repo_README_date.md
+        """
+        # For S3 DVC paths, the path is a hash, not the original filename
+        # We need to extract from the original path in row if available
+        path = Path(path_str)
+        return path.name
+
+    def _clean_text(self, text: str) -> str:
+        """Clean and normalize text before chunking.
+
+        - Removes excessive blank lines (3+ → 2)
+        - Normalizes multiple spaces between words → single space
+        - Preserves code block indentation (4 spaces or tab)
+        - Strips trailing whitespace from all lines
+        """
+        # Remove excessive blank lines (more than 2 consecutive)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+
+        lines = text.split("\n")
+        cleaned_lines = []
+
+        in_code_block = False
+        for line in lines:
+            # Track fenced code blocks (```)
+            if line.strip().startswith("```"):
+                in_code_block = not in_code_block
+                cleaned_lines.append(line.rstrip())
+                continue
+
+            # Preserve indentation in code blocks
+            if in_code_block or line.startswith("    ") or line.startswith("\t"):
+                cleaned_lines.append(line.rstrip())
+            else:
+                # Normalize multiple spaces to single space
+                # This handles cases like "word     word" → "word word"
+                normalized = re.sub(r"[ \t]+", " ", line.strip())
+                cleaned_lines.append(normalized)
+
+        return "\n".join(cleaned_lines)
+
+    def _is_noise_chunk(self, text: str) -> bool:
+        """Detect if a chunk is mostly noise (ASCII art, whitespace, etc.)."""
+        # Remove whitespace for analysis
+        stripped = text.strip()
+
+        # Too short to be useful
+        if len(stripped) < self.min_chunk_size:
+            return True
+
+        # Calculate ratio of ASCII box characters
+        ascii_chars = len(self.ASCII_BOX_PATTERN.findall(text))
+        if ascii_chars > 0:
+            # If more than threshold is ASCII box drawing, it's likely a diagram
+            ratio = ascii_chars / len(stripped)
+            if ratio > self.max_noise_ratio:
+                return True
+
+        # Check if it's just a markdown table row fragment
+        if stripped.startswith("|") and stripped.endswith("|"):
+            # Single table row with no context
+            if stripped.count("\n") == 0:
+                return True
+
+        # Check if mostly horizontal rules or separators
+        separator_chars = set("-=_*")
+        non_separator = sum(
+            1 for c in stripped if c not in separator_chars and not c.isspace()
+        )
+        if non_separator < 20:
+            return True
+
+        return False
+
+    def _merge_small_chunks(
+        self, chunks: List[Dict], min_size: int = 200
+    ) -> List[Dict]:
+        """Merge consecutive small chunks from the same section."""
+        if not chunks:
+            return chunks
+
+        merged = []
+        buffer = None
+
+        for chunk in chunks:
+            if buffer is None:
+                buffer = chunk.copy()
+                continue
+
+            # Check if we should merge with buffer
+            same_section = buffer.get("section_h1") == chunk.get(
+                "section_h1"
+            ) and buffer.get("section_h2") == chunk.get("section_h2")
+            buffer_small = len(buffer["text"]) < min_size
+            combined_fits = len(buffer["text"]) + len(chunk["text"]) < self.chunk_size
+
+            if same_section and buffer_small and combined_fits:
+                # Merge chunks
+                buffer["text"] = buffer["text"] + "\n\n" + chunk["text"]
+            else:
+                # Emit buffer and start new one
+                if not self._is_noise_chunk(buffer["text"]):
+                    merged.append(buffer)
+                buffer = chunk.copy()
+
+        # Don't forget the last buffer
+        if buffer and not self._is_noise_chunk(buffer["text"]):
+            merged.append(buffer)
+
+        return merged
+
     def __call__(self, row: Dict) -> List[Dict]:
-        path = Path(row["path"])
+        # Extract path - handle both direct paths and S3 URLs
+        path_str = row.get("path", "")
+
+        # For S3 DVC URLs like s3://bucket/files/md5/xx/hash, we need original name
+        # The 'path' from ray.data.read_text on S3 is the S3 key
+        # We stored the original filename pattern: repo_README_timestamp.md
+        if "README" in path_str:
+            # Extract just the filename part
+            filename = Path(path_str).name
+            # Parse repo name: "gitops_README_20251204_091155.md" -> "gitops"
+            match = re.match(r"(.+?)_README", filename)
+            repo_name = match.group(1) if match else filename.replace(".md", "")
+        else:
+            # Fallback for other path formats
+            filename = Path(path_str).name
+            repo_name = filename.replace(".md", "").replace("_README", "")
+
         text = row["text"]
-        repo_name = path.stem.replace("_README", "")
         doc_id = str(uuid.uuid4())
+
+        # Clean text before processing
+        text = self._clean_text(text)
 
         chunks = []
 
@@ -178,18 +331,26 @@ class Chunker:
             section_text = split.page_content
             section_headers = split.metadata  # {"h1": "Title", "h2": "Section"}
 
+            # Skip sections that are pure noise
+            if self._is_noise_chunk(section_text):
+                continue
+
             # If section is too large, split further by size
-            if len(section_text) > self.size_splitter._chunk_size:
+            if len(section_text) > self.chunk_size:
                 sub_texts = self.size_splitter.split_text(section_text)
             else:
                 sub_texts = [section_text]
 
             for sub_text in sub_texts:
+                # Skip noise chunks
+                if self._is_noise_chunk(sub_text):
+                    continue
+
                 chunks.append(
                     {
                         "text": sub_text,
                         "source_repo": repo_name,
-                        "source_file": path.name,
+                        "source_file": filename,
                         "chunk_index": chunk_index,
                         "doc_id": doc_id,
                         "chunk_id": str(uuid.uuid4()),
@@ -200,6 +361,13 @@ class Chunker:
                     }
                 )
                 chunk_index += 1
+
+        # Merge small consecutive chunks to reduce fragmentation
+        chunks = self._merge_small_chunks(chunks)
+
+        # Re-index after merging
+        for i, chunk in enumerate(chunks):
+            chunk["chunk_index"] = i
 
         return chunks
 
@@ -370,6 +538,8 @@ def main():
     chunk_size = params.EMBEDDING_CHUNK_SIZE
     chunk_overlap = params.EMBEDDING_CHUNK_OVERLAP
     batch_size = params.EMBEDDING_BATCH_SIZE
+    min_chunk_size = getattr(params, "MIN_CHUNK_SIZE", 50)
+    max_noise_ratio = getattr(params, "MAX_NOISE_RATIO", 0.3)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     table_name = os.getenv("PGVECTOR_TABLE_NAME")
 
@@ -414,6 +584,8 @@ def main():
         fn_constructor_kwargs={
             "chunk_size": chunk_size,
             "chunk_overlap": chunk_overlap,
+            "min_chunk_size": min_chunk_size,
+            "max_noise_ratio": max_noise_ratio,
         },
     )
     print(f"Created {ds.count()} text chunks")
