@@ -22,7 +22,7 @@
   </p>
 </div>
 
----
+______________________________________________________________________
 
 <details>
   <summary>📑 Table of Contents</summary>
@@ -40,7 +40,7 @@
   </ol>
 </details>
 
----
+______________________________________________________________________
 
 <h2 id="about">🎯 About</h2>
 
@@ -74,16 +74,16 @@ dvc get https://github.com/OpenCloudHub/data-registry \
 
 ### Available Datasets
 
-| Dataset | Description | Format | Use Case |
-|---------|-------------|--------|----------|
-| `fashion-mnist` | Fashion product images | Parquet (images + labels) | Image classification |
-| `emotion` | Text emotion dataset | Parquet (text + labels) | Text classification |
-| `wine-quality` | Wine quality ratings | CSV | Tabular regression |
-| `roco-radiology` | Medical X-ray images with captions | Images + JSON annotations | Vision-Language Models (VLM) |
-| `opencloudhub-readmes` | Repository README files | Markdown files | RAG / Embeddings |
-| `opencloudhub-readmes-embeddings` | Vectorized READMEs | pgvector database | Semantic search |
+| Dataset                           | Description                        | Format                    | Use Case                     |
+| --------------------------------- | ---------------------------------- | ------------------------- | ---------------------------- |
+| `fashion-mnist`                   | Fashion product images             | Parquet (images + labels) | Image classification         |
+| `emotion`                         | Text emotion dataset               | Parquet (text + labels)   | Text classification          |
+| `wine-quality`                    | Wine quality ratings               | CSV                       | Tabular regression           |
+| `roco-radiology`                  | Medical X-ray images with captions | Images + JSON annotations | Vision-Language Models (VLM) |
+| `opencloudhub-readmes`            | Repository README files            | Markdown files            | RAG / Embeddings             |
+| `opencloudhub-readmes-embeddings` | Vectorized READMEs                 | pgvector database         | Semantic search              |
 
----
+______________________________________________________________________
 
 <h2 id="thesis-context">📚 Thesis Context</h2>
 
@@ -98,8 +98,8 @@ This repository is part of the **OpenCloudHub MLOps Platform** thesis project, d
 │  Layer 1: INFRASTRUCTURE (infra-modules, infra-live)                        │
 │    └─ Kubernetes, MinIO, PostgreSQL, MLflow, Ray, Argo                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  Layer 2: DATA MANAGEMENT  ◄── THIS REPOSITORY                             │
-│    └─ DVC pipelines, versioned datasets, embeddings generation             │
+│  Layer 2: DATA MANAGEMENT  ◄── THIS REPOSITORY                              │
+│    └─ DVC pipelines, versioned datasets, embeddings generation              │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  Layer 3: ML WORKLOADS (ai-ml-sklearn, ai-dl-bert, ai-radiology-qwen)       │
 │    └─ Training jobs consuming versioned data from Layer 2                   │
@@ -108,22 +108,22 @@ This repository is part of the **OpenCloudHub MLOps Platform** thesis project, d
 
 ### Requirements Demonstrated
 
-| Requirement | Implementation | Files |
-|-------------|----------------|-------|
-| **Data Versioning** | DVC with git tags for immutable dataset versions | `dvc.yaml`, `dvc.lock` |
-| **Data Lineage** | Metadata tracking source version, model, parameters | `metadata.json` files |
-| **Reproducibility** | Version-pinned data access via `dvc get --rev` | Pipeline scripts |
-| **Distributed Processing** | Ray Data for scalable embeddings generation | `process.py` |
-| **MLflow Integration** | Prompt Registry for VLM instruction management | `roco-radiology/process.py` |
-| **GitOps Automation** | GitHub Actions → Argo Workflows for production runs | `.github/workflows/` |
+| Requirement                | Implementation                                      | Files                       |
+| -------------------------- | --------------------------------------------------- | --------------------------- |
+| **Data Versioning**        | DVC with git tags for immutable dataset versions    | `dvc.yaml`, `dvc.lock`      |
+| **Data Lineage**           | Metadata tracking source version, model, parameters | `metadata.json` files       |
+| **Reproducibility**        | Version-pinned data access via `dvc get --rev`      | Pipeline scripts            |
+| **Distributed Processing** | Ray Data for scalable embeddings generation         | `process.py`                |
+| **MLflow Integration**     | Prompt Registry for VLM instruction management      | `roco-radiology/process.py` |
+| **GitOps Automation**      | GitHub Actions → Argo Workflows for production runs | `.github/workflows/`        |
 
 ### Key Implementation Patterns
 
 1. **DVC + Git Tags Pattern**: Data versions tied to git tags enable training code to reference exact dataset snapshots
-2. **Metadata as Metrics**: Statistics computed at pipeline completion, tracked by DVC for monitoring
-3. **Environment-based Configuration**: Secrets via env vars, switching between local/cluster via `.env.*` files
-4. **Ray Data for Scale**: Distributed processing with batched embedding generation and database writes
-5. **MLflow Prompt Registry**: Version-controlled prompts for VLM training data preparation
+1. **Metadata as Metrics**: Statistics computed at pipeline completion, tracked by DVC for monitoring
+1. **Environment-based Configuration**: Secrets via env vars, switching between local/cluster via `.env.*` files
+1. **Ray Data for Scale**: Distributed processing with batched embedding generation and database writes
+1. **MLflow Prompt Registry**: Version-controlled prompts for VLM training data preparation
 
 ### Data Flow Through the Platform
 
@@ -149,7 +149,7 @@ This repository is part of the **OpenCloudHub MLOps Platform** thesis project, d
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
----
+______________________________________________________________________
 
 <h2 id="features">✨ Features</h2>
 
@@ -163,7 +163,7 @@ This repository is part of the **OpenCloudHub MLOps Platform** thesis project, d
 - **🧠 Embeddings Pipeline**: RAG-ready vector generation with pgvector storage
 - **🧪 Development Environment**: VS Code DevContainer with all tools pre-configured
 
----
+______________________________________________________________________
 
 <h2 id="architecture">🏗️ Architecture</h2>
 
@@ -226,7 +226,7 @@ The embeddings pipeline demonstrates a more complex architecture for RAG systems
   readmes-v1.0.0        all-MiniLM-L6-v2        for RAG apps
 ```
 
----
+______________________________________________________________________
 
 <h2 id="getting-started">🚀 Getting Started</h2>
 
@@ -244,11 +244,11 @@ The embeddings pipeline demonstrates a more complex architecture for RAG systems
    cd data-registry
    ```
 
-2. **Open in DevContainer** (Recommended)
+1. **Open in DevContainer** (Recommended)
 
    VS Code: `Ctrl+Shift+P` → `Dev Containers: Rebuild and Reopen in Container`
 
-3. **Configure environment**
+1. **Configure environment**
 
    Choose your backend (see [Configuration](#configuration) for details):
 
@@ -312,9 +312,7 @@ VERSION = "fashion-mnist-v1.0.0"
 
 # Get S3 URL for direct loading with Ray Data
 train_url = dvc.api.get_url(
-    "data/fashion-mnist/processed/train/train.parquet",
-    repo=REPO,
-    rev=VERSION
+    "data/fashion-mnist/processed/train/train.parquet", repo=REPO, rev=VERSION
 )
 
 # Load metadata for normalization parameters
@@ -324,13 +322,16 @@ metadata = json.loads(
 
 # Log to MLflow for reproducibility
 import mlflow
-mlflow.log_params({
-    "data_version": VERSION,
-    "data_pixel_mean": metadata["metrics"]["train"]["pixel_mean"],
-})
+
+mlflow.log_params(
+    {
+        "data_version": VERSION,
+        "data_pixel_mean": metadata["metrics"]["train"]["pixel_mean"],
+    }
+)
 ```
 
----
+______________________________________________________________________
 
 <h2 id="configuration">⚙️ Configuration</h2>
 
@@ -442,7 +443,7 @@ EMBEDDING_CHUNK_OVERLAP = 200
 EMBEDDING_BATCH_SIZE = 4
 ```
 
----
+______________________________________________________________________
 
 <h2 id="project-structure">📁 Project Structure</h2>
 
@@ -499,7 +500,7 @@ data-registry/
 └── pyproject.toml                  # Python dependencies
 ```
 
----
+______________________________________________________________________
 
 <h2 id="contributing">👥 Contributing</h2>
 
@@ -507,13 +508,13 @@ Contributions are welcome! This project follows OpenCloudHub's contribution stan
 
 Please see our [Contributing Guidelines](https://github.com/opencloudhub/.github/blob/main/.github/CONTRIBUTING.md) and [Code of Conduct](https://github.com/opencloudhub/.github/blob/main/.github/CODE_OF_CONDUCT.md) for more details.
 
----
+______________________________________________________________________
 
 <h2 id="license">📄 License</h2>
 
 Distributed under the Apache 2.0 License. See [LICENSE](LICENSE) for more information.
 
----
+______________________________________________________________________
 
 <h2 id="contact">📬 Contact</h2>
 
@@ -521,7 +522,7 @@ Distributed under the Apache 2.0 License. See [LICENSE](LICENSE) for more inform
 - **Project:** [data-registry](https://github.com/opencloudhub/data-registry)
 - **Documentation:** [OpenCloudHub Docs](https://opencloudhub.github.io/docs)
 
----
+______________________________________________________________________
 
 <h2 id="acknowledgements">🙏 Acknowledgements</h2>
 
@@ -535,13 +536,13 @@ Distributed under the Apache 2.0 License. See [LICENSE](LICENSE) for more inform
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
----
+______________________________________________________________________
 
 <div align="center">
   <h3>🌟 Follow the Journey</h3>
   <p><em>Building in public • Learning together • Sharing knowledge</em></p>
 
-  <div>
+<div>
     <a href="https://opencloudhub.github.io/docs">
       <img src="https://img.shields.io/badge/Read%20the%20Docs-2596BE?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Documentation">
     </a>
