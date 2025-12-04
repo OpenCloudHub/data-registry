@@ -19,7 +19,7 @@ stages:
     outs:
     - path: ../../data/opencloudhub-readmes-embeddings/metadata.json
       hash: md5
-      md5: 61d7777f2c1e574c20b5aaf5e6f9efd3
+      md5: 2f1a3dee4a0b49673b08a691d380d2d5
       size: 1054
   process:
     cmd: python scripts/process.py
