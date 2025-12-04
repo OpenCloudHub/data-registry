@@ -263,11 +263,9 @@ The embeddings pipeline demonstrates a more complex architecture for RAG systems
 ### Running a Pipeline
 
 ```bash
-# Navigate to pipeline directory
-cd pipelines/fashion-mnist
 
-# Run all stages
-dvc repro
+# Run all stages of FashionMNIST pipeline
+dvc repro pipelines/fashion-mnist/dvc.yaml
 
 # Or run specific stage
 dvc repro download
