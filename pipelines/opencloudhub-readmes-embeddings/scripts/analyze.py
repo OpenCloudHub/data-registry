@@ -59,9 +59,9 @@ def fetch_readme_list(repo: str, data_version: str, data_path: str) -> list:
     for entry in fs.ls(data_path, detail=False):
         if entry.endswith(".md"):
             try:
-                content = dvc.api.read(
-                    path=entry, repo=repo, rev=data_version, mode="r", encoding="utf-8"
-                )
+                # Use fs.open() instead of dvc.api.read() to use credentials
+                with fs.open(entry, mode="r", encoding="utf-8") as f:
+                    content = f.read()
                 filename = Path(entry).name
                 readmes.append((filename, content))
             except Exception as e:
