@@ -10,7 +10,7 @@ set -e
 # to using GitHub action to trigger argo data pipeline workflows running on cluster.
 #
 # This script:
-#   1. Force-runs all data pipelines (ignores DVC cache)
+#   1. Runs all data pipelines (optionally forced)
 #   2. Pushes data to MinIO
 #   3. Creates v1.0.0 tags for all datasets
 #   4. Optionally runs embeddings pipeline
@@ -21,23 +21,34 @@ set -e
 #       kubectl port-forward -n storage svc/demo-app-db-cluster-rw 5432:5432
 #
 # Usage:
-#   ./scripts/bootstrap-data-examples.sh [--with-embeddings]
+#   ./scripts/bootstrap-data-examples.sh [--force] [--with-embeddings]
 #
 # ==============================================================================
 
-WITH_EMBEDDINGS=true
-[ "$1" = "--with-embeddings" ] && WITH_EMBEDDINGS=true
+FORCE_RUN=false
+WITH_EMBEDDINGS=false
+
+for arg in "$@"; do
+  case $arg in
+    --force) FORCE_RUN=true ;;
+    --with-embeddings) WITH_EMBEDDINGS=true ;;
+  esac
+done
+
+FORCE_FLAG=""
+[ "$FORCE_RUN" = true ] && FORCE_FLAG="--force"
 
 echo ""
 echo "════════════════════════════════════════════════════════════════════════════════"
 echo "🚀 Bootstrap Data Registry (v1.0.0)"
+[ "$FORCE_RUN" = true ] && echo "   ⚠️  Force mode enabled"
 echo "════════════════════════════════════════════════════════════════════════════════"
 echo ""
 
 # ------------------------------------------------------------------------------
-# Force run all pipelines
+# Run all pipelines
 # ------------------------------------------------------------------------------
-echo "📊 Running all pipelines (forced)..."
+echo "📊 Running all pipelines${FORCE_FLAG:+ (forced)}..."
 echo "────────────────────────────────────────────────────────────────────────────────"
 
 PIPELINES=(
@@ -49,7 +60,7 @@ PIPELINES=(
 
 for pipeline in "${PIPELINES[@]}"; do
   echo "  → ${pipeline}..."
-  dvc repro --force pipelines/"${pipeline}"/dvc.yaml
+  dvc repro $FORCE_FLAG pipelines/"${pipeline}"/dvc.yaml
   echo "     ✓ done"
 done
 
@@ -103,7 +114,7 @@ if [ "$WITH_EMBEDDINGS" = true ]; then
   echo "🧠 Running embeddings pipeline..."
   echo "────────────────────────────────────────────────────────────────────────────────"
   sed -i 's/^DVC_DATA_VERSION = .*/DVC_DATA_VERSION = "opencloudhub-readmes-v1.0.0"/' pipelines/opencloudhub-readmes-embeddings/params.py
-  dvc repro --force pipelines/opencloudhub-readmes-embeddings/dvc.yaml
+  dvc repro $FORCE_FLAG pipelines/opencloudhub-readmes-embeddings/dvc.yaml
 
   # Create embeddings tag
   TAG="opencloudhub-readmes-embeddings-v1.0.0"
