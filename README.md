@@ -550,3 +550,22 @@ ______________________________________________________________________
 - [MLflow](https://mlflow.org/) - ML lifecycle management
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+______________________________________________________________________
+
+<div align="center">
+  <h3>🌟 Follow the Journey</h3>
+  <p><em>Building in public • Learning together • Sharing knowledge</em></p>
+
+<div>
+    <a href="https://opencloudhub.github.io/docs">
+      <img src="https://img.shields.io/badge/Read%20the%20Docs-2596BE?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Documentation">
+    </a>
+    <a href="https://github.com/orgs/opencloudhub/discussions">
+      <img src="https://img.shields.io/badge/Join%20Discussion-181717?style=for-the-badge&logo=github&logoColor=white" alt="Discussions">
+    </a>
+    <a href="https://github.com/orgs/opencloudhub/projects/4">
+      <img src="https://img.shields.io/badge/View%20Roadmap-0052CC?style=for-the-badge&logo=jira&logoColor=white" alt="Roadmap">
+    </a>
+  </div>
+</div>

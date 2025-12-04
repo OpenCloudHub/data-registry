@@ -18,7 +18,17 @@ import params
 def fetch_readme_list(repo: str, data_version: str, data_path: str) -> list:
     """Get list of README files from DVC version."""
     print(f"Fetching README files from DVC repo at version: {data_version}")
-    fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version)
+
+    # Configure DVC remote with credentials from environment variables
+    remote_config = {
+        "endpointurl": os.getenv("AWS_ENDPOINT_URL"),
+        "access_key_id": os.getenv("AWS_ACCESS_KEY_ID"),
+        "secret_access_key": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    }
+    # Remove None values
+    remote_config = {k: v for k, v in remote_config.items() if v}
+
+    fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version, remote_config=remote_config)
 
     readmes = []
     for entry in fs.ls(data_path, detail=False):

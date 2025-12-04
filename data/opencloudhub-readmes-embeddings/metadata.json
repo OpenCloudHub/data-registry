@@ -1,33 +1,33 @@
 {
-	"source_data_version": "opencloudhub-readmes-v1.0.0",
-	"embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-	"chunk_size": 1500,
-	"chunk_overlap": 200,
-	"statistics": {
-		"total_files": 15,
-		"total_repositories": 15,
-		"repository_names": [
-			".github_20251204_002727",
-			"ai-dl-bert_20251204_002728",
-			"ai-dl-lightning_20251204_002729",
-			"ai-generative-qwen_20251204_002728",
-			"ai-ml-sklearn_20251204_002728",
-			"ai-radiology-qwen_20251204_002730",
-			"api-testing_20251204_002730",
-			"data-registry_20251204_002729",
-			"demo-app-genai-backend_20251204_002729",
-			"docs_20251204_002727",
-			"gh-actions-local-runner_20251204_002729",
-			"gitops_20251204_002727",
-			"infra-live_20251204_002727",
-			"infra-modules_20251204_002726",
-			"local-compose-stack_20251204_002730"
-		],
-		"total_size_bytes": 239400,
-		"average_size_bytes": 15960.0,
-		"total_characters": 218738,
-		"average_characters": 14582.53,
-		"total_lines": 6013,
-		"average_lines": 400.87
-	}
+  "source_data_version": "opencloudhub-readmes-v1.0.0",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "chunk_size": 1500,
+  "chunk_overlap": 200,
+  "statistics": {
+    "total_files": 15,
+    "total_repositories": 15,
+    "repository_names": [
+      ".github_20251204_011629",
+      "ai-dl-bert_20251204_011631",
+      "ai-dl-lightning_20251204_011631",
+      "ai-generative-qwen_20251204_011631",
+      "ai-ml-sklearn_20251204_011630",
+      "ai-radiology-qwen_20251204_011632",
+      "api-testing_20251204_011632",
+      "data-registry_20251204_011632",
+      "demo-app-genai-backend_20251204_011632",
+      "docs_20251204_011630",
+      "gh-actions-local-runner_20251204_011631",
+      "gitops_20251204_011630",
+      "infra-live_20251204_011629",
+      "infra-modules_20251204_011629",
+      "local-compose-stack_20251204_011633"
+    ],
+    "total_size_bytes": 239400,
+    "average_size_bytes": 15960.0,
+    "total_characters": 218738,
+    "average_characters": 14582.53,
+    "total_lines": 6013,
+    "average_lines": 400.87
+  }
 }
