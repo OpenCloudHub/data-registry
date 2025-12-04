@@ -10,8 +10,8 @@ stages:
       nfiles: 1
     - path: scripts/process.py
       hash: md5
-      md5: 6e9ef4c205f1121fc19491f74a7fa5b6
-      size: 3307
+      md5: 1d59bf5bc3188c8fdccfe0c03a4aa0c5
+      size: 4295
     params:
       params.yaml:
         process:
@@ -36,8 +36,8 @@ stages:
       nfiles: 2
     - path: scripts/analyze.py
       hash: md5
-      md5: 637109c5d2c858cd513655631ca0c72e
-      size: 3876
+      md5: 5cf80c6ed6a11e0cf31251b8d3fb6327
+      size: 4774
     params:
       params.yaml:
         analyze:
