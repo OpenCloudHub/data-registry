@@ -1,4 +1,47 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# Radiology Dataset Processor (Qwen VLM Format)
+# ==============================================================================
+#
+# Converts raw radiology data to Qwen conversation format for VLM fine-tuning.
+# Demonstrates MLflow Prompt Registry integration for instruction management.
+#
+# Key Feature: MLflow Prompt Integration
+#   - Loads instruction prompt from MLflow Prompt Registry
+#   - Enables A/B testing of different prompt versions
+#   - Tracks prompt version in dataset metadata for reproducibility
+#
+# Output Format (Qwen Conversation):
+#   {
+#     "image": "train_radiology_000001.jpg",
+#     "conversations": [
+#       {"from": "human", "value": "<image>\nDescribe this medical image."},
+#       {"from": "gpt", "value": "The X-ray shows..."}
+#     ]
+#   }
+#
+# Output Structure:
+#   processed/
+#   ├── train/
+#   │   ├── images/
+#   │   └── annotations.json
+#   └── test/
+#       ├── images/
+#       └── annotations.json
+#
+# Environment Variables:
+#   - MLFLOW_TRACKING_URI: MLflow server for prompt registry
+#
+# Configuration:
+#   - prompt_name, prompt_version: MLflow prompt to use
+#   - train_split: Train/test split ratio
+#
+# Usage:
+#   python scripts/process.py
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Process raw radiology data to Qwen format."""
 
 import json

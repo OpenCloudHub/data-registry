@@ -1,3 +1,26 @@
+# ==============================================================================
+# Emotion Dataset Downloader
+# ==============================================================================
+#
+# Downloads the Emotion classification dataset from HuggingFace.
+# Used for text classification demonstrations (NLP pipeline).
+#
+# Dataset: boltuix/emotions-dataset
+#   - Text samples labeled with emotion categories
+#   - Categories: joy, sadness, anger, fear, love, surprise
+#
+# Output:
+#   raw/emotions.parquet - Raw dataset in Parquet format
+#
+# Usage:
+#   python scripts/download.py
+#
+# Configuration:
+#   See params.yaml for dataset_name and output_dir settings.
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Download emotion dataset from HuggingFace."""
 
 from pathlib import Path

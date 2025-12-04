@@ -1,3 +1,31 @@
+# ==============================================================================
+# Fashion-MNIST Dataset Downloader
+# ==============================================================================
+#
+# Downloads the Fashion-MNIST dataset from the official source.
+# Fashion-MNIST is a drop-in replacement for MNIST with 10 fashion categories.
+#
+# Dataset Info:
+#   - 60,000 training images + 10,000 test images
+#   - 28x28 grayscale images
+#   - 10 classes: T-shirt, Trouser, Pullover, Dress, Coat, Sandal, Shirt,
+#                 Sneaker, Bag, Ankle boot
+#
+# Output Files (IDX format, gzipped):
+#   - train-images-idx3-ubyte.gz
+#   - train-labels-idx1-ubyte.gz
+#   - t10k-images-idx3-ubyte.gz
+#   - t10k-labels-idx1-ubyte.gz
+#
+# Usage:
+#   python scripts/download.py
+#
+# Configuration:
+#   See params.yaml for base_url and output_dir settings.
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Download FashionMNIST dataset."""
 
 import urllib.request

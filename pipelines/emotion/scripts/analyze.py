@@ -1,3 +1,27 @@
+# ==============================================================================
+# Emotion Dataset Analyzer
+# ==============================================================================
+#
+# Computes comprehensive metadata and statistics for the emotion dataset.
+# Statistics are used for monitoring and can inform model architecture choices.
+#
+# Statistics Computed:
+#   - Sample counts per split (train/val)
+#   - Label distribution (samples per emotion)
+#   - Text length statistics (characters and words)
+#
+# Output (metadata.json):
+#   - dataset: Name, description, source URL
+#   - schema: Feature types, available labels
+#   - splits: Sample counts, label distributions
+#   - metrics: Text length statistics
+#
+# Usage:
+#   python scripts/analyze.py
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Compute dataset metadata and statistics for emotion dataset."""
 
 import json

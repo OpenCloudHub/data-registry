@@ -1,7 +1,32 @@
-"""
-Analyze processed README embeddings and generate metadata.
-Fetches data from a specific DVC version for reproducibility.
-"""
+# ==============================================================================
+# README Embeddings Analyzer
+# ==============================================================================
+#
+# Generates metadata and statistics for the README embeddings pipeline.
+# Fetches data directly from DVC at a specific version tag for reproducibility.
+#
+# Key Features:
+#   - Fetches README files from DVC using version tags (e.g., opencloudhub-readmes-v1.0.0)
+#   - Computes statistics: file counts, sizes, character/line averages
+#   - Records embedding configuration (model, chunk size, overlap)
+#   - Outputs metadata.json for tracking in DVC metrics
+#
+# Environment Variables Required:
+#   - DVC_REPO: GitHub repository URL (e.g., https://github.com/OpenCloudHub/data-registry)
+#   - AWS_ENDPOINT_URL: MinIO/S3 endpoint for DVC remote access
+#   - AWS_ACCESS_KEY_ID: S3 access credentials
+#   - AWS_SECRET_ACCESS_KEY: S3 secret credentials
+#
+# Usage:
+#   python scripts/analyze.py
+#
+# Output:
+#   data/opencloudhub-readmes-embeddings/metadata.json
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
+"""Analyze processed README embeddings and generate metadata."""
 
 import json
 import os

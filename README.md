@@ -14,69 +14,52 @@
   </picture>
   </a>
 
-<h1 align="center">Data Registry MLOps Demo</h1>
+<h1 align="center">Data Registry</h1>
 
 <p align="center">
-    Versioned datasets for reproducible ML training using <a href="https://dvc.org/"><medium>DVC</medium></a>.<br />
+    Versioned datasets for reproducible ML training using <a href="https://dvc.org/"><strong>DVC</strong></a>.<br />
     <a href="https://github.com/opencloudhub"><strong>Explore OpenCloudHub »</strong></a>
   </p>
 </div>
 
-______________________________________________________________________
+---
 
 <details>
   <summary>📑 Table of Contents</summary>
   <ol>
     <li><a href="#about">About</a></li>
-    <li><a href="#why-dvc">Why DVC</a></li>
-    <li><a href="#available-datasets">Available Datasets</a></li>
+    <li><a href="#thesis-context">Thesis Context</a></li>
     <li><a href="#features">Features</a></li>
+    <li><a href="#architecture">Architecture</a></li>
     <li><a href="#getting-started">Getting Started</a></li>
-    <li><a href="#workflows">Workflows</a></li>
-    <li><a href="#production-architecture">Production Architecture</a></li>
+    <li><a href="#configuration">Configuration</a></li>
     <li><a href="#project-structure">Project Structure</a></li>
-    <li><a href="#storage-backends">Storage Backends</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
 </details>
 
-______________________________________________________________________
+---
 
-<!-- TODO: describe working local with config.local and switching the remote-->
-<!-- TODO: add info that when u wanna run the embeddings pipeline from repo and use cluser u need forward db like kubectl port-forward -n storage svc/demo-app-db-pooler 5433:5432 -->
+<h2 id="about">🎯 About</h2>
 
-<h2 id="about">📊 About</h2>
+This repository manages **dataset preparation, versioning, and distribution** for ML training pipelines. It demonstrates how to build reproducible data pipelines using [DVC](https://dvc.org/) (Data Version Control) as part of a complete MLOps platform.
 
-This repository manages dataset preparation, versioning, and distribution for ML training pipelines. It demonstrates automated data pipelines with [DVC](https://dvc.org/) (Data Version Control) for reproducible machine learning workflows.
-
-**Architecture:**
-
-```
-Data Registry (DVC) → Storage (Local/MinIO) → Training Repos (Ray Data)
-       ↓                                              ↓
-   Git Tags (e.g., fashion-mnist-v1.0.0)    →    MLflow Tracking
-```
-
-______________________________________________________________________
-
-<h2 id="why-dvc">🤔 Why DVC?</h2>
+### Why DVC?
 
 > *"What exact samples were in the training data for model v2.3 that we deployed two weeks ago?"*
 
-DVC (Data Version Control) answers this question. It solves a fundamental problem in ML: **tracking which exact data was used to train a model**.
+DVC solves a fundamental problem in ML: **tracking which exact data was used to train a model**.
 
-### The Problem
+**The Problem:**
 
 - Raw data changes over time (new samples, corrections, augmentations)
 - Training results become unreproducible
 - No way to rollback to a known-good dataset state
 - Large files don't belong in Git
 
-### The Solution
-
-DVC creates **git-like versioning for data**:
+**The Solution:** DVC creates **git-like versioning for data**:
 
 ```bash
 # Data versions are tied to git tags
@@ -89,59 +72,161 @@ dvc get https://github.com/OpenCloudHub/data-registry \
     --rev fashion-mnist-v1.0.0
 ```
 
-### Data Lineage Through the ML Lifecycle
+### Available Datasets
 
-The data version tag flows through the entire ML pipeline:
+| Dataset | Description | Format | Use Case |
+|---------|-------------|--------|----------|
+| `fashion-mnist` | Fashion product images | Parquet (images + labels) | Image classification |
+| `emotion` | Text emotion dataset | Parquet (text + labels) | Text classification |
+| `wine-quality` | Wine quality ratings | CSV | Tabular regression |
+| `roco-radiology` | Medical X-ray images with captions | Images + JSON annotations | Vision-Language Models (VLM) |
+| `opencloudhub-readmes` | Repository README files | Markdown files | RAG / Embeddings |
+| `opencloudhub-readmes-embeddings` | Vectorized READMEs | pgvector database | Semantic search |
 
+---
+
+<h2 id="thesis-context">📚 Thesis Context</h2>
+
+This repository is part of the **OpenCloudHub MLOps Platform** thesis project, demonstrating enterprise-grade ML infrastructure patterns.
+
+### Role in Platform Architecture
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         MLOPS PLATFORM LAYERS                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Layer 1: INFRASTRUCTURE (infra-modules, infra-live)                        │
+│    └─ Kubernetes, MinIO, PostgreSQL, MLflow, Ray, Argo                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Layer 2: DATA MANAGEMENT  ◄── THIS REPOSITORY                             │
+│    └─ DVC pipelines, versioned datasets, embeddings generation             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Layer 3: ML WORKLOADS (ai-ml-sklearn, ai-dl-bert, ai-radiology-qwen)       │
+│    └─ Training jobs consuming versioned data from Layer 2                   │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        DATA REGISTRY                             │
-│  fashion-mnist-v1.0.0 → MinIO (s3://dvcstore/files/md5/...)     │
-└─────────────────────────────────────────────────────────────────┘
+
+### Requirements Demonstrated
+
+| Requirement | Implementation | Files |
+|-------------|----------------|-------|
+| **Data Versioning** | DVC with git tags for immutable dataset versions | `dvc.yaml`, `dvc.lock` |
+| **Data Lineage** | Metadata tracking source version, model, parameters | `metadata.json` files |
+| **Reproducibility** | Version-pinned data access via `dvc get --rev` | Pipeline scripts |
+| **Distributed Processing** | Ray Data for scalable embeddings generation | `process.py` |
+| **MLflow Integration** | Prompt Registry for VLM instruction management | `roco-radiology/process.py` |
+| **GitOps Automation** | GitHub Actions → Argo Workflows for production runs | `.github/workflows/` |
+
+### Key Implementation Patterns
+
+1. **DVC + Git Tags Pattern**: Data versions tied to git tags enable training code to reference exact dataset snapshots
+2. **Metadata as Metrics**: Statistics computed at pipeline completion, tracked by DVC for monitoring
+3. **Environment-based Configuration**: Secrets via env vars, switching between local/cluster via `.env.*` files
+4. **Ray Data for Scale**: Distributed processing with batched embedding generation and database writes
+5. **MLflow Prompt Registry**: Version-controlled prompts for VLM training data preparation
+
+### Data Flow Through the Platform
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           DATA REGISTRY                                     │
+│  fashion-mnist-v1.0.0 → MinIO (s3://dvcstore/files/md5/...)                 │
+└─────────────────────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                      TRAINING JOB                                │
-│  Input: data_version=fashion-mnist-v1.0.0                       │
-│  Output: model artifact + MLflow run                            │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          TRAINING JOB                                       │
+│  Input: data_version=fashion-mnist-v1.0.0                                   │
+│  Output: model artifact + MLflow run                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
                               ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                       MLFLOW TRACKING                            │
-│  Params:                                                         │
-│    - data_version: fashion-mnist-v1.0.0                         │
-│    - data_pixel_mean: 0.2860                                    │
-│    - data_pixel_std: 0.3530                                     │
-│  → Full reproducibility: same data + same code = same model     │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         MLFLOW TRACKING                                     │
+│  Params:                                                                    │
+│    - data_version: fashion-mnist-v1.0.0                                     │
+│    - data_pixel_mean: 0.2860                                                │
+│    - data_pixel_std: 0.3530                                                 │
+│  → Full reproducibility: same data + same code = same model                 │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-______________________________________________________________________
-
-<h2 id="available-datasets">📦 Available Datasets</h2>
-
-| Dataset                           | Description                        | Format                    | Use Case                     |
-| --------------------------------- | ---------------------------------- | ------------------------- | ---------------------------- |
-| `fashion-mnist`                   | Fashion product images             | Parquet (images + labels) | Image classification         |
-| `emotion`                         | Text emotion dataset               | Parquet (text + labels)   | Text classification          |
-| `wine-quality`                    | Wine quality ratings               | CSV                       | Tabular regression           |
-| `radiology-mini`                  | Medical X-ray images with captions | Images + JSON annotations | Vision-Language Models (VLM) |
-| `opencloudhub-readmes`            | Repository README files            | Markdown files            | RAG / Embeddings             |
-| `opencloudhub-readmes-embeddings` | Vectorized READMEs                 | pgvector database         | Semantic search              |
-
-______________________________________________________________________
+---
 
 <h2 id="features">✨ Features</h2>
 
-- 📊 **Automated Data Pipelines**: Download → process → analyze workflow
-- 🔄 **Version Control**: Git tags + DVC for dataset versioning
-- 📈 **Automatic Metrics**: Statistics computed and tracked per dataset
-- 🔀 **Flexible Storage**: Local Docker Compose or MinIO cluster
-- 🚀 **Easy Integration**: Seamless use in training repos via `dvc get` or Python API
-- ☸️ **Production Patterns**: GitHub Actions + Argo Workflows for cluster execution
-- ⚡ **Ray Data Integration**: Distributed processing for large datasets
-- 🧪 **Development Environment**: VS Code DevContainer setup
+- **📊 Automated Data Pipelines**: Download → Process → Analyze workflow with DVC
+- **🔄 Version Control**: Git tags + DVC for immutable dataset versions
+- **📈 Automatic Metrics**: Statistics computed and tracked per dataset
+- **🔀 Flexible Storage**: Local Docker Compose or MinIO cluster backends
+- **🚀 Easy Integration**: Seamless use in training repos via `dvc get` or Python API
+- **☸️ Production Patterns**: GitHub Actions + Argo Workflows for cluster execution
+- **⚡ Ray Data Integration**: Distributed processing for large datasets
+- **🧠 Embeddings Pipeline**: RAG-ready vector generation with pgvector storage
+- **🧪 Development Environment**: VS Code DevContainer with all tools pre-configured
 
-______________________________________________________________________
+---
+
+<h2 id="architecture">🏗️ Architecture</h2>
+
+### Pipeline Stages
+
+Each dataset follows a three-stage pipeline pattern:
+
+```text
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   DOWNLOAD   │ ──► │   PROCESS    │ ──► │   ANALYZE    │
+│              │     │              │     │              │
+│ Fetch raw    │     │ Transform to │     │ Compute      │
+│ data from    │     │ ML-ready     │     │ statistics   │
+│ source       │     │ format       │     │ & metadata   │
+└──────────────┘     └──────────────┘     └──────────────┘
+      │                    │                    │
+      ▼                    ▼                    ▼
+   data/raw/         data/processed/      metadata.json
+   (DVC-tracked)     (DVC-tracked)        (git-tracked)
+```
+
+### Production Execution
+
+In production, pipelines run on Kubernetes via GitHub Actions and Argo Workflows:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          EXECUTION OPTIONS                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. LOCAL (Development)                                                     │
+│     └─ dvc repro pipelines/fashion-mnist/dvc.yaml                           │
+│                                                                             │
+│  2. GITHUB ACTIONS → ARGO WORKFLOWS (Production)                            │
+│     └─ Trigger via workflow_dispatch or schedule                            │
+│     └─ Submits Argo Workflow to Kubernetes cluster                          │
+│     └─ Auto-tags with semantic versioning                                   │
+│                                                                             │
+│  3. RAY DATA (Distributed Processing)                                       │
+│     └─ For compute-heavy pipelines (embeddings, large datasets)             │
+│     └─ Scales across Ray cluster workers                                    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Embeddings Pipeline (RAG)
+
+The embeddings pipeline demonstrates a more complex architecture for RAG systems:
+
+```text
+┌────────────────┐     ┌────────────────┐     ┌────────────────┐
+│  DVC (READMEs) │ ──► │   Ray Data     │ ──► │   pgvector     │
+│                │     │                │     │                │
+│ Version-tagged │     │ Chunk + Embed  │     │ LangChain-     │
+│ source data    │     │ (distributed)  │     │ compatible     │
+└────────────────┘     └────────────────┘     └────────────────┘
+        │                      │                      │
+        ▼                      ▼                      ▼
+  Git tag:              sentence-transformers    Vector search
+  readmes-v1.0.0        all-MiniLM-L6-v2        for RAG apps
+```
+
+---
 
 <h2 id="getting-started">🚀 Getting Started</h2>
 
@@ -159,105 +244,66 @@ ______________________________________________________________________
    cd data-registry
    ```
 
-1. **Open in DevContainer** (Recommended)
+2. **Open in DevContainer** (Recommended)
 
-   VSCode: `Ctrl+Shift+P` → `Dev Containers: Rebuild and Reopen in Container`
+   VS Code: `Ctrl+Shift+P` → `Dev Containers: Rebuild and Reopen in Container`
 
-1. **Configure environment**
+3. **Configure environment**
 
-   **For local Docker Compose setup:**
+   Choose your backend (see [Configuration](#configuration) for details):
 
    ```bash
-   # Source environment variables
+   # For local Docker Compose setup
    set -a && source .env.docker && set +a
 
-   # DVC is pre-configured to use local remote pointing to MinIO
-   dvc remote default local
-   ```
-
-   **For Minikube/Kubernetes setup:**
-
-   ```bash
+   # For Minikube/Kubernetes setup
    set -a && source .env.minikube && set +a
-   dvc remote default minio
    ```
 
-### Running a Pipeline Locally
+### Running a Pipeline
 
 ```bash
+# Navigate to pipeline directory
 cd pipelines/fashion-mnist
 
 # Run all stages
 dvc repro
 
-# Or run individually
+# Or run specific stage
 dvc repro download
 dvc repro process
 dvc repro analyze
 
-# Bootstrap all pipelines locally with version 1.0.0 for all
-bash scripts/bootstrap-data-examples.sh
+# Check results
+cat ../../data/fashion-mnist/metadata.json
 ```
 
-### Verifying Results
+### Bootstrap All Datasets
+
+For quick setup with all datasets at v1.0.0:
 
 ```bash
-# Check pipeline status
-dvc status
+./scripts/bootstrap-data-examples.sh
 
-# View computed metadata
-cat data/fashion-mnist/metadata.json
+# With forced re-run (ignore cache)
+./scripts/bootstrap-data-examples.sh --force
 
-# Push to remote storage
-dvc push
+# Include embeddings pipeline (requires pgvector)
+./scripts/bootstrap-data-examples.sh --with-embeddings
 ```
 
-______________________________________________________________________
+### Using Datasets in Training Code
 
-<h2 id="workflows">🔄 Workflows</h2>
-
-### Data Engineer: Adding/Updating Datasets
-
-**Create new dataset:**
+**Option 1: DVC CLI**
 
 ```bash
-# 1. Create structure
-mkdir -p data/my-dataset/{raw,processed}
-mkdir -p pipelines/my-dataset/scripts
-
-# 2. Create pipeline files (dvc.yaml, params.yaml, scripts/*.py)
-
-# 3. Run pipeline
-cd pipelines/my-dataset
-dvc repro
-
-# 4. Version and push
-dvc push
-git add .
-git commit -m "Add my-dataset v1.0.0"
-git tag my-dataset-v1.0.0
-git push origin main my-dataset-v1.0.0
-```
-
-### ML Engineer: Using Datasets
-
-#### Option 1: Download with DVC CLI
-
-```bash
-# Download specific dataset version
 dvc get https://github.com/OpenCloudHub/data-registry \
     data/fashion-mnist/processed \
     -o ./data/fashion-mnist \
     --rev fashion-mnist-v1.0.0
-
-# Download radiology dataset for VLM training
-dvc get https://github.com/OpenCloudHub/data-registry \
-    data/radiology-mini/processed \
-    -o ./data/radiology-mini \
-    --rev radiology-mini-v1.0.0
 ```
 
-#### Option 2: Python API (Recommended for Training Code)
+**Option 2: Python API (Recommended)**
 
 ```python
 import dvc.api
@@ -266,258 +312,196 @@ import json
 REPO = "https://github.com/OpenCloudHub/data-registry"
 VERSION = "fashion-mnist-v1.0.0"
 
-# Get S3 URLs for direct loading with Ray Data
+# Get S3 URL for direct loading with Ray Data
 train_url = dvc.api.get_url(
-    "data/fashion-mnist/processed/train/train.parquet", repo=REPO, rev=VERSION
+    "data/fashion-mnist/processed/train/train.parquet",
+    repo=REPO,
+    rev=VERSION
 )
 
-# Load metadata for normalization params
+# Load metadata for normalization parameters
 metadata = json.loads(
     dvc.api.read("data/fashion-mnist/metadata.json", repo=REPO, rev=VERSION)
 )
 
 # Log to MLflow for reproducibility
 import mlflow
-
-mlflow.log_params(
-    {
-        "data_version": VERSION,
-        "data_pixel_mean": metadata["metrics"]["train"]["pixel_mean"],
-    }
-)
+mlflow.log_params({
+    "data_version": VERSION,
+    "data_pixel_mean": metadata["metrics"]["train"]["pixel_mean"],
+})
 ```
 
-#### Option 3: Ray Data Integration
+---
 
-```python
-import ray
-import dvc.api
-import s3fs
+<h2 id="configuration">⚙️ Configuration</h2>
 
-# Get URLs from DVC
-train_url = dvc.api.get_url(
-    "data/radiology-mini/processed/train", repo=REPO, rev="radiology-mini-v1.0.0"
-)
+### Storage Backends
 
-# Create S3 filesystem for MinIO
-fs = s3fs.S3FileSystem(
-    endpoint_url=os.getenv("AWS_ENDPOINT_URL"),
-    key=os.getenv("AWS_ACCESS_KEY_ID"),
-    secret=os.getenv("AWS_SECRET_ACCESS_KEY"),
-)
+The repository supports two storage backends, configured via environment files and DVC remotes.
 
-# Load with Ray Data for distributed processing
-ds = ray.data.read_images(train_url, filesystem=fs)
-```
+#### Local Docker Compose (Development)
 
-______________________________________________________________________
-
-<h2 id="production-architecture">🏭 Production Architecture</h2>
-
-In production, pipelines run on a Kubernetes cluster via GitHub Actions and Argo Workflows—not manually.
-
-### Pipeline Execution Options
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     EXECUTION OPTIONS                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  1. LOCAL (Development)                                         │
-│     └─ dvc repro pipelines/fashion-mnist/dvc.yaml               │
-│                                                                  │
-│  2. GITHUB ACTIONS → ARGO WORKFLOWS (Production)                │
-│     └─ Trigger via workflow_dispatch or schedule                │
-│     └─ Submits to Argo Workflow on cluster                      │
-│                                                                  │
-│  3. RAY DATA (Distributed Processing)                           │
-│     └─ For compute-heavy pipelines (embeddings, large datasets) │
-│     └─ Scales across Ray cluster workers                        │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### GitHub Actions Integration
-
-Pipelines are triggered via GitHub Actions which submit jobs to the cluster:
-
-```yaml
-# .github/workflows/run-data-pipelines.yaml
-on:
-  workflow_dispatch:
-    inputs:
-      pipelines:
-        description: 'Pipelines to run (comma-separated)'
-        default: 'opencloudhub-readmes-download,fashion-mnist'
-  schedule:
-    - cron: '0 2 * * *'  # Nightly automated runs
-```
-
-The workflow submits an Argo Workflow that:
-
-1. Clones the repo
-1. Runs `dvc repro` for each pipeline
-1. Pushes data to MinIO
-1. Auto-tags with semantic versioning (e.g., `fashion-mnist-v1.2.3`)
-1. Commits updated `dvc.lock` files
-
-### Argo Workflow Templates
-
-We maintain reusable workflow templates in the [gitops repo](https://github.com/OpenCloudHub/gitops/tree/main/src/platform/mlops/argo-workflows/workflow-templates/data):
-
-#### Pure DVC Pipeline (CPU-bound)
-
-```yaml
-# For standard download/process/analyze pipelines
-apiVersion: argoproj.io/v1alpha1
-kind: WorkflowTemplate
-metadata:
-  name: data-pipeline
-spec:
-  entrypoint: main
-  templates:
-    - name: single-pipeline
-      script:
-        image: opencloudhuborg/data-registry-pipelines:latest
-        source: |
-          dvc repro pipelines/${PIPELINE}/dvc.yaml
-          dvc push
-          # Auto-version and tag...
-```
-
-#### Ray Data Pipeline (Distributed)
-
-```yaml
-# For compute-heavy pipelines like embeddings
-apiVersion: argoproj.io/v1alpha1
-kind: WorkflowTemplate
-metadata:
-  name: embeddings-pipeline
-spec:
-  templates:
-    - name: create-rayjob
-      # Creates a RayJob resource for distributed processing
-      # Scales across Ray cluster workers
-```
-
-### Scaling Considerations
-
-| Pipeline Type            | Execution Method        | When to Use                   |
-| ------------------------ | ----------------------- | ----------------------------- |
-| Simple download/process  | DVC in single container | Small datasets, I/O bound     |
-| Large dataset processing | Ray Data on cluster     | CPU-intensive, parallelizable |
-| Embedding generation     | Ray + GPU workers       | GPU-accelerated inference     |
-
-**Future improvements:**
-
-- Separate container images per pipeline for faster cold starts
-- Pipeline-specific resource limits
-- Caching of intermediate artifacts
-
-______________________________________________________________________
-
-<h2 id="project-structure">📁 Project Structure</h2>
-
-```
-data-registry/
-├── data/
-│   ├── fashion-mnist/          # Image classification dataset
-│   │   ├── raw/                # Downloaded files (DVC-tracked)
-│   │   ├── processed/          # Parquet files (DVC-tracked)
-│   │   └── metadata.json       # Dataset stats (git-tracked)
-│   ├── emotion/                # Text emotion dataset
-│   ├── wine-quality/           # Tabular regression dataset
-│   ├── radiology-mini/         # VLM training dataset
-│   │   ├── raw/
-│   │   │   ├── images/         # X-ray images
-│   │   │   └── captions.json   # Image descriptions
-│   │   └── processed/
-│   │       ├── train/
-│   │       │   ├── images/
-│   │       │   └── annotations.json
-│   │       └── test/
-│   ├── opencloudhub-readmes/   # README markdown files
-│   └── opencloudhub-readmes-embeddings/  # Embeddings metadata
-│
-├── pipelines/
-│   ├── fashion-mnist/
-│   │   ├── dvc.yaml            # Pipeline stages definition
-│   │   ├── params.yaml         # Pipeline parameters
-│   │   └── scripts/
-│   │       ├── download.py     # Stage 1: Download
-│   │       ├── process.py      # Stage 2: Transform
-│   │       └── analyze.py      # Stage 3: Compute stats
-│   ├── roco-radiology/         # Radiology VLM dataset pipeline
-│   ├── opencloudhub-readmes-download/
-│   └── opencloudhub-readmes-embeddings/  # Ray Data pipeline
-│       ├── dvc.yaml
-│       ├── params.py           # Python-based config
-│       └── scripts/
-│           └── process.py      # Ray Data distributed processing
-│
-├── .github/workflows/
-│   ├── run-data-pipelines.yaml      # Trigger DVC pipelines
-│   └── run-embeddings-pipeline.yaml # Trigger Ray embeddings
-│
-├── .dvc/
-│   └── config                  # DVC remote configuration
-│
-├── .env.docker                 # Local Docker Compose env
-└── .env.minikube              # Minikube/K8s env
-```
-
-______________________________________________________________________
-
-<h2 id="storage-backends">💾 Storage Backends</h2>
-
-### Local Docker Compose (Development)
-
-Use when developing locally with Docker Compose infrastructure:
+For local development with Docker Compose infrastructure:
 
 ```bash
-# Source environment
+# 1. Source environment variables
 set -a && source .env.docker && set +a
 
-# DVC config points to localhost MinIO
-dvc remote default local
-```
+# 2. Set DVC remote to docker
+dvc remote default docker
 
-**Configuration in `.dvc/config`:**
-
-```ini
-['remote "local"']
-    url = s3://dvcstore
-    endpointurl = http://localhost:9000
-```
-
-### MinIO on Kubernetes (Production)
-
-For minikube or production cluster:
-
-```bash
-set -a && source .env.minikube && set +a
-dvc remote default minio
+# 3. Run pipelines
+dvc repro pipelines/fashion-mnist/dvc.yaml
+dvc push
 ```
 
 **Configuration:**
 
-```ini
-['remote "minio"']
-    url = s3://dvcstore
-    endpointurl = https://minio-api.internal.opencloudhub.org
-    ssl_verify = false
-```
+- MinIO endpoint: `http://localhost:9000`
+- pgvector: `localhost:5432`
+- MLflow: `http://localhost:5000`
 
-### Switching Remotes
+#### Minikube/Kubernetes (Production-like)
+
+For testing with Kubernetes infrastructure:
 
 ```bash
-dvc remote list           # Show available remotes
-dvc remote default local  # Switch to local
-dvc remote default minio  # Switch to production
-dvc push -r minio         # Push to specific remote
+# 1. Source environment variables
+set -a && source .env.minikube && set +a
+
+# 2. Set DVC remote to minikube (default)
+dvc remote default minikube
+
+# 3. Port-forward services if needed
+kubectl port-forward -n storage svc/demo-app-db-pooler 5432:5432
+
+# 4. Run pipelines
+dvc repro pipelines/fashion-mnist/dvc.yaml
+dvc push
 ```
 
-______________________________________________________________________
+**Configuration:**
+
+- MinIO endpoint: `https://minio-api.internal.opencloudhub.org`
+- pgvector: port-forwarded to `localhost:5432`
+- MLflow: `https://mlflow.internal.opencloudhub.org`
+
+### DVC Remote Configuration
+
+```bash
+# List available remotes
+dvc remote list
+
+# Switch default remote
+dvc remote default docker    # Local development
+dvc remote default minikube  # Kubernetes
+
+# Push to specific remote
+dvc push -r minikube
+```
+
+**Remote definitions in `.dvc/config`:**
+
+```ini
+[core]
+    remote = minikube
+
+['remote "minikube"']
+    url = s3://dvcstore
+    endpointurl = https://minio-api.internal.opencloudhub.org
+
+['remote "docker"']
+    url = s3://dvcstore
+    endpointurl = http://localhost:9000
+```
+
+### Embeddings Pipeline Configuration
+
+The embeddings pipeline requires additional environment variables for database access:
+
+```bash
+# Required for embeddings pipeline
+export PGVECTOR_HOST=localhost
+export PGVECTOR_PORT=5432
+export PGVECTOR_DATABASE=vectors
+export PGVECTOR_USER=admin
+export PGVECTOR_PASSWORD=admin
+export PGVECTOR_TABLE_NAME=readme_embeddings
+```
+
+Parameters are defined in `pipelines/opencloudhub-readmes-embeddings/params.py`:
+
+```python
+# Data source (DVC version tag)
+DVC_DATA_VERSION = "opencloudhub-readmes-v1.0.0"
+DVC_DATA_PATH = "data/opencloudhub-readmes/raw"
+
+# Embedding model
+EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_CHUNK_SIZE = 1500
+EMBEDDING_CHUNK_OVERLAP = 200
+EMBEDDING_BATCH_SIZE = 4
+```
+
+---
+
+<h2 id="project-structure">📁 Project Structure</h2>
+
+```text
+data-registry/
+├── data/                           # Dataset storage (DVC-tracked)
+│   ├── fashion-mnist/
+│   │   ├── raw/                    # Downloaded IDX files
+│   │   ├── processed/              # Parquet files (train/val)
+│   │   └── metadata.json           # Statistics (git-tracked)
+│   ├── emotion/                    # Text classification dataset
+│   ├── wine-quality/               # Tabular regression dataset
+│   ├── roco-radiology/             # VLM training dataset
+│   │   ├── raw/images/             # Original X-ray images
+│   │   └── processed/              # Qwen conversation format
+│   ├── opencloudhub-readmes/       # README markdown files
+│   └── opencloudhub-readmes-embeddings/
+│       └── metadata.json           # Embeddings pipeline stats
+│
+├── pipelines/                      # DVC pipeline definitions
+│   ├── fashion-mnist/
+│   │   ├── dvc.yaml                # Pipeline stages
+│   │   ├── params.yaml             # Configuration
+│   │   └── scripts/
+│   │       ├── download.py         # Stage 1: Download
+│   │       ├── process.py          # Stage 2: Transform
+│   │       └── analyze.py          # Stage 3: Compute stats
+│   ├── emotion/                    # Same structure
+│   ├── wine-quality/               # Same structure
+│   ├── roco-radiology/             # VLM dataset pipeline
+│   ├── opencloudhub-readmes-download/
+│   └── opencloudhub-readmes-embeddings/
+│       ├── dvc.yaml
+│       ├── params.py               # Python config for DVC
+│       ├── run_pipeline.py         # Production wrapper
+│       └── scripts/
+│           ├── process.py          # Ray Data pipeline
+│           └── analyze.py          # Metadata generation
+│
+├── scripts/
+│   └── bootstrap-data-examples.sh  # Initialize all datasets
+│
+├── .github/workflows/
+│   ├── run-data-pipelines.yaml     # Trigger DVC pipelines via Argo
+│   └── run-embeddings-pipeline.yaml # Trigger Ray embeddings via Argo
+│
+├── .dvc/
+│   ├── config                      # DVC remote configuration (git-tracked)
+│   └── config.local                # Local overrides (git-ignored)
+│
+├── .env.docker                     # Local Docker Compose environment
+├── .env.minikube                   # Minikube/K8s environment
+├── Dockerfile                      # Multi-stage: dev + prod (Ray)
+└── pyproject.toml                  # Python dependencies
+```
+
+---
 
 <h2 id="contributing">👥 Contributing</h2>
 
@@ -525,21 +509,21 @@ Contributions are welcome! This project follows OpenCloudHub's contribution stan
 
 Please see our [Contributing Guidelines](https://github.com/opencloudhub/.github/blob/main/.github/CONTRIBUTING.md) and [Code of Conduct](https://github.com/opencloudhub/.github/blob/main/.github/CODE_OF_CONDUCT.md) for more details.
 
-______________________________________________________________________
+---
 
 <h2 id="license">📄 License</h2>
 
 Distributed under the Apache 2.0 License. See [LICENSE](LICENSE) for more information.
 
-______________________________________________________________________
+---
 
 <h2 id="contact">📬 Contact</h2>
 
-Organization Link: [https://github.com/OpenCloudHub](https://github.com/OpenCloudHub)
+- **Organization:** [OpenCloudHub](https://github.com/OpenCloudHub)
+- **Project:** [data-registry](https://github.com/opencloudhub/data-registry)
+- **Documentation:** [OpenCloudHub Docs](https://opencloudhub.github.io/docs)
 
-Project Link: [https://github.com/opencloudhub/data-registry](https://github.com/opencloudhub/data-registry)
-
-______________________________________________________________________
+---
 
 <h2 id="acknowledgements">🙏 Acknowledgements</h2>
 
@@ -548,16 +532,18 @@ ______________________________________________________________________
 - [Argo Workflows](https://argoproj.github.io/workflows/) - Kubernetes workflow orchestration
 - [MinIO](https://min.io/) - S3-compatible object storage
 - [MLflow](https://mlflow.org/) - ML lifecycle management
+- [sentence-transformers](https://www.sbert.net/) - Embedding generation
+- [pgvector](https://github.com/pgvector/pgvector) - Vector similarity search
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-______________________________________________________________________
+---
 
 <div align="center">
   <h3>🌟 Follow the Journey</h3>
   <p><em>Building in public • Learning together • Sharing knowledge</em></p>
 
-<div>
+  <div>
     <a href="https://opencloudhub.github.io/docs">
       <img src="https://img.shields.io/badge/Read%20the%20Docs-2596BE?style=for-the-badge&logo=read-the-docs&logoColor=white" alt="Documentation">
     </a>

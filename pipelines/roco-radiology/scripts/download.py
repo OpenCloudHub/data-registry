@@ -1,4 +1,34 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# Radiology Dataset Downloader (ROCO Mini)
+# ==============================================================================
+#
+# Downloads medical radiology images with captions from HuggingFace.
+# Used for Vision-Language Model (VLM) fine-tuning demonstrations.
+#
+# Dataset: unsloth/Radiology_mini
+#   - Medical X-ray and CT images
+#   - Natural language captions describing findings
+#   - Suitable for medical VLM training (Qwen-VL, LLaVA, etc.)
+#
+# Output Structure:
+#   raw/
+#   ├── images/
+#   │   ├── image_000000.jpg
+#   │   ├── image_000001.jpg
+#   │   └── ...
+#   └── captions.json
+#
+# Configuration:
+#   - num_samples in params.yaml limits download size for demos
+#   - Images converted to RGB JPEG for consistency
+#
+# Usage:
+#   python scripts/download.py
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Download Radiology dataset from HuggingFace."""
 
 from pathlib import Path

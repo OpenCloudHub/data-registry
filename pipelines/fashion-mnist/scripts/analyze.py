@@ -1,3 +1,35 @@
+# ==============================================================================
+# Fashion-MNIST Dataset Analyzer
+# ==============================================================================
+#
+# Computes comprehensive metadata and statistics for the Fashion-MNIST dataset.
+# This metadata is git-tracked and used by training pipelines for normalization.
+#
+# Statistics Computed:
+#   - Sample counts per split (train/val)
+#   - Class distribution (samples per category)
+#   - Pixel statistics: mean, std, min, max, median
+#
+# Output (metadata.json):
+#   - dataset: Name, description, source URL
+#   - schema: Feature types, shapes, class mappings
+#   - splits: Sample counts, class distributions
+#   - metrics: Pixel statistics for normalization
+#
+# Why Track Pixel Statistics?
+#   Training code uses these values for input normalization:
+#   ```python
+#   normalized = (image - metadata['metrics']['train']['pixel_mean']) /
+#                         metadata['metrics']['train']['pixel_std']
+#   ```
+#   By tracking this in git, we ensure reproducibility across data versions.
+#
+# Usage:
+#   python scripts/analyze.py
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Compute dataset metadata and statistics."""
 
 import json

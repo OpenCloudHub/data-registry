@@ -1,7 +1,45 @@
-"""
-Process README files using Ray Data: chunk, embed, and store to pgvector.
-Reads data directly from DVC without intermediate local storage.
-"""
+# ==============================================================================
+# README Embeddings Processor (Ray Data Pipeline)
+# ==============================================================================
+#
+# Distributed pipeline for generating and storing README embeddings using Ray Data.
+# This is the core processing script that demonstrates MLOps patterns for RAG systems.
+#
+# Pipeline Flow:
+#   1. Fetch README URLs from DVC (version-controlled data)
+#   2. Read markdown files via Ray Data from S3/MinIO
+#   3. Chunk text using LangChain splitters (header-aware + size-based)
+#   4. Generate embeddings with sentence-transformers (GPU-accelerated if available)
+#   5. Store vectors in pgvector with LangChain-compatible schema
+#
+# Key Components:
+#   - Chunker: MarkdownHeaderTextSplitter + RecursiveCharacterTextSplitter
+#   - Embedder: sentence-transformers/all-MiniLM-L6-v2 (384 dimensions)
+#   - PGVectorWriter: Batched inserts with full metadata for lineage tracking
+#
+# Metadata Stored per Chunk:
+#   - source_repo, source_file, chunk_index, doc_id
+#   - section_h1, section_h2, section_h3 (markdown context)
+#   - dvc_data_version, embedding_model (reproducibility)
+#   - docker_image, argo_workflow_uid (production lineage)
+#
+# Environment Variables Required:
+#   - DVC_REPO: GitHub repository URL
+#   - AWS_ENDPOINT_URL, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY: S3/MinIO
+#   - PGVECTOR_HOST, PGVECTOR_PORT, PGVECTOR_DATABASE, PGVECTOR_USER, PGVECTOR_PASSWORD
+#   - PGVECTOR_TABLE_NAME: Target table for embeddings
+#   - DOCKER_IMAGE_TAG, ARGO_WORKFLOW_UID: Production tracking (optional)
+#
+# Usage:
+#   python scripts/process.py
+#
+# Production:
+#   Runs as RayJob on Kubernetes via Argo Workflows
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
+"""Process README files using Ray Data: chunk, embed, and store to pgvector."""
 
 import os
 import re

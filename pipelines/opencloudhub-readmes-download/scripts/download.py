@@ -1,6 +1,37 @@
-"""
-Download README.md files from all public repositories in the GitHub organization.
-"""
+# ==============================================================================
+# GitHub Organization README Downloader
+# ==============================================================================
+#
+# Downloads README.md files from all public repositories in a GitHub organization.
+# Used to create a corpus for RAG (Retrieval-Augmented Generation) demonstrations.
+#
+# How It Works:
+#   1. Fetches list of all public repos via GitHub API
+#   2. Downloads README.md from each repo (base64 decoded)
+#   3. Saves with timestamped filenames for versioning
+#
+# Output Structure:
+#   raw/
+#   ├── repo1_README_20251204_013839.md
+#   ├── repo2_README_20251204_013840.md
+#   └── ...
+#
+# Rate Limiting:
+#   - Uses GITHUB_TOKEN env var if available (recommended)
+#   - Unauthenticated: 60 requests/hour
+#   - Authenticated: 5000 requests/hour
+#
+# Configuration:
+#   - org_name in params.yaml: Target GitHub organization
+#   - output_dir: Where to save README files
+#
+# Usage:
+#   GITHUB_TOKEN=ghp_xxx python scripts/download.py
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
+"""Download README.md files from all public repositories in the GitHub organization."""
 
 import base64
 import os

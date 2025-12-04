@@ -1,3 +1,34 @@
+# ==============================================================================
+# Wine Quality Dataset Processor
+# ==============================================================================
+#
+# Combines and processes red/white wine quality CSV files into a single
+# clean dataset for tabular regression.
+#
+# Processing Steps:
+#   1. Load red and white wine CSV files
+#   2. Add wine_type column (0=red, 1=white)
+#   3. Combine into single dataset
+#   4. Optionally sample for development
+#   5. Save as clean CSV
+#
+# Output Schema:
+#   - fixed acidity, volatile acidity, citric acid, ...
+#   - wine_type: 0=red, 1=white
+#   - quality: Target variable (0-10)
+#
+# Output:
+#   processed/wine-quality.csv
+#
+# Usage:
+#   python scripts/process.py
+#
+# Configuration:
+#   See params.yaml for sample_fraction and random_state.
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Convert Wine Quality CSV to clean format."""
 
 from pathlib import Path

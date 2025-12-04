@@ -1,3 +1,34 @@
+# ==============================================================================
+# Fashion-MNIST Data Processor
+# ==============================================================================
+#
+# Converts raw Fashion-MNIST IDX files to Parquet format for efficient loading.
+# Supports optional sampling for development/testing with smaller datasets.
+#
+# Processing Steps:
+#   1. Read gzipped IDX files (images + labels)
+#   2. Optionally sample a fraction of data (reproducible with seed=42)
+#   3. Convert to PyArrow tables
+#   4. Save as Parquet files (train.parquet, val.parquet)
+#
+# Output Schema:
+#   - image: List[List[uint8]] - 28x28 pixel values
+#   - label: uint8 - Class label (0-9)
+#
+# Parquet Benefits:
+#   - Columnar format efficient for ML workloads
+#   - Compression reduces storage by ~50%
+#   - Direct loading with Ray Data, PyArrow, Pandas
+#
+# Usage:
+#   python scripts/process.py
+#
+# Configuration:
+#   See params.yaml for raw_dir, output_dir, and sample_fraction.
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Convert IDX format to Parquet."""
 
 import gzip

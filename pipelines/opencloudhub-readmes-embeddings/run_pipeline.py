@@ -1,16 +1,44 @@
 #!/usr/bin/env python
+# ==============================================================================
+# DVC Pipeline Runner with Change Detection
+# ==============================================================================
+#
+# Wrapper script for running DVC pipelines in production (Argo Workflows).
+# Provides runtime parameter injection and change detection for conditional tagging.
+#
+# Purpose:
+#   In production, we need to:
+#   1. Inject runtime parameters (data version) into the pipeline
+#   2. Detect if DVC actually produced new outputs (vs cache hit)
+#   3. Signal to Argo whether to create new git tags
+#
+# How It Works:
+#   1. Reads DVC_DATA_VERSION and FORCE_RUN from environment variables
+#   2. Updates params.py with the runtime data version
+#   3. Captures dvc.lock hash BEFORE running pipeline
+#   4. Runs `dvc repro` (optionally with --force)
+#   5. Compares dvc.lock hash AFTER to detect changes
+#   6. Outputs marker: ##DVC_CHANGED=true/false##
+#
+# The marker is parsed by the Argo workflow to conditionally:
+#   - Create git tags only when new data was produced
+#   - Skip tagging on cache hits (no wasted versions)
+#
+# Environment Variables:
+#   - DVC_DATA_VERSION: The source data version tag to use
+#   - FORCE_RUN: "true" to ignore DVC cache and force re-run
+#
+# Usage:
+#   DVC_DATA_VERSION=opencloudhub-readmes-v1.0.0 python run_pipeline.py
+#
+# Production:
+#   Called by Argo Workflow template 'embeddings-pipeline'
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """
 Wrapper script to run DVC pipeline with runtime parameters from env vars.
-
-This script:
-1. Reads DVC_DATA_VERSION and FORCE_RUN from environment variables
-2. Updates params.py with the new DVC_DATA_VERSION
-3. Runs dvc repro
-4. Detects if DVC produced new outputs by comparing dvc.lock hash
-5. Outputs a marker (##DVC_CHANGED=true/false##) for Argo to parse
-
-The marker is used by the Argo workflow to conditionally create git tags
-only when the pipeline actually produced new outputs (not a cache hit).
 """
 
 import hashlib

@@ -1,3 +1,34 @@
+# ==============================================================================
+# Emotion Dataset Processor
+# ==============================================================================
+#
+# Processes raw emotion data: normalizes schema, samples, and splits into
+# train/validation sets for ML training.
+#
+# Processing Steps:
+#   1. Normalize column names (Sentence→text, Label→label)
+#   2. Sample a fraction of data (configurable, reproducible with seed)
+#   3. Split into train/val sets
+#   4. Save as Parquet files
+#
+# Output Schema:
+#   - text: string - Sentence text
+#   - label: string - Emotion label
+#
+# Output Structure:
+#   processed/
+#   ├── train/train.parquet
+#   └── val/val.parquet
+#
+# Usage:
+#   python scripts/process.py
+#
+# Configuration:
+#   See params.yaml for sample_fraction, train_split, and random_seed.
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Process emotion dataset: sample and split."""
 
 from pathlib import Path

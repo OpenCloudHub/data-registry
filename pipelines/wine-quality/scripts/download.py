@@ -1,3 +1,30 @@
+# ==============================================================================
+# Wine Quality Dataset Downloader
+# ==============================================================================
+#
+# Downloads the Wine Quality dataset from UCI ML Repository.
+# Used for tabular regression demonstrations.
+#
+# Dataset: UCI Wine Quality
+#   - Physicochemical properties of red and white wines
+#   - Target: Quality score (0-10 scale)
+#   - Features: acidity, sugar, pH, alcohol, etc.
+#
+# Output Files:
+#   - winequality-red.csv
+#   - winequality-white.csv
+#
+# Citation:
+#   P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis.
+#   "Modeling wine preferences by data mining from physicochemical properties."
+#   Decision Support Systems, Elsevier, 47(4):547-553, 2009.
+#
+# Usage:
+#   python scripts/download.py
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Download Wine Quality dataset."""
 
 import urllib.request

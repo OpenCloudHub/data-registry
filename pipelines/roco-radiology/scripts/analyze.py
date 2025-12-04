@@ -1,4 +1,39 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# Radiology Dataset Analyzer
+# ==============================================================================
+#
+# Computes metadata and statistics for the processed radiology VLM dataset.
+# Includes prompt lineage information from MLflow for full reproducibility.
+#
+# Statistics Computed:
+#   - Sample counts per split (train/test)
+#   - Caption length statistics (word count)
+#   - Image dimension statistics
+#
+# Prompt Lineage:
+#   The metadata includes full prompt information from the process stage:
+#   - prompt_name: MLflow prompt registry name
+#   - prompt_version: Specific version used
+#   - prompt_text: Actual instruction text
+#
+# This enables:
+#   - Tracking which prompt was used to create the dataset
+#   - Comparing model performance across prompt versions
+#   - Reproducing exact dataset configuration
+#
+# Output (metadata.json):
+#   - dataset: Name, description, source, format
+#   - prompt: MLflow prompt metadata
+#   - splits: Sample counts
+#   - metrics: Caption and image statistics
+#
+# Usage:
+#   python scripts/analyze.py
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Compute radiology dataset metadata and statistics."""
 
 import json

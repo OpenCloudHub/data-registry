@@ -1,3 +1,35 @@
+# ==============================================================================
+# Wine Quality Dataset Analyzer
+# ==============================================================================
+#
+# Computes comprehensive metadata and statistics for the wine quality dataset.
+# Statistics inform feature scaling and model selection.
+#
+# Statistics Computed:
+#   - Total sample count
+#   - Quality score distribution
+#   - Wine type distribution (red/white)
+#   - Per-feature statistics (mean, std, min, max, median)
+#
+# Output (metadata.json):
+#   - dataset: Name, description, source, citation
+#   - schema: Feature types, target range
+#   - summary: Sample counts, distributions
+#   - statistics: Per-feature numerical stats
+#
+# Why Track Feature Statistics?
+#   Training code can use these for feature scaling:
+#   ```python
+#   scaler = StandardScaler()
+#   scaler.mean_ = [metadata['statistics']['features'][f]['mean'] for f in features]
+#   ```
+#
+# Usage:
+#   python scripts/analyze.py
+#
+# Part of the Data Registry MLOps Demo - Thesis Project
+# ==============================================================================
+
 """Compute dataset metadata and statistics."""
 
 import json
