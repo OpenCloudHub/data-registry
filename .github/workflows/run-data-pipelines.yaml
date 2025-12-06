@@ -20,13 +20,25 @@ on:
         description: 'Mark as automated run (adds -automated suffix to tags)'
         type: boolean
         default: false
+      compute_type:
+        description: 'Compute configuration'
+        required: true
+        type: choice
+        options:
+          - 'cpu-small'
+          - 'cpu-medium'
+          - 'cpu-large'
+          - 'gpu-small'
+          - 'gpu-medium'
+          - 'gpu-large'
+        default: 'cpu-small'
   schedule:
     - cron: '0 2 * * *'
 
 jobs:
   submit:
     name: 🚀 Submit Data Pipeline
-    runs-on: self-hosted-local
+    runs-on: arc-runner-set
     steps:
       # =========================================================================
       # Setup
@@ -85,6 +97,8 @@ jobs:
                 value: "${{ inputs.bump_type || 'patch' }}"
               - name: is_automated
                 value: "${{ steps.params.outputs.is_automated }}"
+              - name: compute_type
+                value: "${{inputs.compute_type}}"
           EOF
 
           # Get the actual workflow name
