@@ -1,176 +1,179 @@
 {
-	"dataset": {
-		"name": "wine-quality",
-		"description": "Wine Quality dataset - physicochemical properties and quality ratings",
-		"source": "https://archive.ics.uci.edu/ml/datasets/wine+quality",
-		"citation": "P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. Modeling wine preferences by data mining from physicochemical properties. Decision Support Systems, Elsevier, 47(4):547-553, 2009."
-	},
-	"schema": {
-		"features": {
-			"fixed acidity": {
-				"dtype": "float64",
-				"description": "Wine feature: fixed acidity"
-			},
-			"volatile acidity": {
-				"dtype": "float64",
-				"description": "Wine feature: volatile acidity"
-			},
-			"citric acid": {
-				"dtype": "float64",
-				"description": "Wine feature: citric acid"
-			},
-			"residual sugar": {
-				"dtype": "float64",
-				"description": "Wine feature: residual sugar"
-			},
-			"chlorides": {
-				"dtype": "float64",
-				"description": "Wine feature: chlorides"
-			},
-			"free sulfur dioxide": {
-				"dtype": "float64",
-				"description": "Wine feature: free sulfur dioxide"
-			},
-			"total sulfur dioxide": {
-				"dtype": "float64",
-				"description": "Wine feature: total sulfur dioxide"
-			},
-			"density": {
-				"dtype": "float64",
-				"description": "Wine feature: density"
-			},
-			"pH": {
-				"dtype": "float64",
-				"description": "Wine feature: pH"
-			},
-			"sulphates": {
-				"dtype": "float64",
-				"description": "Wine feature: sulphates"
-			},
-			"alcohol": {
-				"dtype": "float64",
-				"description": "Wine feature: alcohol"
-			},
-			"wine_type": {
-				"dtype": "int64",
-				"description": "Wine feature: wine_type"
-			}
-		},
-		"target": {
-			"name": "quality",
-			"dtype": "int64",
-			"description": "Wine quality score (0-10)",
-			"range": [3, 9]
-		}
-	},
-	"summary": {
-		"num_samples": 6497,
-		"num_features": 12,
-		"quality_distribution": {
-			"3": 30,
-			"4": 216,
-			"5": 2138,
-			"6": 2836,
-			"7": 1079,
-			"8": 193,
-			"9": 5
-		},
-		"wine_type_distribution": {
-			"white": 4898,
-			"red": 1599
-		}
-	},
-	"statistics": {
-		"features": {
-			"fixed acidity": {
-				"mean": 7.215307064799139,
-				"std": 1.2964337577998153,
-				"min": 3.8,
-				"max": 15.9,
-				"median": 7.0
-			},
-			"volatile acidity": {
-				"mean": 0.3396659996921656,
-				"std": 0.16463647408467877,
-				"min": 0.08,
-				"max": 1.58,
-				"median": 0.29
-			},
-			"citric acid": {
-				"mean": 0.3186332153301524,
-				"std": 0.14531786489759155,
-				"min": 0.0,
-				"max": 1.66,
-				"median": 0.31
-			},
-			"residual sugar": {
-				"mean": 5.443235339387409,
-				"std": 4.757803743147418,
-				"min": 0.6,
-				"max": 65.8,
-				"median": 3.0
-			},
-			"chlorides": {
-				"mean": 0.05603386178236109,
-				"std": 0.03503360137245907,
-				"min": 0.009,
-				"max": 0.611,
-				"median": 0.047
-			},
-			"free sulfur dioxide": {
-				"mean": 30.525319378174544,
-				"std": 17.7493997720025,
-				"min": 1.0,
-				"max": 289.0,
-				"median": 29.0
-			},
-			"total sulfur dioxide": {
-				"mean": 115.7445744189626,
-				"std": 56.521854522630285,
-				"min": 6.0,
-				"max": 440.0,
-				"median": 118.0
-			},
-			"density": {
-				"mean": 0.9946966338309989,
-				"std": 0.0029986730037190393,
-				"min": 0.98711,
-				"max": 1.03898,
-				"median": 0.99489
-			},
-			"pH": {
-				"mean": 3.2185008465445586,
-				"std": 0.16078720210398764,
-				"min": 2.72,
-				"max": 4.01,
-				"median": 3.21
-			},
-			"sulphates": {
-				"mean": 0.5312682776666154,
-				"std": 0.14880587361449027,
-				"min": 0.22,
-				"max": 2.0,
-				"median": 0.51
-			},
-			"alcohol": {
-				"mean": 10.491800831152839,
-				"std": 1.192711748870993,
-				"min": 8.0,
-				"max": 14.9,
-				"median": 10.3
-			},
-			"wine_type": {
-				"mean": 0.7538864091118977,
-				"std": 0.4307786597787077,
-				"min": 0.0,
-				"max": 1.0,
-				"median": 1.0
-			}
-		},
-		"target": {
-			"mean": 5.818377712790519,
-			"std": 0.8732552715311248,
-			"median": 6.0
-		}
-	}
+  "dataset": {
+    "name": "wine-quality",
+    "description": "Wine Quality dataset - physicochemical properties and quality ratings",
+    "source": "https://archive.ics.uci.edu/ml/datasets/wine+quality",
+    "citation": "P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. Modeling wine preferences by data mining from physicochemical properties. Decision Support Systems, Elsevier, 47(4):547-553, 2009."
+  },
+  "schema": {
+    "features": {
+      "fixed acidity": {
+        "dtype": "float64",
+        "description": "Wine feature: fixed acidity"
+      },
+      "volatile acidity": {
+        "dtype": "float64",
+        "description": "Wine feature: volatile acidity"
+      },
+      "citric acid": {
+        "dtype": "float64",
+        "description": "Wine feature: citric acid"
+      },
+      "residual sugar": {
+        "dtype": "float64",
+        "description": "Wine feature: residual sugar"
+      },
+      "chlorides": {
+        "dtype": "float64",
+        "description": "Wine feature: chlorides"
+      },
+      "free sulfur dioxide": {
+        "dtype": "float64",
+        "description": "Wine feature: free sulfur dioxide"
+      },
+      "total sulfur dioxide": {
+        "dtype": "float64",
+        "description": "Wine feature: total sulfur dioxide"
+      },
+      "density": {
+        "dtype": "float64",
+        "description": "Wine feature: density"
+      },
+      "pH": {
+        "dtype": "float64",
+        "description": "Wine feature: pH"
+      },
+      "sulphates": {
+        "dtype": "float64",
+        "description": "Wine feature: sulphates"
+      },
+      "alcohol": {
+        "dtype": "float64",
+        "description": "Wine feature: alcohol"
+      },
+      "wine_type": {
+        "dtype": "int64",
+        "description": "Wine feature: wine_type"
+      }
+    },
+    "target": {
+      "name": "quality",
+      "dtype": "int64",
+      "description": "Wine quality score (0-10)",
+      "range": [
+        3,
+        9
+      ]
+    }
+  },
+  "summary": {
+    "num_samples": 6497,
+    "num_features": 12,
+    "quality_distribution": {
+      "3": 30,
+      "4": 216,
+      "5": 2138,
+      "6": 2836,
+      "7": 1079,
+      "8": 193,
+      "9": 5
+    },
+    "wine_type_distribution": {
+      "white": 4898,
+      "red": 1599
+    }
+  },
+  "statistics": {
+    "features": {
+      "fixed acidity": {
+        "mean": 7.215307064799139,
+        "std": 1.2964337577998153,
+        "min": 3.8,
+        "max": 15.9,
+        "median": 7.0
+      },
+      "volatile acidity": {
+        "mean": 0.3396659996921656,
+        "std": 0.16463647408467877,
+        "min": 0.08,
+        "max": 1.58,
+        "median": 0.29
+      },
+      "citric acid": {
+        "mean": 0.3186332153301524,
+        "std": 0.14531786489759155,
+        "min": 0.0,
+        "max": 1.66,
+        "median": 0.31
+      },
+      "residual sugar": {
+        "mean": 5.443235339387409,
+        "std": 4.757803743147418,
+        "min": 0.6,
+        "max": 65.8,
+        "median": 3.0
+      },
+      "chlorides": {
+        "mean": 0.05603386178236109,
+        "std": 0.03503360137245907,
+        "min": 0.009,
+        "max": 0.611,
+        "median": 0.047
+      },
+      "free sulfur dioxide": {
+        "mean": 30.525319378174544,
+        "std": 17.7493997720025,
+        "min": 1.0,
+        "max": 289.0,
+        "median": 29.0
+      },
+      "total sulfur dioxide": {
+        "mean": 115.7445744189626,
+        "std": 56.521854522630285,
+        "min": 6.0,
+        "max": 440.0,
+        "median": 118.0
+      },
+      "density": {
+        "mean": 0.9946966338309989,
+        "std": 0.0029986730037190393,
+        "min": 0.98711,
+        "max": 1.03898,
+        "median": 0.99489
+      },
+      "pH": {
+        "mean": 3.2185008465445586,
+        "std": 0.16078720210398764,
+        "min": 2.72,
+        "max": 4.01,
+        "median": 3.21
+      },
+      "sulphates": {
+        "mean": 0.5312682776666154,
+        "std": 0.14880587361449027,
+        "min": 0.22,
+        "max": 2.0,
+        "median": 0.51
+      },
+      "alcohol": {
+        "mean": 10.491800831152839,
+        "std": 1.192711748870993,
+        "min": 8.0,
+        "max": 14.9,
+        "median": 10.3
+      },
+      "wine_type": {
+        "mean": 0.7538864091118977,
+        "std": 0.4307786597787077,
+        "min": 0.0,
+        "max": 1.0,
+        "median": 1.0
+      }
+    },
+    "target": {
+      "mean": 5.818377712790519,
+      "std": 0.8732552715311248,
+      "median": 6.0
+    }
+  }
 }
