@@ -1,34 +1,34 @@
 {
-  "source_data_version": "opencloudhub-readmes-v1.0.0",
-  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-  "chunk_size": 800,
-  "chunk_overlap": 100,
-  "statistics": {
-    "total_files": 16,
-    "total_repositories": 16,
-    "repository_names": [
-      ".github_20251205_145615",
-      "ai-dl-bert_20251205_145616",
-      "ai-dl-lightning_20251205_145617",
-      "ai-generative-qwen_20251205_145617",
-      "ai-ml-sklearn_20251205_145616",
-      "ai-radiology-qwen_20251205_145619",
-      "api-testing_20251205_145618",
-      "data-registry_20251205_145618",
-      "demo-app-frontend_20251205_145619",
-      "demo-app-genai-backend_20251205_145618",
-      "docs_20251205_145616",
-      "gh-actions-local-runner_20251205_145617",
-      "gitops_20251205_145616",
-      "infra-live_20251205_145615",
-      "infra-modules_20251205_145615",
-      "local-compose-stack_20251205_145619"
-    ],
-    "total_size_bytes": 301814,
-    "average_size_bytes": 18863.38,
-    "total_characters": 268053,
-    "average_characters": 16753.31,
-    "total_lines": 6762,
-    "average_lines": 422.62
-  }
+	"source_data_version": "opencloudhub-readmes-v1.0.0",
+	"embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+	"chunk_size": 800,
+	"chunk_overlap": 100,
+	"statistics": {
+		"total_files": 16,
+		"total_repositories": 16,
+		"repository_names": [
+			".github_20251205_145615",
+			"ai-dl-bert_20251205_145616",
+			"ai-dl-lightning_20251205_145617",
+			"ai-generative-qwen_20251205_145617",
+			"ai-ml-sklearn_20251205_145616",
+			"ai-radiology-qwen_20251205_145619",
+			"api-testing_20251205_145618",
+			"data-registry_20251205_145618",
+			"demo-app-frontend_20251205_145619",
+			"demo-app-genai-backend_20251205_145618",
+			"docs_20251205_145616",
+			"gh-actions-local-runner_20251205_145617",
+			"gitops_20251205_145616",
+			"infra-live_20251205_145615",
+			"infra-modules_20251205_145615",
+			"local-compose-stack_20251205_145619"
+		],
+		"total_size_bytes": 301814,
+		"average_size_bytes": 18863.38,
+		"total_characters": 268053,
+		"average_characters": 16753.31,
+		"total_lines": 6762,
+		"average_lines": 422.62
+	}
 }

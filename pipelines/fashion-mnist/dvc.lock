@@ -9,7 +9,7 @@ stages:
       size: 2034
     params:
       params.yaml:
-        download.base_url: 
+        download.base_url:
           http://fashion-mnist.s3-website.eu-central-1.amazonaws.com
     outs:
     - path: ../../data/fashion-mnist/raw
