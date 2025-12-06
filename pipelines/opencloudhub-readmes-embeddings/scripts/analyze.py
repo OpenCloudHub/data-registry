@@ -42,7 +42,8 @@ import params
 _output_path = os.getenv(
     "ANALYZE_OUTPUT_FILE", "../../data/opencloudhub-readmes-embeddings/metadata.json"
 )
-ANALYZE_OUTPUT_FILE = Path(__file__).parent / _output_path
+# __file__ is in scripts/, go up to pipeline dir, then apply relative path
+ANALYZE_OUTPUT_FILE = (Path(__file__).parent.parent / _output_path).resolve()
 
 
 def fetch_readme_list(repo: str, data_version: str, data_path: str) -> list:
