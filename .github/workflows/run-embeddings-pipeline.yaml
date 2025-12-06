@@ -40,7 +40,7 @@ on:
 jobs:
   submit:
     name: 🚀 Submit Embeddings Pipeline
-    runs-on: self-hosted-local
+    runs-on: arc-runner-set
     steps:
       # =========================================================================
       # Setup
