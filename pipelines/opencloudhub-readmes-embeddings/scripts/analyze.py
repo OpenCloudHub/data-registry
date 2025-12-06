@@ -39,6 +39,11 @@ import dvc.api
 sys.path.insert(0, str(Path(__file__).parent.parent))
 import params
 
+_output_path = os.getenv(
+    "ANALYZE_OUTPUT_FILE", "../../data/opencloudhub-readmes-embeddings/metadata.json"
+)
+ANALYZE_OUTPUT_FILE = Path(__file__).parent / _output_path
+
 
 def fetch_readme_list(repo: str, data_version: str, data_path: str) -> list:
     """Get list of README files from DVC version."""
@@ -102,7 +107,7 @@ def main():
     """Generate metadata for README embeddings."""
     data_version = params.DVC_DATA_VERSION
     data_path = params.DVC_DATA_PATH
-    output_file = params.ANALYZE_OUTPUT_FILE
+    output_file = ANALYZE_OUTPUT_FILE
     repo = params.DVC_REPO_URL
 
     print(f"\n{'=' * 60}")

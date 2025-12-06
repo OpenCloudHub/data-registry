@@ -13,6 +13,7 @@ stages:
           - EMBEDDING_BATCH_SIZE
           - MIN_CHUNK_SIZE
           - MAX_NOISE_RATIO
+
   analyze:
     cmd: python scripts/analyze.py
     deps:
