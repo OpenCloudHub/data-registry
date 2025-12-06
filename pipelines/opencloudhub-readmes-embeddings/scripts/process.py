@@ -597,7 +597,7 @@ def main():
         Embedder,
         fn_constructor_kwargs={"model_name": model_name, "device": device},
         batch_size=batch_size,
-        num_cpus=4,
+        # num_cpus=1,
     )
     ds = ds.map_batches(
         PGVectorWriter,
@@ -610,7 +610,7 @@ def main():
             "argo_workflow_uid": argo_workflow_uid,
         },
         batch_size=100,
-        num_cpus=1,
+        # num_cpus=1,
     )
 
     # Trigger execution of all stages
