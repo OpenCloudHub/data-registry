@@ -1,83 +1,86 @@
 {
-	"dataset": {
-		"name": "fashion-mnist",
-		"description": "Fashion-MNIST dataset - grayscale images of fashion items",
-		"source": "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com"
-	},
-	"schema": {
-		"features": {
-			"image": {
-				"dtype": "uint8",
-				"shape": [28, 28],
-				"description": "28x28 grayscale image"
-			},
-			"label": {
-				"dtype": "uint8",
-				"shape": [],
-				"description": "Class label (0-9)",
-				"classes": {
-					"0": "T-shirt/top",
-					"1": "Trouser",
-					"2": "Pullover",
-					"3": "Dress",
-					"4": "Coat",
-					"5": "Sandal",
-					"6": "Shirt",
-					"7": "Sneaker",
-					"8": "Bag",
-					"9": "Ankle boot"
-				}
-			}
-		}
-	},
-	"splits": {
-		"train": {
-			"num_samples": 36000,
-			"num_features": 2,
-			"class_distribution": {
-				"T-shirt/top": 3539,
-				"Trouser": 3599,
-				"Pullover": 3622,
-				"Dress": 3630,
-				"Coat": 3633,
-				"Sandal": 3573,
-				"Shirt": 3602,
-				"Sneaker": 3592,
-				"Bag": 3581,
-				"Ankle boot": 3629
-			}
-		},
-		"val": {
-			"num_samples": 6000,
-			"num_features": 2,
-			"class_distribution": {
-				"T-shirt/top": 582,
-				"Trouser": 593,
-				"Pullover": 599,
-				"Dress": 590,
-				"Coat": 612,
-				"Sandal": 601,
-				"Shirt": 592,
-				"Sneaker": 636,
-				"Bag": 592,
-				"Ankle boot": 603
-			}
-		}
-	},
-	"metrics": {
-		"train": {
-			"pixel_mean": 0.2859452992308034,
-			"pixel_std": 0.3530615147815278,
-			"pixel_min": 0.0,
-			"pixel_max": 1.0,
-			"pixel_median": 0.0
-		},
-		"val": {
-			"pixel_mean": 0.2856579381752702,
-			"pixel_std": 0.35236269468971876,
-			"pixel_min": 0.0,
-			"pixel_max": 1.0,
-			"pixel_median": 0.0
-		}
-	}
+  "dataset": {
+    "name": "fashion-mnist",
+    "description": "Fashion-MNIST dataset - grayscale images of fashion items",
+    "source": "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com"
+  },
+  "schema": {
+    "features": {
+      "image": {
+        "dtype": "uint8",
+        "shape": [
+          28,
+          28
+        ],
+        "description": "28x28 grayscale image"
+      },
+      "label": {
+        "dtype": "uint8",
+        "shape": [],
+        "description": "Class label (0-9)",
+        "classes": {
+          "0": "T-shirt/top",
+          "1": "Trouser",
+          "2": "Pullover",
+          "3": "Dress",
+          "4": "Coat",
+          "5": "Sandal",
+          "6": "Shirt",
+          "7": "Sneaker",
+          "8": "Bag",
+          "9": "Ankle boot"
+        }
+      }
+    }
+  },
+  "splits": {
+    "train": {
+      "num_samples": 36000,
+      "num_features": 2,
+      "class_distribution": {
+        "T-shirt/top": 3539,
+        "Trouser": 3599,
+        "Pullover": 3622,
+        "Dress": 3630,
+        "Coat": 3633,
+        "Sandal": 3573,
+        "Shirt": 3602,
+        "Sneaker": 3592,
+        "Bag": 3581,
+        "Ankle boot": 3629
+      }
+    },
+    "val": {
+      "num_samples": 6000,
+      "num_features": 2,
+      "class_distribution": {
+        "T-shirt/top": 582,
+        "Trouser": 593,
+        "Pullover": 599,
+        "Dress": 590,
+        "Coat": 612,
+        "Sandal": 601,
+        "Shirt": 592,
+        "Sneaker": 636,
+        "Bag": 592,
+        "Ankle boot": 603
+      }
+    }
+  },
+  "metrics": {
+    "train": {
+      "pixel_mean": 0.2859452992308034,
+      "pixel_std": 0.3530615147815278,
+      "pixel_min": 0.0,
+      "pixel_max": 1.0,
+      "pixel_median": 0.0
+    },
+    "val": {
+      "pixel_mean": 0.2856579381752702,
+      "pixel_std": 0.35236269468971876,
+      "pixel_min": 0.0,
+      "pixel_max": 1.0,
+      "pixel_median": 0.0
+    }
+  }
 }
