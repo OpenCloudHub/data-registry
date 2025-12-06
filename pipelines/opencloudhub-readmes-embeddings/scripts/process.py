@@ -142,8 +142,10 @@ class Chunker:
     """Chunk markdown text by headers first, then by size if needed.
 
     Improvements over naive chunking:
+    - Strips HTML tags and markdown images
     - Removes ASCII art boxes (├─│└┌┐┘┬┴) that add no semantic value
     - Filters out chunks that are mostly whitespace or too short
+    - Prepends header context to chunks for better embeddings
     - Normalizes excessive whitespace
     - Enforces minimum chunk size to avoid single-line fragments
     """
@@ -168,7 +170,7 @@ class Chunker:
                 ("##", "h2"),
                 ("###", "h3"),
             ],
-            strip_headers=False,  # Keep headers in the text
+            strip_headers=False,
         )
         # Then split large sections by size
         self.size_splitter = RecursiveCharacterTextSplitter(
@@ -179,57 +181,77 @@ class Chunker:
         self.chunk_size = chunk_size
 
     def _clean_header(self, h: str) -> str:
-        """Remove anchor tags like <a id="..."></a>."""
-        return re.sub(r"<a[^>]*></a>", "", h).strip()
-
-    def _extract_filename_from_path(self, path_str: str) -> str:
-        """Extract actual filename from S3 URL or path.
-
-        Handles paths like:
-        - s3://bucket/files/md5/ab/cdef123... -> tries to find README name
-        - /path/to/repo_README_date.md -> repo_README_date.md
-        """
-        # For S3 DVC paths, the path is a hash, not the original filename
-        # We need to extract from the original path in row if available
-        path = Path(path_str)
-        return path.name
+        """Remove anchor tags and HTML from headers."""
+        h = re.sub(r"<[^>]+>", "", h)
+        return h.strip()
 
     def _clean_text(self, text: str) -> str:
-        """Clean and normalize text before chunking.
+        """Clean and normalize text before chunking."""
+        # Strip HTML tags
+        text = re.sub(r"<[^>]+>", "", text)
 
-        - Removes excessive blank lines (3+ → 2)
-        - Normalizes multiple spaces between words → single space
-        - Preserves code block indentation (4 spaces or tab)
-        - Strips trailing whitespace from all lines
-        """
-        # Remove excessive blank lines (more than 2 consecutive)
-        text = re.sub(r"\n{3,}", "\n\n", text)
+        # Remove markdown image syntax ![alt](url)
+        text = re.sub(r"!\[[^\]]*\]\([^)]+\)", "", text)
+
+        # Remove inline links but keep text: [text](url) -> text
+        text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
 
         lines = text.split("\n")
         cleaned_lines = []
 
         in_code_block = False
         for line in lines:
-            # Track fenced code blocks (```)
+            # Track fenced code blocks
             if line.strip().startswith("```"):
                 in_code_block = not in_code_block
                 cleaned_lines.append(line.rstrip())
                 continue
 
-            # Preserve indentation in code blocks
-            if in_code_block or line.startswith("    ") or line.startswith("\t"):
+            # Preserve code blocks as-is
+            if in_code_block:
                 cleaned_lines.append(line.rstrip())
-            else:
-                # Normalize multiple spaces to single space
-                # This handles cases like "word     word" → "word word"
-                normalized = re.sub(r"[ \t]+", " ", line.strip())
-                cleaned_lines.append(normalized)
+                continue
 
-        return "\n".join(cleaned_lines)
+            stripped = line.strip()
+
+            # Skip empty lines (will consolidate later)
+            if not stripped:
+                cleaned_lines.append("")
+                continue
+
+            # Skip lines that are mostly box-drawing characters
+            box_chars = len(self.ASCII_BOX_PATTERN.findall(line))
+            if box_chars > len(stripped) * 0.3:
+                continue
+
+            # Skip pure separator lines
+            if all(c in "-=_*─│┌┐└┘├┤┬┴┼" for c in stripped):
+                continue
+
+            # Skip "back to top" links and similar nav elements
+            if "back to top" in stripped.lower():
+                continue
+
+            # Skip shield.io badges and similar
+            if (
+                "img.shields.io" in stripped
+                or "badge" in stripped.lower()
+                and "http" in stripped
+            ):
+                continue
+
+            # Normalize whitespace
+            normalized = re.sub(r"[ \t]+", " ", stripped)
+            cleaned_lines.append(normalized)
+
+        # Remove excessive blank lines
+        text = "\n".join(cleaned_lines)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+
+        return text.strip()
 
     def _is_noise_chunk(self, text: str) -> bool:
         """Detect if a chunk is mostly noise (ASCII art, whitespace, etc.)."""
-        # Remove whitespace for analysis
         stripped = text.strip()
 
         # Too short to be useful
@@ -239,14 +261,12 @@ class Chunker:
         # Calculate ratio of ASCII box characters
         ascii_chars = len(self.ASCII_BOX_PATTERN.findall(text))
         if ascii_chars > 0:
-            # If more than threshold is ASCII box drawing, it's likely a diagram
             ratio = ascii_chars / len(stripped)
             if ratio > self.max_noise_ratio:
                 return True
 
         # Check if it's just a markdown table row fragment
         if stripped.startswith("|") and stripped.endswith("|"):
-            # Single table row with no context
             if stripped.count("\n") == 0:
                 return True
 
@@ -256,6 +276,13 @@ class Chunker:
             1 for c in stripped if c not in separator_chars and not c.isspace()
         )
         if non_separator < 20:
+            return True
+
+        # Check if mostly URLs or paths
+        url_pattern = re.compile(r"https?://\S+")
+        urls = url_pattern.findall(stripped)
+        url_chars = sum(len(u) for u in urls)
+        if url_chars > len(stripped) * 0.6:
             return True
 
         return False
@@ -275,7 +302,6 @@ class Chunker:
                 buffer = chunk.copy()
                 continue
 
-            # Check if we should merge with buffer
             same_section = buffer.get("section_h1") == chunk.get(
                 "section_h1"
             ) and buffer.get("section_h2") == chunk.get("section_h2")
@@ -283,35 +309,25 @@ class Chunker:
             combined_fits = len(buffer["text"]) + len(chunk["text"]) < self.chunk_size
 
             if same_section and buffer_small and combined_fits:
-                # Merge chunks
                 buffer["text"] = buffer["text"] + "\n\n" + chunk["text"]
             else:
-                # Emit buffer and start new one
                 if not self._is_noise_chunk(buffer["text"]):
                     merged.append(buffer)
                 buffer = chunk.copy()
 
-        # Don't forget the last buffer
         if buffer and not self._is_noise_chunk(buffer["text"]):
             merged.append(buffer)
 
         return merged
 
     def __call__(self, row: Dict) -> List[Dict]:
-        # Extract path - handle both direct paths and S3 URLs
         path_str = row.get("path", "")
 
-        # For S3 DVC URLs like s3://bucket/files/md5/xx/hash, we need original name
-        # The 'path' from ray.data.read_text on S3 is the S3 key
-        # We stored the original filename pattern: repo_README_timestamp.md
         if "README" in path_str:
-            # Extract just the filename part
             filename = Path(path_str).name
-            # Parse repo name: "gitops_README_20251204_091155.md" -> "gitops"
             match = re.match(r"(.+?)_README", filename)
             repo_name = match.group(1) if match else filename.replace(".md", "")
         else:
-            # Fallback for other path formats
             filename = Path(path_str).name
             repo_name = filename.replace(".md", "").replace("_README", "")
 
@@ -329,40 +345,51 @@ class Chunker:
         chunk_index = 0
         for split in header_splits:
             section_text = split.page_content
-            section_headers = split.metadata  # {"h1": "Title", "h2": "Section"}
+            section_headers = split.metadata
 
-            # Skip sections that are pure noise
             if self._is_noise_chunk(section_text):
                 continue
 
-            # If section is too large, split further by size
             if len(section_text) > self.chunk_size:
                 sub_texts = self.size_splitter.split_text(section_text)
             else:
                 sub_texts = [section_text]
 
             for sub_text in sub_texts:
-                # Skip noise chunks
                 if self._is_noise_chunk(sub_text):
                     continue
 
+                # Prepend header context to chunk for better embeddings
+                h1 = self._clean_header(section_headers.get("h1", ""))
+                h2 = section_headers.get("h2", "")
+                h3 = section_headers.get("h3", "")
+
+                header_context = ""
+                if h1:
+                    header_context += f"# {h1}\n"
+                if h2:
+                    header_context += f"## {h2}\n"
+                if h3:
+                    header_context += f"### {h3}\n"
+
+                chunk_text = header_context + sub_text if header_context else sub_text
+
                 chunks.append(
                     {
-                        "text": sub_text,
+                        "text": chunk_text,
                         "source_repo": repo_name,
                         "source_file": filename,
                         "chunk_index": chunk_index,
                         "doc_id": doc_id,
                         "chunk_id": str(uuid.uuid4()),
-                        # Add header context to metadata
-                        "section_h1": self._clean_header(section_headers.get("h1", "")),
-                        "section_h2": section_headers.get("h2", ""),
-                        "section_h3": section_headers.get("h3", ""),
+                        "section_h1": h1,
+                        "section_h2": h2,
+                        "section_h3": h3,
                     }
                 )
                 chunk_index += 1
 
-        # Merge small consecutive chunks to reduce fragmentation
+        # Merge small consecutive chunks
         chunks = self._merge_small_chunks(chunks)
 
         # Re-index after merging
