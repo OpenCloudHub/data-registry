@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       dvc_data_version:
-        description: 'DVC data version (e.g., "latest" or "opencloudhub-readmes-v1.0.0")'
+        description: 'DVC data version (e.g., "latest" or "opencloudhub-readmes-download-v1.0.0")'
         default: 'latest'
         type: string
       force:
@@ -12,7 +12,7 @@ on:
         type: boolean
         default: false
       image_tag:
-        description: 'Docker image tag (e.g., "latest" or "main-abc1234")'
+        description: 'Docker image tag (e.g., "latest" or sha "abc1234")'
         default: 'latest'
         type: string
       compute_type:
