@@ -5,24 +5,48 @@
 # Configuration for the README embeddings pipeline. These parameters are tracked
 # by DVC and used by both analyze.py and process.py scripts.
 #
-# Parameter Categories:
-#   - Data Source: DVC version tag and path to source data
-#   - Embedding Model: Model name, chunk size, overlap, batch size
-#   - Output: Path to metadata output file
+# CONFIGURATION HIERARCHY:
+#   1. Environment variables (highest priority) - set by ConfigMaps in production
+#   2. params.py defaults (this file) - tracked by DVC, triggers re-runs
 #
-# Note: Database connection parameters (PGVECTOR_*) are loaded from environment
-# variables to keep secrets out of version control. See .env.docker or .env.minikube.
+# WHAT GOES WHERE:
+#   - params.py: Pipeline logic defaults (model, chunk size, paths)
+#   - Environment: Platform config (URLs, credentials, runtime overrides)
 #
-# DVC tracks these parameters in dvc.yaml and will re-run the pipeline if they change.
+# In production (Argo Workflows), ConfigMaps inject env vars to override defaults.
+# Locally, use .env.docker or .env.minikube files.
+#
+# DVC tracks the DEFAULTS below - changing them triggers pipeline re-run.
+# Env var overrides don't trigger re-runs (they're runtime config).
 #
 # ==============================================================================
 
-# Data source configuration
-DVC_DATA_VERSION = "opencloudhub-readmes-v1.0.0"
+import os
+from pathlib import Path
+
+# =============================================================================
+# DATA SOURCE CONFIGURATION
+# =============================================================================
+# These can be overridden by environment variables for production flexibility
+
+# DVC repository URL - where to fetch versioned data from
+# Override: DVC_REPO_URL env var (set by data-job-env ConfigMap)
+DVC_REPO_URL = os.getenv(
+    "DVC_REPO_URL", "https://github.com/OpenCloudHub/data-registry"
+)
+
+# Data version tag - which snapshot of data to process
+# Override: DVC_DATA_VERSION env var (set per workflow run)
+DVC_DATA_VERSION = os.getenv("DVC_DATA_VERSION", "opencloudhub-readmes-v1.0.0")
+
+# Path within DVC repo to source data (rarely changes)
 DVC_DATA_PATH = "data/opencloudhub-readmes/raw"
 
-# Embedding model configuration
-# ------------------------------------------------------------------------------
+# =============================================================================
+# EMBEDDING MODEL CONFIGURATION
+# =============================================================================
+# These are pipeline logic - tracked by DVC, changing triggers re-run
+#
 # Model: all-MiniLM-L6-v2 (384 dimensions, fast, good quality)
 # Alternatives:
 #   - all-mpnet-base-v2: Better quality, 768 dims, slower
@@ -34,17 +58,25 @@ DVC_DATA_PATH = "data/opencloudhub-readmes/raw"
 #   - Sweet spot: 500-800 for technical docs
 #
 # Chunk Overlap: 10-20% of chunk size prevents losing context at boundaries
-#   - Helps when relevant info spans chunk boundaries
-#   - Too much overlap = redundant storage, slower retrieval
-# ------------------------------------------------------------------------------
-EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-EMBEDDING_CHUNK_SIZE = 800  # Reduced from 1500 for better semantic density
-EMBEDDING_CHUNK_OVERLAP = 100  # ~12% overlap
-EMBEDDING_BATCH_SIZE = 8  # Increased for faster processing
 
-# Chunking quality filters
+EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_CHUNK_SIZE = 800
+EMBEDDING_CHUNK_OVERLAP = 100
+EMBEDDING_BATCH_SIZE = 8
+
+# =============================================================================
+# CHUNKING QUALITY FILTERS
+# =============================================================================
+# Filter out noise that wastes embedding dimensions
+
 MIN_CHUNK_SIZE = 50  # Skip chunks smaller than this (noise)
 MAX_NOISE_RATIO = 0.3  # Skip if >30% ASCII art/box characters
 
-# Output configuration
-ANALYZE_OUTPUT_FILE = "../../data/opencloudhub-readmes-embeddings/metadata.json"
+# =============================================================================
+# OUTPUT CONFIGURATION
+# =============================================================================
+
+ANALYZE_OUTPUT_FILE = (
+    Path(__file__).parent.parent.parent
+    / "data/opencloudhub-readmes-embeddings/metadata.json"
+)

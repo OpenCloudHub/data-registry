@@ -12,7 +12,7 @@
 #   - Outputs metadata.json for tracking in DVC metrics
 #
 # Environment Variables Required:
-#   - DVC_REPO: GitHub repository URL (e.g., https://github.com/OpenCloudHub/data-registry)
+#   - DVC_REPO_URL: GitHub repository URL (e.g., https://github.com/OpenCloudHub/data-registry)
 #   - AWS_ENDPOINT_URL: MinIO/S3 endpoint for DVC remote access
 #   - AWS_ACCESS_KEY_ID: S3 access credentials
 #   - AWS_SECRET_ACCESS_KEY: S3 secret credentials
@@ -102,11 +102,8 @@ def main():
     """Generate metadata for README embeddings."""
     data_version = params.DVC_DATA_VERSION
     data_path = params.DVC_DATA_PATH
-    output_file = Path(params.ANALYZE_OUTPUT_FILE)
-
-    repo = os.getenv("DVC_REPO")
-    if not repo:
-        raise ValueError("Environment variable DVC_REPO not set")
+    output_file = params.ANALYZE_OUTPUT_FILE
+    repo = params.DVC_REPO_URL
 
     print(f"\n{'=' * 60}")
     print("Analyzing READMEs from DVC version")

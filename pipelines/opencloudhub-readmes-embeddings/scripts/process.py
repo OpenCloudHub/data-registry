@@ -523,16 +523,18 @@ def main():
     data_version = params.DVC_DATA_VERSION
     data_path = params.DVC_DATA_PATH
 
-    repo = os.getenv("DVC_REPO")
-    if not repo:
-        raise ValueError("Environment variable DVC_REPO not set")
+    repo = params.DVC_REPO_URL
     endpoint_url = os.getenv("AWS_ENDPOINT_URL")
     if not endpoint_url:
         raise ValueError("Environment variable AWS_ENDPOINT_URL not set")
 
     # Workflow metadata for lineage tracking
     docker_image = os.getenv("DOCKER_IMAGE_TAG")
+    if not docker_image:
+        raise ValueError("Environment variable DOCKER_IMAGE_TAG not set")
     argo_workflow_uid = os.getenv("ARGO_WORKFLOW_UID")
+    if not argo_workflow_uid:
+        raise ValueError("Environment variable ARGO_WORKFLOW_UID not set")
 
     model_name = params.EMBEDDING_MODEL_NAME
     chunk_size = params.EMBEDDING_CHUNK_SIZE
