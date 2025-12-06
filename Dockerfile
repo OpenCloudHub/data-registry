@@ -17,7 +17,7 @@
 # =============================================================================
 # Build Arguments
 # =============================================================================
-ARG RAY_VERSION=2.48.0
+ARG RAY_VERSION=2.51.0
 ARG PYTHON_MAJOR=3
 ARG PYTHON_MINOR=12
 ARG DISTRO=bookworm
