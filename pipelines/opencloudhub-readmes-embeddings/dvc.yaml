@@ -24,7 +24,6 @@ stages:
           - EMBEDDING_MODEL_NAME
           - EMBEDDING_CHUNK_SIZE
           - EMBEDDING_CHUNK_OVERLAP
-          - ANALYZE_OUTPUT_FILE
     metrics:
       - ../../data/opencloudhub-readmes-embeddings/metadata.json:
           cache: false
