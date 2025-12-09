@@ -5,8 +5,8 @@ set -e
 # Reset Data Registry for Demo
 # ==============================================================================
 #
-# Cleans up DVC state and git tags so you can run bootstrap-data-examples.sh
-# fresh for a demo recording.
+# Cleans up DVC state and git tags to run bootstrap-data-examples.sh
+# fresh for a demo.
 #
 # Usage:
 #   ./scripts/reset-for-demo.sh

@@ -1,7 +1,11 @@
 # pipelines/wine-quality/params.yaml
 
 download:
-  base_url: "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality"
+  files:
+    - name: "winequality-red.csv"
+      url: "https://raw.githubusercontent.com/shrikant-temburwar/Wine-Quality-Dataset/master/winequality-red.csv"
+    - name: "winequality-white.csv"
+      url: "https://raw.githubusercontent.com/shrikant-temburwar/Wine-Quality-Dataset/master/winequality-white.csv"
   output_dir: "../../data/wine-quality/raw"
 
 process:

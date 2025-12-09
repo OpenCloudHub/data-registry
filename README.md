@@ -546,7 +546,8 @@ data-registry/
 │ └── analyze.py # Metadata generation
 │
 ├── scripts/
-│ └── bootstrap-data-examples.sh # Initialize all datasets
+│ ├── bootstrap-data-examples.sh # Initialize all datasets for local dev
+│ └── reset-for-demo.sh # Reset DVC state for fresh demo
 │
 ├── .github/workflows/
 │ ├── run-data-pipelines.yaml # Trigger DVC pipelines via Argo
@@ -753,6 +754,50 @@ export PGVECTOR_PASSWORD=admin
 # Run pipeline
 cd pipelines/opencloudhub-readmes-embeddings
 python run_pipeline.py
+```
+
+### Quick Bootstrap for Local Development
+
+If you're using the [local-compose-stack](https://github.com/OpenCloudHub/local-compose-stack) and just want to quickly get all datasets available for testing ML training repos or experimenting with DVC, use the bootstrap script:
+
+```bash
+# 1. Source environment variables
+set -a && source .env.docker && set +a
+unset AWS_CA_BUNDLE  # Fix for some container environments
+
+# 2. Run bootstrap (downloads, processes, versions all datasets)
+./scripts/bootstrap-data-examples.sh
+
+# Or include embeddings pipeline (requires pgvector running)
+./scripts/bootstrap-data-examples.sh --with-embeddings
+
+# Force re-run even if data exists
+./scripts/bootstrap-data-examples.sh --force
+```
+
+This script will:
+
+1. Run all data pipelines (emotion, fashion-mnist, wine-quality, opencloudhub-readmes)
+1. Push processed data to MinIO
+1. Create `v1.0.0` git tags for each dataset
+1. Optionally generate embeddings and store in pgvector
+
+After bootstrap, you can immediately use the data in other ML repos:
+
+```bash
+# From any training repo
+dvc get https://github.com/OpenCloudHub/data-registry \
+    data/fashion-mnist/processed \
+    --rev fashion-mnist-v1.0.0
+```
+
+**Reset for Demo:**
+
+To start fresh (e.g., for recording a demo), use the reset script:
+
+```bash
+./scripts/reset-for-demo.sh  # Clears DVC cache, deletes tags
+./scripts/bootstrap-data-examples.sh --with-embeddings  # Run fresh
 ```
 
 ______________________________________________________________________

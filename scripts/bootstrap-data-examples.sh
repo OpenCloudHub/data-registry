@@ -38,6 +38,9 @@ done
 FORCE_FLAG=""
 [ "$FORCE_RUN" = true ] && FORCE_FLAG="--force"
 
+# Fix for empty CA bundle variables that break boto/aiohttp
+unset AWS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE REQUESTS_CA_BUNDLE 2>/dev/null || true
+
 echo ""
 echo "════════════════════════════════════════════════════════════════════════════════"
 echo "🚀 Bootstrap Data Registry (v1.0.0)"
