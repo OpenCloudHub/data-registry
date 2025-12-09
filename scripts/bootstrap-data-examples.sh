@@ -83,7 +83,16 @@ echo "   ✓ Data pushed"
 echo ""
 
 # ------------------------------------------------------------------------------
-# Create v1.0.0 tags
+# Commit changes FIRST (so tags point to correct commit)
+# ------------------------------------------------------------------------------
+echo "💾 Committing changes..."
+echo "────────────────────────────────────────────────────────────────────────────────"
+git add .
+git commit -m "chore: bootstrap data registry v1.0.0 [skip ci]" || echo "   ℹ️  No changes to commit"
+echo ""
+
+# ------------------------------------------------------------------------------
+# Create v1.0.0 tags (on the commit we just made)
 # ------------------------------------------------------------------------------
 echo "🏷️  Creating v1.0.0 tags..."
 echo "────────────────────────────────────────────────────────────────────────────────"
@@ -100,12 +109,10 @@ done
 echo ""
 
 # ------------------------------------------------------------------------------
-# Commit and push
+# Push to GitHub
 # ------------------------------------------------------------------------------
-echo "💾 Committing and pushing..."
+echo "📤 Pushing to GitHub..."
 echo "────────────────────────────────────────────────────────────────────────────────"
-git add .
-git commit -m "chore: bootstrap data registry v1.0.0 [skip ci]" || echo "   ℹ️  No changes"
 git push origin main --force || echo "   ℹ️  Nothing to push"
 git push origin --tags --force || echo "   ℹ️  No tags to push"
 echo ""
@@ -119,14 +126,15 @@ if [ "$WITH_EMBEDDINGS" = true ]; then
   sed -i 's/^DVC_DATA_VERSION = .*/DVC_DATA_VERSION = "opencloudhub-readmes-v1.0.0"/' pipelines/opencloudhub-readmes-embeddings/params.py
   dvc repro $FORCE_FLAG pipelines/opencloudhub-readmes-embeddings/dvc.yaml
 
-  # Create embeddings tag
+  # Commit FIRST, then tag
+  git add .
+  git commit -m "chore: embeddings for v1.0.0 [skip ci]" || true
+
   TAG="opencloudhub-readmes-embeddings-v1.0.0"
   git tag -d "$TAG" 2>/dev/null || true
   git tag -a "$TAG" -m "opencloudhub-readmes-embeddings v1.0.0 (bootstrap)"
   echo "   ✓ Created tag: ${TAG}"
 
-  git add .
-  git commit -m "chore: embeddings for v1.0.0 [skip ci]" || true
   git push origin main --force || true
   git push origin --tags --force || true
   echo "   ✓ Embeddings done"
