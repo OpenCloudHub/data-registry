@@ -79,7 +79,16 @@ def get_readme_urls(repo: str, data_version: str, data_path: str) -> List[str]:
     """Get URLs for all README files from DVC."""
     print(f"Fetching README URLs from DVC version: {data_version}")
 
-    fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version)
+    # Configure DVC remote with credentials from environment variables
+    remote_config = {
+        "endpointurl": os.getenv("AWS_ENDPOINT_URL"),
+        "access_key_id": os.getenv("AWS_ACCESS_KEY_ID"),
+        "secret_access_key": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    }
+    # Remove None values
+    remote_config = {k: v for k, v in remote_config.items() if v}
+
+    fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version, remote_config=remote_config)
     readme_paths = []
 
     try:
@@ -94,7 +103,9 @@ def get_readme_urls(repo: str, data_version: str, data_path: str) -> List[str]:
     urls = []
     for path in readme_paths:
         try:
-            url = dvc.api.get_url(path, repo=repo, rev=data_version)
+            url = dvc.api.get_url(
+                path, repo=repo, rev=data_version, remote_config=remote_config
+            )
             urls.append(url)
             print(f"  ✓ {Path(path).name} -> {url}")
         except Exception as e:
