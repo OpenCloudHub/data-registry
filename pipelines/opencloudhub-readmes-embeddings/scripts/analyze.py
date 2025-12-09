@@ -59,7 +59,10 @@ def fetch_readme_list(repo: str, data_version: str, data_path: str) -> list:
     # Remove None values
     remote_config = {k: v for k, v in remote_config.items() if v}
 
-    fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version, remote_config=remote_config)
+    # Use DVC_REMOTE env var if set, otherwise use repo default
+    dvc_remote = os.getenv("DVC_REMOTE")
+
+    fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version, remote=dvc_remote, remote_config=remote_config)
 
     readmes = []
     for entry in fs.ls(data_path, detail=False):

@@ -88,7 +88,12 @@ def get_readme_urls(repo: str, data_version: str, data_path: str) -> List[str]:
     # Remove None values
     remote_config = {k: v for k, v in remote_config.items() if v}
 
-    fs = dvc.api.DVCFileSystem(repo=repo, rev=data_version, remote_config=remote_config)
+    # Use DVC_REMOTE env var if set, otherwise use repo default
+    dvc_remote = os.getenv("DVC_REMOTE")
+
+    fs = dvc.api.DVCFileSystem(
+        repo=repo, rev=data_version, remote=dvc_remote, remote_config=remote_config
+    )
     readme_paths = []
 
     try:
@@ -104,7 +109,11 @@ def get_readme_urls(repo: str, data_version: str, data_path: str) -> List[str]:
     for path in readme_paths:
         try:
             url = dvc.api.get_url(
-                path, repo=repo, rev=data_version, remote_config=remote_config
+                path,
+                repo=repo,
+                rev=data_version,
+                remote=dvc_remote,
+                remote_config=remote_config,
             )
             urls.append(url)
             print(f"  ✓ {Path(path).name} -> {url}")
