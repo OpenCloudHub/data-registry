@@ -2,7 +2,7 @@
     remote = minikube
 ['remote "minikube"']
     url = s3://dvcstore
-    endpointurl = https://minio-api.internal.opencloudhub.org
+    endpointurl = http://minio.minio-tenant.svc.cluster.local:80
     ssl_verify = false
 ['remote "docker"']
     url = s3://dvcstore

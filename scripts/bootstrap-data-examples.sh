@@ -97,7 +97,7 @@ echo ""
 echo "🏷️  Creating v1.0.0 tags..."
 echo "────────────────────────────────────────────────────────────────────────────────"
 
-DATASETS=("emotion" "fashion-mnist" "wine-quality" "opencloudhub-readmes" "opencloudhub-readmes-rag-evaluation" "roco-radiology")
+DATASETS=("emotion" "fashion-mnist" "wine-quality" "opencloudhub-readmes-downloads" "opencloudhub-readmes-rag-evaluation" "roco-radiology")
 
 for dataset in "${DATASETS[@]}"; do
   TAG="${dataset}-v1.0.0"
