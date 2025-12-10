@@ -29,7 +29,7 @@ TAGS=(
   "emotion-v1.0.0"
   "fashion-mnist-v1.0.0"
   "wine-quality-v1.0.0"
-  "opencloudhub-readmes-v1.0.0"
+  "opencloudhub-readmes-download-v1.0.0"
   "opencloudhub-readmes-rag-evaluation-v1.0.0"
   "opencloudhub-readmes-embeddings-v1.0.0"
   "roco-radiology-v1.0.0"
