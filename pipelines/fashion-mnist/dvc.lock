@@ -36,29 +36,25 @@ stages:
           output_dir: ../../data/fashion-mnist/processed
           sample_fraction: 0.6
     outs:
-    - path: ../../data/fashion-mnist/processed/train
+    - path: ../../data/fashion-mnist/processed/train/train.parquet
       hash: md5
-      md5: da3716ba740d5dbb51552d1da853da02.dir
+      md5: d4f50257fda46cf796d3b06937f5c239
       size: 18397586
-      nfiles: 1
-    - path: ../../data/fashion-mnist/processed/val
+    - path: ../../data/fashion-mnist/processed/val/val.parquet
       hash: md5
-      md5: 51925a6ac62af5d9dc55db2684237f6f.dir
+      md5: 90f84167000a18d3ca8307d77bb2106d
       size: 3068026
-      nfiles: 1
   analyze:
     cmd: python scripts/analyze.py
     deps:
-    - path: ../../data/fashion-mnist/processed/train
+    - path: ../../data/fashion-mnist/processed/train/train.parquet
       hash: md5
-      md5: da3716ba740d5dbb51552d1da853da02.dir
+      md5: d4f50257fda46cf796d3b06937f5c239
       size: 18397586
-      nfiles: 1
-    - path: ../../data/fashion-mnist/processed/val
+    - path: ../../data/fashion-mnist/processed/val/val.parquet
       hash: md5
-      md5: 51925a6ac62af5d9dc55db2684237f6f.dir
+      md5: 90f84167000a18d3ca8307d77bb2106d
       size: 3068026
-      nfiles: 1
     - path: scripts/analyze.py
       hash: md5
       md5: b2da72240b4c14349d8626a671994811

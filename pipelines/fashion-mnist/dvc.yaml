@@ -17,15 +17,16 @@ stages:
     params:
       - process
     outs:
-      - ../../data/fashion-mnist/processed/train
-      - ../../data/fashion-mnist/processed/val
+      - ../../data/fashion-mnist/processed/train/train.parquet
+      - ../../data/fashion-mnist/processed/val/val.parquet
+
 
   analyze:
     cmd: python scripts/analyze.py
     deps:
       - scripts/analyze.py
-      - ../../data/fashion-mnist/processed/train
-      - ../../data/fashion-mnist/processed/val
+      - ../../data/fashion-mnist/processed/train/train.parquet
+      - ../../data/fashion-mnist/processed/val/val.parquet
     params:
       - analyze
     metrics:
