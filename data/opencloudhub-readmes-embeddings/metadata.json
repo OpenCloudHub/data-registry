@@ -1,0 +1,34 @@
+{
+  "source_data_version": "opencloudhub-readmes-download-v1.0.0",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "chunk_size": 800,
+  "chunk_overlap": 100,
+  "statistics": {
+    "total_files": 16,
+    "total_repositories": 16,
+    "repository_names": [
+      ".github_20251210_175658",
+      "ai-dl-bert_20251210_175700",
+      "ai-dl-lightning_20251210_175701",
+      "ai-genai-qwen-vl_20251210_175702",
+      "ai-generative-qwen_20251210_175700",
+      "ai-ml-sklearn_20251210_175659",
+      "api-testing_20251210_175701",
+      "data-registry_20251210_175701",
+      "demo-app-frontend_20251210_175702",
+      "demo-app-genai-backend_20251210_175701",
+      "docs_20251210_175659",
+      "gh-actions-local-runner_20251210_175700",
+      "gitops_20251210_175659",
+      "infra-live_20251210_175658",
+      "infra-modules_20251210_175658",
+      "local-compose-stack_20251210_175702"
+    ],
+    "total_size_bytes": 309057,
+    "average_size_bytes": 19316.06,
+    "total_characters": 284360,
+    "average_characters": 17772.5,
+    "total_lines": 7551,
+    "average_lines": 471.94
+  }
+}

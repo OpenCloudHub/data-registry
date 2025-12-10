@@ -123,7 +123,7 @@ echo ""
 if [ "$WITH_EMBEDDINGS" = true ]; then
   echo "🧠 Running embeddings pipeline..."
   echo "────────────────────────────────────────────────────────────────────────────────"
-  sed -i 's/^DVC_DATA_VERSION = .*/DVC_DATA_VERSION = "opencloudhub-readmes-v1.0.0"/' pipelines/opencloudhub-readmes-embeddings/params.py
+  sed -i 's/^DVC_DATA_VERSION = .*/DVC_DATA_VERSION = "opencloudhub-readmes-download-v1.0.0"/' pipelines/opencloudhub-readmes-embeddings/params.py
   dvc repro $FORCE_FLAG pipelines/opencloudhub-readmes-embeddings/dvc.yaml
 
   # Commit FIRST, then tag
