@@ -1,0 +1,19 @@
+schema: '2.0'
+stages:
+  download:
+    cmd: python scripts/download.py
+    deps:
+    - path: scripts/download.py
+      hash: md5
+      md5: 9b11c4d5e6e5e9c560fbc91884b479b6
+      size: 5027
+    params:
+      params.yaml:
+        org_name: OpenCloudHub
+        output_dir: ../../data/opencloudhub-readmes/raw
+    outs:
+    - path: ../../data/opencloudhub-readmes/raw
+      hash: md5
+      md5: 9c97198d0a09e8a00b012fc2eea02cf3.dir
+      size: 320084
+      nfiles: 16
