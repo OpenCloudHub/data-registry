@@ -74,14 +74,14 @@ dvc get https://github.com/OpenCloudHub/data-registry \
 
 Each dataset is prepared for a specific ML workload in the platform:
 
-| Dataset                           | Format                | Training Repo                                                                    | Use Case                         |
-| --------------------------------- | --------------------- | -------------------------------------------------------------------------------- | -------------------------------- |
-| `wine-quality`                    | CSV → Parquet         | [ai-ml-sklearn](https://github.com/opencloudhub/ai-ml-sklearn)                   | Baseline tabular regression      |
-| `fashion-mnist`                   | IDX → Parquet         | [ai-dl-lightning](https://github.com/opencloudhub/ai-dl-lightning)               | Distributed image classification |
-| `emotion`                         | HuggingFace → Parquet | [ai-dl-bert](https://github.com/opencloudhub/ai-dl-bert)                         | Text classification with HPO     |
-| `roco-radiology`                  | Images + JSON         | [ai-dl-qwen](https://github.com/opencloudhub/ai-dl-qwen)                         | VLM fine-tuning                  |
-| `opencloudhub-readmes`            | GitHub → Markdown     | *(intermediate)*                                                                 | Source data for embeddings       |
-| `opencloudhub-readmes-embeddings` | Markdown → pgvector   | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG semantic search              |
+| Dataset                           | Tag Format                            | Training Repo                                                                    | Use Case                         |
+| --------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------- |
+| `wine-quality`                    | `wine-quality-v1.0.0`                 | [ai-ml-sklearn](https://github.com/opencloudhub/ai-ml-sklearn)                   | Baseline tabular regression      |
+| `fashion-mnist`                   | `fashion-mnist-v1.0.0`                | [ai-dl-lightning](https://github.com/opencloudhub/ai-dl-lightning)               | Distributed image classification |
+| `emotion`                         | `emotion-v1.0.0`                      | [ai-dl-bert](https://github.com/opencloudhub/ai-dl-bert)                         | Text classification with HPO     |
+| `roco-radiology`                  | `roco-radiology-v1.0.0`               | [ai-dl-qwen](https://github.com/opencloudhub/ai-dl-qwen)                         | VLM fine-tuning                  |
+| `opencloudhub-readmes`            | `opencloudhub-readmes-download-v1.0.0`| *(intermediate)*                                                                 | Source data for embeddings       |
+| `opencloudhub-readmes-embeddings` | `opencloudhub-readmes-embeddings-v1.0.0` | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG semantic search              |
 
 Note: The embeddings pipeline depends on the readmes-download pipeline, creating a two-stage lineage chain.
 
@@ -152,11 +152,11 @@ flowchart LR
         RAG[demo-app-genai-backend]
     end
 
-    WINE -->|"wine-v1.0.0"| SKLEARN
+    WINE -->|"wine-quality-v1.0.0"| SKLEARN
     FMNIST -->|"fashion-mnist-v1.0.0"| LIGHTNING
     EMOTION -->|"emotion-v1.0.0"| BERT
-    ROCO -->|"roco-v1.0.0"| QWEN
-    READMES -->|"depends on"| EMBED
+    ROCO -->|"roco-radiology-v1.0.0"| QWEN
+    READMES -->|"opencloudhub-readmes-download-v1.0.0"| EMBED
     EMBED -->|"pgvector"| RAG
 ```
 
@@ -424,7 +424,7 @@ flowchart LR
 
     subgraph stage2["Pipeline 2: readmes-embeddings"]
         DVC_GET["dvc.api.get_url
-        (rev=opencloudhub-readmes-v1.0.0)"]
+        (rev=opencloudhub-readmes-download-v1.0.0)"]
         RAYDATA[Ray Data Pipeline]
         PGVECTOR[(pgvector)]
     end
@@ -475,7 +475,7 @@ Every chunk stored in pgvector includes complete workflow metadata:
     "section_h1": "Getting Started",
     "section_h2": "Installation",
     # Data lineage (which version of source READMEs)
-    "dvc_data_version": "opencloudhub-readmes-v1.0.0",
+    "dvc_data_version": "opencloudhub-readmes-download-v1.0.0",
     # Processing lineage (which code/workflow produced this)
     "embedding_model": "all-MiniLM-L6-v2",
     "docker_image": "sha-abc123",
@@ -490,7 +490,7 @@ When comparing RAG prompt performance, you need to know which embeddings were us
 ```sql
 -- Compare retrieval quality across embedding versions
 SELECT * FROM readme_embeddings
-WHERE dvc_data_version = 'opencloudhub-readmes-v1.0.0'
+WHERE dvc_data_version = 'opencloudhub-readmes-download-v1.0.0'
   AND argo_workflow_uid = 'workflow-xyz';
 ```
 
@@ -505,60 +505,66 @@ ______________________________________________________________________
 ### Project Layout
 
 ```
-
 data-registry/
-├── data/ # Dataset storage (DVC-tracked)
-│ ├── wine-quality/
-│ │ ├── raw/ # Downloaded CSV
-│ │ ├── processed/ # Train/test Parquet
-│ │ └── metadata.json # Statistics (Git-tracked)
-│ ├── fashion-mnist/
-│ │ ├── raw/ # IDX files
-│ │ ├── processed/train/ # Parquet with images + labels
-│ │ ├── processed/val/ # Validation split
-│ │ └── metadata.json # pixel_mean, pixel_std
-│ ├── emotion/
-│ │ └── ... # Same structure
-│ ├── roco-radiology/
-│ │ ├── raw/images/ # X-ray images
-│ │ ├── processed/train/ # Qwen conversation format
-│ │ └── metadata.json # Includes prompt_version
-│ └── opencloudhub-readmes-embeddings/
-│ └── metadata.json # Embedding pipeline stats
+├── data/                              # Dataset storage (DVC-tracked)
+│   ├── wine-quality/
+│   │   ├── raw/                       # Downloaded CSV files
+│   │   ├── processed/                 # Merged wine-quality.csv
+│   │   └── metadata.json              # Statistics (Git-tracked)
+│   ├── fashion-mnist/
+│   │   ├── raw/                       # IDX files
+│   │   ├── processed/train/           # Parquet with images + labels
+│   │   ├── processed/val/             # Validation split
+│   │   └── metadata.json              # pixel_mean, pixel_std
+│   ├── emotion/
+│   │   └── ...                        # Same structure
+│   ├── roco-radiology/
+│   │   ├── raw/images/                # X-ray images
+│   │   ├── processed/train/           # Qwen conversation format
+│   │   └── metadata.json              # Includes prompt_version
+│   ├── opencloudhub-readmes/
+│   │   ├── raw/                       # README.md files from GitHub
+│   │   └── rag-evaluation/            # Test questions for RAG
+│   │       └── questions.csv
+│   └── opencloudhub-readmes-embeddings/
+│       └── metadata.json              # Embedding pipeline stats
 │
-├── pipelines/ # DVC pipeline definitions
-│ ├── wine-quality/
-│ │ ├── dvc.yaml # Pipeline stages
-│ │ ├── params.yaml # Configuration
-│ │ └── scripts/
-│ │ ├── download.py # Fetch from UCI ML Repo
-│ │ ├── process.py # Train/test split, Parquet
-│ │ └── analyze.py # Compute feature statistics
-│ ├── fashion-mnist/ # Same structure
-│ ├── emotion/ # Same structure
-│ ├── roco-radiology/ # Same structure + prompt fetch
-│ ├── opencloudhub-readmes-download/ # Fetch README files
-│ └── opencloudhub-readmes-embeddings/
-│ ├── dvc.yaml
-│ ├── params.py # Python config (chunk size, model)
-│ └── scripts/
-│ ├── process.py # Ray Data pipeline
-│ └── analyze.py # Metadata generation
+├── pipelines/                         # DVC pipeline definitions
+│   ├── wine-quality/
+│   │   ├── dvc.yaml                   # Pipeline stages
+│   │   ├── params.yaml                # Configuration
+│   │   └── scripts/
+│   │       ├── download.py            # Fetch from GitHub mirror
+│   │       ├── process.py             # Merge red/white wines
+│   │       └── analyze.py             # Compute feature statistics
+│   ├── fashion-mnist/                 # Same structure
+│   ├── emotion/                       # Same structure
+│   ├── roco-radiology/                # Same structure + prompt fetch
+│   ├── opencloudhub-readmes-download/ # Fetch README files
+│   │   ├── dvc.yaml
+│   │   ├── params.yaml
+│   │   └── scripts/download.py
+│   └── opencloudhub-readmes-embeddings/
+│       ├── dvc.yaml
+│       ├── params.py                  # Python config (allows env overrides)
+│       ├── run_pipeline.py            # Standalone runner
+│       └── scripts/
+│           ├── process.py             # Ray Data pipeline → pgvector
+│           └── analyze.py             # Metadata generation
 │
 ├── scripts/
-│ ├── bootstrap-data-examples.sh # Initialize all datasets for local dev
-│ └── reset-for-demo.sh # Reset DVC state for fresh demo
+│   ├── bootstrap-data-examples.sh     # Initialize all datasets for demo
+│   └── reset-for-demo.sh              # Reset DVC state for fresh demo
 │
 ├── .github/workflows/
-│ ├── run-data-pipelines.yaml # Trigger DVC pipelines via Argo
-│ └── run-embeddings-pipeline.yaml # Trigger Ray embeddings via Argo
+│   ├── run-data-pipelines.yaml        # Trigger DVC pipelines via Argo
+│   └── run-embeddings-pipeline.yaml   # Trigger Ray embeddings via Argo
 │
 ├── .dvc/
-│ └── config # DVC remote configuration
-├── .env.docker # Local environment
-├── .env.minikube # Cluster environment
-└── Dockerfile # Multi-stage: dev + prod
-
+│   └── config                         # DVC remote configuration (2 remotes)
+├── .env.docker                        # Local docker compose environment
+├── .env.minikube                      # Minikube/cluster environment
+└── Dockerfile                         # Multi-stage: dev + prod
 ````
 
 ### DVC Pipeline Definition Pattern
@@ -632,42 +638,211 @@ ______________________________________________________________________
 
 <h2 id="infrastructure">🛠️ Infrastructure Options</h2>
 
-### Option 1: Local Compose Stack
+> **⚠️ IMPORTANT: Understanding Multi-Environment DVC**
+>
+> DVC stores data in remote storage (MinIO) and references it via hashes in `dvc.lock`. The tricky part is that **the DVC remote URL is stored in the git repository's `.dvc/config`**, so when you `dvc get` or `dvc list` from the GitHub repo, it uses whatever remote is configured there — not your local environment.
+>
+> This creates challenges when working across environments:
+>
+> | Scenario | Problem | Solution |
+> |----------|---------|----------|
+> | Ran pipelines locally (docker), trying to list from GitHub | GitHub repo has minikube remote URL → connection timeout | Use `--remote docker` flag |
+> | Ran pipelines in cluster, trying to list from devcontainer | Devcontainer can't reach internal cluster URLs | Port-forward or run from host |
+> | Destroyed minikube, trying to get data | Data files are gone from that MinIO instance | Re-run pipelines or restore MinIO |
+> | Mixed environments | Data pushed to one remote, tag created, can't access from other | Stick to one environment per workflow |
+>
+> **Golden Rule:** The environment where you `dvc push` must be accessible when you `dvc get/list/pull`.
 
-For development with local MinIO storage.
+### Option 1: Local Docker Compose (Recommended for Development)
+
+Best for local development and testing. Uses [local-compose-stack](https://github.com/OpenCloudHub/local-compose-stack).
 
 ```bash
-# Start MinIO + MLflow
+# 1. Start infrastructure
 git clone https://github.com/OpenCloudHub/local-compose-stack.git
 cd local-compose-stack && docker compose up -d
 
-# Configure DVC
+# 2. Configure environment
 cd ../data-registry
 set -a && source .env.docker && set +a
-dvc remote default docker
+
+# 3. IMPORTANT: Unset CA bundle vars (they break boto/aiohttp when empty)
+unset AWS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE
+
+# 4. Run pipelines
+./scripts/bootstrap-data-examples.sh --with-embeddings
 ```
 
-**Available Services:**
+**Services:**
 
-| Service       | URL                   |
-| ------------- | --------------------- |
-| MinIO Console | http://localhost:9001 |
-| MLflow UI     | http://localhost:5000 |
+| Service        | URL                   | Credentials     |
+| -------------- | --------------------- | --------------- |
+| MinIO Console  | http://localhost:9001 | admin/admin123  |
+| MinIO API      | http://localhost:9000 | admin/admin123  |
+| pgvector       | localhost:5433        | admin/admin     |
+| MLflow UI      | http://localhost:5000 | -               |
 
-### Option 2: Minikube with Platform Services
-
-Use MinIO deployed on Minikube.
+**Using data pushed to docker remote:**
 
 ```bash
-set -a && source .env.minikube && set +a
-dvc remote default minikube
+# From same machine with docker compose running:
+dvc list https://github.com/OpenCloudHub/data-registry data/wine-quality --remote docker
+
+# Or set environment and use API:
+export AWS_ENDPOINT_URL=http://localhost:9000
+export AWS_ACCESS_KEY_ID=admin
+export AWS_SECRET_ACCESS_KEY=admin123
+export DVC_REMOTE=docker
 ```
 
-### Option 3: Production via Argo Workflows
+### Option 2: Minikube (Local Kubernetes)
 
-Pipelines run on Kubernetes, triggered by GitHub Actions.
+For testing Kubernetes deployments locally. Requires MinIO deployed on minikube with ingress.
 
-**Trigger pipeline:** [Actions → Run Data Pipelines](https://github.com/OpenCloudHub/data-registry/actions/workflows/run-data-pipelines.yaml)
+```bash
+# 1. Ensure minikube services are running and accessible
+#    (MinIO at minio-api.internal.opencloudhub.org)
+
+# 2. Configure environment
+set -a && source .env.minikube && set +a
+unset AWS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE
+
+# 3. Verify connectivity (from HOST, not devcontainer!)
+curl -k https://minio-api.internal.opencloudhub.org/minio/health/live
+```
+
+**⚠️ Devcontainer Networking Issue:**
+
+If you're in a VS Code devcontainer, the container likely **cannot reach** `minio-api.internal.opencloudhub.org` because:
+- That DNS resolves to a local IP (e.g., 192.168.x.x) 
+- The devcontainer has its own network namespace
+- In this Devcontainer we run on the hosts network, but if restarting minikube, you lose context, but can just rebuild
+
+**Workarounds:**
+
+```bash
+# Option A: Run DVC commands from HOST terminal (not devcontainer)
+# Your host can resolve the minikube ingress
+
+# Option B: Port-forward and use host.docker.internal
+kubectl port-forward -n storage svc/minio-api 9000:9000
+export AWS_ENDPOINT_URL=http://host.docker.internal:9000
+
+# Option C: Add to devcontainer's /etc/hosts
+echo "192.168.49.2 minio-api.internal.opencloudhub.org" >> /etc/hosts
+```
+
+### Option 3: Production (In-Cluster via Argo Workflows)
+
+Pipelines run entirely on Kubernetes, triggered by GitHub Actions.
+
+```bash
+# Trigger via GitHub Actions UI or CLI:
+gh workflow run run-data-pipelines.yaml \
+  -f dataset=fashion-mnist \
+  -f version=v1.0.0
+
+# The workflow:
+# 1. Submits Argo Workflow to cluster
+# 2. Pipeline runs with cluster-internal MinIO URL
+# 3. Creates git tag on success
+```
+
+**In-cluster DVC config:**
+
+```ini
+# .dvc/config (committed to repo)
+[core]
+    remote = minikube
+['remote "minikube"']
+    url = s3://dvcstore
+    endpointurl = http://minio.minio-tenant.svc.cluster.local:80
+```
+
+The in-cluster URL (`minio.minio-tenant.svc.cluster.local`) is **only reachable from inside the cluster**. This is intentional for production, but means:
+
+- ✅ Training jobs in cluster can access data
+- ✅ GitHub Actions → Argo → DVC works
+- ❌ Cannot `dvc list` from local machine without `--remote docker` or port-forward
+
+### Environment Variables Reference
+
+| Variable | `.env.docker` | `.env.minikube` | In-Cluster |
+|----------|---------------|-----------------|------------|
+| `AWS_ENDPOINT_URL` | `http://localhost:9000` | `https://minio-api.internal.opencloudhub.org` | (from ConfigMap) |
+| `DVC_REMOTE` | `docker` | `minikube` | (not needed, uses config default) |
+| `PGVECTOR_HOST` | `localhost` | `127.0.0.1` (port-forward) | (from Secret) |
+| `PGVECTOR_PORT` | `5433` | `5432` | `5432` |
+
+### Common Pitfalls
+
+<details>
+<summary><b>🔴 "Connect timeout" when listing/getting data</b></summary>
+
+**Cause:** DVC is trying to reach a MinIO endpoint you can't access.
+
+**Debug:**
+```bash
+# Check which endpoint DVC is trying to use:
+dvc config core.remote  # Shows default remote
+dvc config remote.minikube.endpointurl  # Shows URL
+
+# Try with explicit remote:
+dvc list https://github.com/OpenCloudHub/data-registry data/wine-quality --remote docker
+```
+</details>
+
+<details>
+<summary><b>🔴 "Unable to locate credentials" error</b></summary>
+
+**Cause:** AWS_* environment variables not set or empty.
+
+**Fix:**
+```bash
+set -a && source .env.docker && set +a
+env | grep AWS  # Verify they're set
+```
+</details>
+
+<details>
+<summary><b>🔴 SSL/CA Bundle errors</b></summary>
+
+**Cause:** Empty `AWS_CA_BUNDLE=""` is different from unset — it breaks boto/aiohttp.
+
+**Fix:**
+```bash
+unset AWS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE REQUESTS_CA_BUNDLE
+```
+</details>
+
+<details>
+<summary><b>🔴 Data exists locally but can't list from GitHub</b></summary>
+
+**Cause:** The git tag references a `dvc.lock` with hashes, but `dvc list` needs to fetch the `.dir` file from the remote to list directory contents.
+
+**Scenario:**
+1. You ran pipeline locally → data in local MinIO
+2. Committed and tagged
+3. Try `dvc list` from GitHub → tries minikube remote (from .dvc/config) → fails
+
+**Fix:**
+```bash
+# Specify the correct remote explicitly:
+dvc list https://github.com/OpenCloudHub/data-registry data/wine-quality \
+  --rev wine-quality-v1.0.0 \
+  --remote docker
+```
+</details>
+
+<details>
+<summary><b>🔴 Minikube destroyed, data inaccessible</b></summary>
+
+**Cause:** Data was only in minikube's MinIO, which is gone.
+
+**Fix:** Re-run pipelines to regenerate data, or restore MinIO from backup.
+
+**Prevention:** For important data, push to a persistent remote (e.g., cloud S3).
+</details>
 
 ______________________________________________________________________
 
@@ -691,9 +866,14 @@ dvc push
 
 ```bash
 # After running pipeline and pushing data
-git add dvc.lock data/fashion-mnist/metadata.json
+git add .
 git commit -m "Update fashion-mnist dataset"
-git tag fashion-mnist-v1.0.0
+
+# Create tag AFTER commit (tag points to current HEAD)
+git tag -a fashion-mnist-v1.0.0 -m "fashion-mnist v1.0.0"
+
+# Push both
+git push origin main
 git push origin fashion-mnist-v1.0.0
 ```
 
@@ -704,13 +884,25 @@ git push origin fashion-mnist-v1.0.0
 ```python
 import dvc.api
 import json
+import os
 
 REPO = "https://github.com/OpenCloudHub/data-registry"
 VERSION = "fashion-mnist-v1.0.0"
 
+# Configure remote credentials (if not using default)
+remote_config = {
+    "endpointurl": os.getenv("AWS_ENDPOINT_URL"),
+    "access_key_id": os.getenv("AWS_ACCESS_KEY_ID"),
+    "secret_access_key": os.getenv("AWS_SECRET_ACCESS_KEY"),
+}
+
 # Get S3 URL for Ray Data streaming
 train_url = dvc.api.get_url(
-    "data/fashion-mnist/processed/train/train.parquet", repo=REPO, rev=VERSION
+    "data/fashion-mnist/processed/train",
+    repo=REPO,
+    rev=VERSION,
+    remote=os.getenv("DVC_REMOTE"),  # "docker" or "minikube" or None for default
+    remote_config=remote_config,
 )
 
 # Load metadata for normalization
@@ -722,81 +914,90 @@ metadata = json.loads(
 pixel_mean = metadata["metrics"]["train"]["pixel_mean"]
 pixel_std = metadata["metrics"]["train"]["pixel_std"]
 
-# Log to MLflow
-mlflow.log_params(
-    {"dvc_data_version": VERSION, "pixel_mean": pixel_mean, "pixel_std": pixel_std}
-)
+# Log to MLflow for lineage
+mlflow.log_params({
+    "dvc_data_version": VERSION,
+    "pixel_mean": pixel_mean,
+    "pixel_std": pixel_std
+})
 ```
 
 **CLI:**
 
 ```bash
-# Download specific version
+# Download specific version (uses repo's default remote)
 dvc get https://github.com/OpenCloudHub/data-registry \
     data/fashion-mnist/processed \
     --rev fashion-mnist-v1.0.0 \
     -o ./data/
+
+# Specify remote explicitly (when data is in different MinIO)
+dvc get https://github.com/OpenCloudHub/data-registry \
+    data/fashion-mnist/processed \
+    --rev fashion-mnist-v1.0.0 \
+    --remote docker \
+    -o ./data/
+
+# List files at a version
+dvc list https://github.com/OpenCloudHub/data-registry \
+    data/wine-quality/processed \
+    --rev wine-quality-v1.0.0 \
+    --remote docker
 ```
 
 ### Running Embeddings Pipeline
 
-The embeddings pipeline requires pgvector and Ray:
+The embeddings pipeline requires pgvector and reads source data from another DVC tag:
 
 ```bash
-# Start Ray
-ray start --head
+# 1. Ensure source data exists (opencloudhub-readmes-download-v1.0.0)
+dvc list https://github.com/OpenCloudHub/data-registry \
+    data/opencloudhub-readmes/raw \
+    --rev opencloudhub-readmes-download-v1.0.0 \
+    --remote docker
 
-# Set database credentials
-export PGVECTOR_HOST=localhost
-export PGVECTOR_PASSWORD=admin
-# ... other PGVECTOR_* vars
+# 2. Set environment (includes PGVECTOR_* vars)
+set -a && source .env.docker && set +a
+unset AWS_CA_BUNDLE
 
-# Run pipeline
-cd pipelines/opencloudhub-readmes-embeddings
-python run_pipeline.py
+# 3. Run pipeline
+dvc repro pipelines/opencloudhub-readmes-embeddings/dvc.yaml
 ```
 
 ### Quick Bootstrap for Local Development
 
-If you're using the [local-compose-stack](https://github.com/OpenCloudHub/local-compose-stack) and just want to quickly get all datasets available for testing ML training repos or experimenting with DVC, use the bootstrap script:
+If you're using the [local-compose-stack](https://github.com/OpenCloudHub/local-compose-stack) and want to quickly initialize all datasets:
 
 ```bash
 # 1. Source environment variables
 set -a && source .env.docker && set +a
-unset AWS_CA_BUNDLE  # Fix for some container environments
+unset AWS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE  # Critical!
 
 # 2. Run bootstrap (downloads, processes, versions all datasets)
 ./scripts/bootstrap-data-examples.sh
 
-# Or include embeddings pipeline (requires pgvector running)
+# Or include embeddings pipeline (requires pgvector running on port 5433)
 ./scripts/bootstrap-data-examples.sh --with-embeddings
 
 # Force re-run even if data exists
 ./scripts/bootstrap-data-examples.sh --force
 ```
 
-This script will:
-
-1. Run all data pipelines (emotion, fashion-mnist, wine-quality, opencloudhub-readmes)
-1. Push processed data to MinIO
-1. Create `v1.0.0` git tags for each dataset
-1. Optionally generate embeddings and store in pgvector
-
-After bootstrap, you can immediately use the data in other ML repos:
-
-```bash
-# From any training repo
-dvc get https://github.com/OpenCloudHub/data-registry \
-    data/fashion-mnist/processed \
-    --rev fashion-mnist-v1.0.0
-```
+This creates the following tags:
+- `emotion-v1.0.0`
+- `fashion-mnist-v1.0.0`
+- `wine-quality-v1.0.0`
+- `opencloudhub-readmes-download-v1.0.0`
+- `opencloudhub-readmes-rag-evaluation-v1.0.0`
+- `roco-radiology-v1.0.0`
+- `opencloudhub-readmes-embeddings-v1.0.0` (if `--with-embeddings`)
 
 **Reset for Demo:**
 
-To start fresh (e.g., for recording a demo), use the reset script:
+To start fresh (e.g., for recording a demo):
 
 ```bash
-./scripts/reset-for-demo.sh  # Clears DVC cache, deletes tags
+./scripts/reset-for-demo.sh  # Clears DVC cache, deletes tags locally and on GitHub
 ./scripts/bootstrap-data-examples.sh --with-embeddings  # Run fresh
 ```
 
@@ -806,25 +1007,51 @@ ______________________________________________________________________
 
 ### DVC Remotes
 
+The repository has two DVC remotes configured. **The default is `minikube`** (for in-cluster access), which uses an internal Kubernetes URL.
+
 ```ini
-# .dvc/config
+# .dvc/config (committed to repo)
 [core]
     remote = minikube
 
 ['remote "minikube"']
     url = s3://dvcstore
-    endpointurl = https://minio-api.internal.opencloudhub.org
+    endpointurl = http://minio.minio-tenant.svc.cluster.local:80
+    ssl_verify = false
 
 ['remote "docker"']
     url = s3://dvcstore
     endpointurl = http://localhost:9000
 ```
 
-Switch between remotes:
+**⚠️ Important:** The `minikube` remote URL (`minio.minio-tenant.svc.cluster.local`) is only accessible from inside the Kubernetes cluster. For local development, you need to either:
+
+1. Use `--remote docker` flag with DVC commands
+2. Set `DVC_REMOTE=docker` environment variable (for Python API)
+3. Or change default: `dvc remote default docker` (modifies `.dvc/config.local`)
+
+### Environment Files
+
+| File | Purpose | When to Use |
+|------|---------|-------------|
+| `.env.docker` | Local docker compose stack | Development, local testing |
+| `.env.minikube` | Minikube with ingress | Testing k8s deployments locally |
+| (none) | In-cluster via ConfigMaps | Production Argo workflows |
+
+**Key variables:**
 
 ```bash
-dvc remote default docker    # Local development
-dvc remote default minikube  # Kubernetes
+# .env.docker
+AWS_ENDPOINT_URL=http://localhost:9000
+AWS_ACCESS_KEY_ID=admin
+AWS_SECRET_ACCESS_KEY=admin123
+DVC_REMOTE=docker              # Tells Python scripts which remote to use
+PGVECTOR_PORT=5433             # Docker compose uses 5433 to avoid conflicts
+
+# .env.minikube  
+AWS_ENDPOINT_URL=https://minio-api.internal.opencloudhub.org
+DVC_REMOTE=minikube
+PGVECTOR_PORT=5432             # Standard port via port-forward
 ```
 
 ### Pipeline Parameters
@@ -846,20 +1073,54 @@ analyze:
 
 ### Embeddings Pipeline Parameters
 
+The embeddings pipeline uses Python for config (allows env var overrides):
+
 ```python
 # pipelines/opencloudhub-readmes-embeddings/params.py
-DVC_DATA_VERSION = "opencloudhub-readmes-v1.0.0"
-DVC_DATA_PATH = "data/opencloudhub-readmes/raw"
 
+# Source data version - which tag of READMEs to embed
+DVC_DATA_VERSION = "opencloudhub-readmes-download-v1.0.0"
+DVC_DATA_PATH = "data/opencloudhub-readmes/raw"
+DVC_REPO_URL = "https://github.com/OpenCloudHub/data-registry"
+
+# Embedding configuration
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_CHUNK_SIZE = 800
 EMBEDDING_CHUNK_OVERLAP = 100
 EMBEDDING_BATCH_SIZE = 8
+
+# Quality filters
+MIN_CHUNK_SIZE = 50
+MAX_NOISE_RATIO = 0.3
 ```
 
 ______________________________________________________________________
 
 <h2 id="design-decisions">💭 Design Decisions</h2>
+
+### Why Multiple DVC Remotes Are Tricky
+
+**The challenge:** DVC stores the remote URL in `.dvc/config` which is committed to git. When you `dvc get/list` from a GitHub repo, DVC clones the repo and uses its `.dvc/config` — not your local environment.
+
+**Our solution:**
+1. **Default remote = in-cluster** (`minikube`) for production pipelines
+2. **Explicit `--remote` flag** or `DVC_REMOTE` env var for local access
+3. **Both remotes point to same bucket** (`s3://dvcstore`) — only endpoint differs
+
+**Why not just one remote?**
+- In-cluster jobs need internal Kubernetes DNS (`minio.minio-tenant.svc.cluster.local`)
+- Local development needs localhost or ingress URL
+- Cloud deployments might need different credentials entirely
+
+**Python API workaround:**
+
+```python
+# Training code handles this with DVC_REMOTE env var
+dvc_remote = os.getenv("DVC_REMOTE")  # "docker", "minikube", or None
+fs = dvc.api.DVCFileSystem(repo=REPO, rev=VERSION, remote=dvc_remote, remote_config=creds)
+```
+
+This way, the same training code works in all environments — just set the right env vars.
 
 ### Why Combined Pipelines + Data?
 
