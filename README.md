@@ -80,8 +80,8 @@ Each dataset is prepared for a specific ML workload in the platform:
 | `fashion-mnist`                   | `fashion-mnist-v1.0.0`                | [ai-dl-lightning](https://github.com/opencloudhub/ai-dl-lightning)               | Distributed image classification |
 | `emotion`                         | `emotion-v1.0.0`                      | [ai-dl-bert](https://github.com/opencloudhub/ai-dl-bert)                         | Text classification with HPO     |
 | `roco-radiology`                  | `roco-radiology-v1.0.0`               | [ai-dl-qwen](https://github.com/opencloudhub/ai-dl-qwen)                         | VLM fine-tuning                  |
-| `opencloudhub-readmes`            | `opencloudhub-readmes-download-v1.0.0`| *(intermediate)*                                                                 | Source data for embeddings       |
-| `opencloudhub-readmes-rag-evaluation` | `opencloudhub-readmes-rag-evaluation-v1.0.0` | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG evaluation test questions |
+| `opencloudhub-readmes-download`   | `opencloudhub-readmes-download-v1.0.0`| *(intermediate)*                                                                 | Source data for embeddings       |
+| `opencloudhub-readmes-evaluation` | `opencloudhub-readmes-evaluation-v1.0.0` | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG evaluation test questions |
 | `opencloudhub-readmes-embeddings` | `opencloudhub-readmes-embeddings-v1.0.0` | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG semantic search              |
 
 **Notes:**
@@ -143,8 +143,8 @@ flowchart LR
         FMNIST[(fashion-mnist)]
         EMOTION[(emotion)]
         ROCO[(roco-radiology)]
-        READMES[(opencloudhub-readmes)]
-        RAGEVAL[(rag-evaluation)]
+        READMES[(readmes-download)]
+        RAGEVAL[(readmes-evaluation)]
         EMBED[(readmes-embeddings)]
     end
 
@@ -160,7 +160,7 @@ flowchart LR
     FMNIST -->|"fashion-mnist-v1.0.0"| LIGHTNING
     EMOTION -->|"emotion-v1.0.0"| BERT
     ROCO -->|"roco-radiology-v1.0.0"| QWEN
-    READMES -->|"opencloudhub-readmes-download-v1.0.0"| EMBED
+    READMES -->|"...-download-v1.0.0"| EMBED
     EMBED -->|"pgvector"| RAG
     RAGEVAL -->|"evaluation questions"| RAG
 ```
@@ -525,11 +525,11 @@ data-registry/
 │   │   ├── raw/images/                # X-ray images
 │   │   ├── processed/train/           # Qwen conversation format
 │   │   └── metadata.json              # Includes prompt_version
-│   ├── opencloudhub-readmes/
-│   │   ├── raw/                       # README.md files from GitHub
-│   │   └── rag-evaluation/            # RAG test questions (manually curated)
-│   │       ├── questions.csv          # Question, expected answer, key concepts
-│   │       └── questions.csv.dvc      # DVC tracking file
+│   ├── opencloudhub-readmes-download/
+│   │   └── raw/                       # README.md files from GitHub
+│   ├── opencloudhub-readmes-evaluation/   # RAG test questions (manually curated)
+│   │   ├── questions.csv              # Question, expected answer, key concepts
+│   │   └── questions.csv.dvc          # DVC tracking file
 │   └── opencloudhub-readmes-embeddings/
 │       └── metadata.json              # Embedding pipeline stats
 │
@@ -955,26 +955,26 @@ Not all datasets come from automated pipelines. For curated files like evaluatio
 
 ```bash
 # 1. Create/edit your data file
-mkdir -p data/opencloudhub-readmes/rag-evaluation
-vim data/opencloudhub-readmes/rag-evaluation/questions.csv
+mkdir -p data/opencloudhub-readmes-evaluation
+vim data/opencloudhub-readmes-evaluation/questions.csv
 
 # 2. Track with DVC (creates .dvc file)
-dvc add data/opencloudhub-readmes/rag-evaluation/questions.csv
+dvc add data/opencloudhub-readmes-evaluation/questions.csv
 
 # 3. Push data to remote storage
 dvc push
 
 # 4. Commit the .dvc file and create a version tag
-git add data/opencloudhub-readmes/rag-evaluation/questions.csv.dvc
-git add data/opencloudhub-readmes/rag-evaluation/.gitignore  # auto-generated
+git add data/opencloudhub-readmes-evaluation/questions.csv.dvc
+git add data/opencloudhub-readmes-evaluation/.gitignore  # auto-generated
 git commit -m "Add RAG evaluation questions"
 
 # IMPORTANT: Create tag AFTER commit
-git tag -a opencloudhub-readmes-rag-evaluation-v1.0.0 -m "RAG evaluation questions v1.0.0"
+git tag -a opencloudhub-readmes-evaluation-v1.0.0 -m "RAG evaluation questions v1.0.0"
 
 # 5. Push to GitHub
 git push origin main
-git push origin opencloudhub-readmes-rag-evaluation-v1.0.0
+git push origin opencloudhub-readmes-evaluation-v1.0.0
 ```
 
 **Using the manually added data:**
@@ -984,9 +984,9 @@ import dvc.api
 
 # Read evaluation questions
 questions_csv = dvc.api.read(
-    "data/opencloudhub-readmes/rag-evaluation/questions.csv",
+    "data/opencloudhub-readmes-evaluation/questions.csv",
     repo="https://github.com/OpenCloudHub/data-registry",
-    rev="opencloudhub-readmes-rag-evaluation-v1.0.0",
+    rev="opencloudhub-readmes-evaluation-v1.0.0",
 )
 ```
 
@@ -1004,7 +1004,7 @@ The embeddings pipeline requires pgvector and reads source data from another DVC
 ```bash
 # 1. Ensure source data exists (opencloudhub-readmes-download-v1.0.0)
 dvc list https://github.com/OpenCloudHub/data-registry \
-    data/opencloudhub-readmes/raw \
+    data/opencloudhub-readmes-download/raw \
     --rev opencloudhub-readmes-download-v1.0.0 \
     --remote docker
 
@@ -1040,7 +1040,7 @@ This creates the following tags:
 - `fashion-mnist-v1.0.0`
 - `wine-quality-v1.0.0`
 - `opencloudhub-readmes-download-v1.0.0`
-- `opencloudhub-readmes-rag-evaluation-v1.0.0`
+- `opencloudhub-readmes-evaluation-v1.0.0`
 - `roco-radiology-v1.0.0`
 - `opencloudhub-readmes-embeddings-v1.0.0` (if `--with-embeddings`)
 

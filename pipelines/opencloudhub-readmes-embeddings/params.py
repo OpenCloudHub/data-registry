@@ -22,7 +22,7 @@
 # ConfigMap: embeddings-env (DVC_DATA_VERSION, DVC_DATA_PATH)
 
 DVC_DATA_VERSION = "opencloudhub-readmes-download-v1.0.0"
-DVC_DATA_PATH = "data/opencloudhub-readmes/raw"
+DVC_DATA_PATH = "data/opencloudhub-readmes-download/raw"
 DVC_REPO_URL = "https://github.com/OpenCloudHub/data-registry"
 
 # =============================================================================

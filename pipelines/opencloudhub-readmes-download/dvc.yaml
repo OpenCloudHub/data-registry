@@ -7,5 +7,5 @@ stages:
       - org_name
       - output_dir
     outs:
-      - ../../data/opencloudhub-readmes/raw
-    always_changed: true  # ALways run as we might have new readmes
+      - ../../data/opencloudhub-readmes-download/raw
+    always_changed: true  # Always run as we might have new readmes

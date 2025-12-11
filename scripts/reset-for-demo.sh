@@ -30,7 +30,7 @@ TAGS=(
   "fashion-mnist-v1.0.0"
   "wine-quality-v1.0.0"
   "opencloudhub-readmes-download-v1.0.0"
-  "opencloudhub-readmes-rag-evaluation-v1.0.0"
+  "opencloudhub-readmes-evaluation-v1.0.0"
   "opencloudhub-readmes-embeddings-v1.0.0"
   "roco-radiology-v1.0.0"
 )
@@ -67,9 +67,9 @@ echo "────────────────────────�
 rm -rf data/emotion/raw data/emotion/processed data/emotion/metadata.json
 rm -rf data/fashion-mnist/raw data/fashion-mnist/processed data/fashion-mnist/metadata.json
 rm -rf data/wine-quality/raw data/wine-quality/processed data/wine-quality/metadata.json
-rm -rf data/opencloudhub-readmes/raw
+rm -rf data/opencloudhub-readmes-download/raw
 rm -rf data/opencloudhub-readmes-embeddings
-rm -f data/opencloudhub-readmes/rag-evaluation/questions.csv.dvc
+rm -f data/opencloudhub-readmes-evaluation/questions.csv.dvc
 
 echo "   ✓ Data folders cleaned"
 
