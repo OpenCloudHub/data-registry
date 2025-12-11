@@ -81,9 +81,12 @@ Each dataset is prepared for a specific ML workload in the platform:
 | `emotion`                         | `emotion-v1.0.0`                      | [ai-dl-bert](https://github.com/opencloudhub/ai-dl-bert)                         | Text classification with HPO     |
 | `roco-radiology`                  | `roco-radiology-v1.0.0`               | [ai-dl-qwen](https://github.com/opencloudhub/ai-dl-qwen)                         | VLM fine-tuning                  |
 | `opencloudhub-readmes`            | `opencloudhub-readmes-download-v1.0.0`| *(intermediate)*                                                                 | Source data for embeddings       |
+| `opencloudhub-readmes-rag-evaluation` | `opencloudhub-readmes-rag-evaluation-v1.0.0` | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG evaluation test questions |
 | `opencloudhub-readmes-embeddings` | `opencloudhub-readmes-embeddings-v1.0.0` | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG semantic search              |
 
-Note: The embeddings pipeline depends on the readmes-download pipeline, creating a two-stage lineage chain.
+**Notes:**
+- The embeddings pipeline depends on the readmes-download pipeline, creating a two-stage lineage chain.
+- The rag-evaluation dataset is a manually curated CSV (not from a pipeline) — see [Adding Data Manually](#adding-data-manually).
 
 ______________________________________________________________________
 
@@ -141,6 +144,7 @@ flowchart LR
         EMOTION[(emotion)]
         ROCO[(roco-radiology)]
         READMES[(opencloudhub-readmes)]
+        RAGEVAL[(rag-evaluation)]
         EMBED[(readmes-embeddings)]
     end
 
@@ -158,6 +162,7 @@ flowchart LR
     ROCO -->|"roco-radiology-v1.0.0"| QWEN
     READMES -->|"opencloudhub-readmes-download-v1.0.0"| EMBED
     EMBED -->|"pgvector"| RAG
+    RAGEVAL -->|"evaluation questions"| RAG
 ```
 
 ______________________________________________________________________
@@ -494,9 +499,7 @@ WHERE dvc_data_version = 'opencloudhub-readmes-download-v1.0.0'
   AND argo_workflow_uid = 'workflow-xyz';
 ```
 
-This allows A/B testing different embedding models or chunk strategies while maintaining complete traceability
-
-```
+This allows A/B testing different embedding models or chunk strategies while maintaining complete traceability.
 
 ______________________________________________________________________
 
@@ -524,8 +527,9 @@ data-registry/
 │   │   └── metadata.json              # Includes prompt_version
 │   ├── opencloudhub-readmes/
 │   │   ├── raw/                       # README.md files from GitHub
-│   │   └── rag-evaluation/            # Test questions for RAG
-│   │       └── questions.csv
+│   │   └── rag-evaluation/            # RAG test questions (manually curated)
+│   │       ├── questions.csv          # Question, expected answer, key concepts
+│   │       └── questions.csv.dvc      # DVC tracking file
 │   └── opencloudhub-readmes-embeddings/
 │       └── metadata.json              # Embedding pipeline stats
 │
@@ -565,7 +569,7 @@ data-registry/
 ├── .env.docker                        # Local docker compose environment
 ├── .env.minikube                      # Minikube/cluster environment
 └── Dockerfile                         # Multi-stage: dev + prod
-````
+```
 
 ### DVC Pipeline Definition Pattern
 
@@ -601,7 +605,7 @@ stages:
     metrics:
       - ../../data/fashion-mnist/metadata.json:
           cache: false                # Keep in Git, not DVC
-````
+```
 
 **Key DVC concepts:**
 
@@ -944,6 +948,54 @@ dvc list https://github.com/OpenCloudHub/data-registry \
     --rev wine-quality-v1.0.0 \
     --remote docker
 ```
+
+### Adding Data Manually (without a pipeline) {#adding-data-manually}
+
+Not all datasets come from automated pipelines. For curated files like evaluation questions, use `dvc add` directly:
+
+```bash
+# 1. Create/edit your data file
+mkdir -p data/opencloudhub-readmes/rag-evaluation
+vim data/opencloudhub-readmes/rag-evaluation/questions.csv
+
+# 2. Track with DVC (creates .dvc file)
+dvc add data/opencloudhub-readmes/rag-evaluation/questions.csv
+
+# 3. Push data to remote storage
+dvc push
+
+# 4. Commit the .dvc file and create a version tag
+git add data/opencloudhub-readmes/rag-evaluation/questions.csv.dvc
+git add data/opencloudhub-readmes/rag-evaluation/.gitignore  # auto-generated
+git commit -m "Add RAG evaluation questions"
+
+# IMPORTANT: Create tag AFTER commit
+git tag -a opencloudhub-readmes-rag-evaluation-v1.0.0 -m "RAG evaluation questions v1.0.0"
+
+# 5. Push to GitHub
+git push origin main
+git push origin opencloudhub-readmes-rag-evaluation-v1.0.0
+```
+
+**Using the manually added data:**
+
+```python
+import dvc.api
+
+# Read evaluation questions
+questions_csv = dvc.api.read(
+    "data/opencloudhub-readmes/rag-evaluation/questions.csv",
+    repo="https://github.com/OpenCloudHub/data-registry",
+    rev="opencloudhub-readmes-rag-evaluation-v1.0.0",
+)
+```
+
+**When to use `dvc add` vs pipelines:**
+
+| Approach | Use When | Example |
+|----------|----------|--------|
+| `dvc add` | Static files, manual curation, no processing needed | Evaluation questions, label mappings, config files |
+| DVC pipeline | Reproducible processing, external data sources, computed outputs | Download → Process → Analyze stages |
 
 ### Running Embeddings Pipeline
 
