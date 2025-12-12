@@ -1,7 +1,7 @@
 [project]
 name = "Data-Registry"
-version = "0.1.0"
-description = "Demo DVC Data Registry"
+version = "1.0.0"
+description = "Centralized data versioning with DVC for reproducible ML pipelines"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

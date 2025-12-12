@@ -1143,7 +1143,7 @@ The embeddings pipeline uses Python for config (allows env var overrides):
 
 # Source data version - which tag of READMEs to embed
 DVC_DATA_VERSION = "opencloudhub-readmes-download-v1.0.0"
-DVC_DATA_PATH = "data/opencloudhub-readmes/raw"
+DVC_DATA_PATH = "data/opencloudhub-readmes-download/raw"
 DVC_REPO_URL = "https://github.com/OpenCloudHub/data-registry"
 
 # Embedding configuration

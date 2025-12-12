@@ -16,8 +16,8 @@ set -e
 #   4. Optionally runs embeddings pipeline
 #
 # Prerequisites:
-#   - Environment variables: source .env.mikikube (or .env.local)
-#   - Port-forward pgvector if using minikube(for embeddings):
+#   - Environment variables: source .env.minikube (or .env.docker)
+#   - Port-forward pgvector if using minikube (for embeddings):
 #       kubectl port-forward -n storage svc/demo-app-db-cluster-rw 5432:5432
 #
 # Usage:
