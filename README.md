@@ -74,17 +74,18 @@ dvc get https://github.com/OpenCloudHub/data-registry \
 
 Each dataset is prepared for a specific ML workload in the platform:
 
-| Dataset                           | Tag Format                            | Training Repo                                                                    | Use Case                         |
-| --------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------- |
-| `wine-quality`                    | `wine-quality-v1.0.0`                 | [ai-ml-sklearn](https://github.com/opencloudhub/ai-ml-sklearn)                   | Baseline tabular regression      |
-| `fashion-mnist`                   | `fashion-mnist-v1.0.0`                | [ai-dl-lightning](https://github.com/opencloudhub/ai-dl-lightning)               | Distributed image classification |
-| `emotion`                         | `emotion-v1.0.0`                      | [ai-dl-bert](https://github.com/opencloudhub/ai-dl-bert)                         | Text classification with HPO     |
-| `roco-radiology`                  | `roco-radiology-v1.0.0`               | [ai-dl-qwen](https://github.com/opencloudhub/ai-dl-qwen)                         | VLM fine-tuning                  |
-| `opencloudhub-readmes-download`   | `opencloudhub-readmes-download-v1.0.0`| *(intermediate)*                                                                 | Source data for embeddings       |
-| `opencloudhub-readmes-rag-evaluation` | `opencloudhub-readmes-rag-evaluation-v1.0.0` | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG evaluation test questions |
-| `opencloudhub-readmes-embeddings` | `opencloudhub-readmes-embeddings-v1.0.0` | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG semantic search              |
+| Dataset                               | Tag Format                                   | Training Repo                                                                    | Use Case                         |
+| ------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------- |
+| `wine-quality`                        | `wine-quality-v1.0.0`                        | [ai-ml-sklearn](https://github.com/opencloudhub/ai-ml-sklearn)                   | Baseline tabular regression      |
+| `fashion-mnist`                       | `fashion-mnist-v1.0.0`                       | [ai-dl-lightning](https://github.com/opencloudhub/ai-dl-lightning)               | Distributed image classification |
+| `emotion`                             | `emotion-v1.0.0`                             | [ai-dl-bert](https://github.com/opencloudhub/ai-dl-bert)                         | Text classification with HPO     |
+| `roco-radiology`                      | `roco-radiology-v1.0.0`                      | [ai-dl-qwen](https://github.com/opencloudhub/ai-dl-qwen)                         | VLM fine-tuning                  |
+| `opencloudhub-readmes-download`       | `opencloudhub-readmes-download-v1.0.0`       | *(intermediate)*                                                                 | Source data for embeddings       |
+| `opencloudhub-readmes-rag-evaluation` | `opencloudhub-readmes-rag-evaluation-v1.0.0` | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG evaluation test questions    |
+| `opencloudhub-readmes-embeddings`     | `opencloudhub-readmes-embeddings-v1.0.0`     | [demo-app-genai-backend](https://github.com/opencloudhub/demo-app-genai-backend) | RAG semantic search              |
 
 **Notes:**
+
 - The embeddings pipeline depends on the readmes-download pipeline, creating a two-stage lineage chain.
 - The rag-evaluation dataset is a manually curated CSV (not from a pipeline) — see [Adding Data Manually](#adding-data-manually).
 
@@ -648,12 +649,12 @@ ______________________________________________________________________
 >
 > This creates challenges when working across environments:
 >
-> | Scenario | Problem | Solution |
-> |----------|---------|----------|
-> | Ran pipelines locally (docker), trying to list from GitHub | GitHub repo has minikube remote URL → connection timeout | Use `--remote docker` flag |
-> | Ran pipelines in cluster, trying to list from devcontainer | Devcontainer can't reach internal cluster URLs | Port-forward or run from host |
-> | Destroyed minikube, trying to get data | Data files are gone from that MinIO instance | Re-run pipelines or restore MinIO |
-> | Mixed environments | Data pushed to one remote, tag created, can't access from other | Stick to one environment per workflow |
+> | Scenario                                                   | Problem                                                         | Solution                              |
+> | ---------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------- |
+> | Ran pipelines locally (docker), trying to list from GitHub | GitHub repo has minikube remote URL → connection timeout        | Use `--remote docker` flag            |
+> | Ran pipelines in cluster, trying to list from devcontainer | Devcontainer can't reach internal cluster URLs                  | Port-forward or run from host         |
+> | Destroyed minikube, trying to get data                     | Data files are gone from that MinIO instance                    | Re-run pipelines or restore MinIO     |
+> | Mixed environments                                         | Data pushed to one remote, tag created, can't access from other | Stick to one environment per workflow |
 >
 > **Golden Rule:** The environment where you `dvc push` must be accessible when you `dvc get/list/pull`.
 
@@ -679,12 +680,12 @@ unset AWS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE
 
 **Services:**
 
-| Service        | URL                   | Credentials     |
-| -------------- | --------------------- | --------------- |
-| MinIO Console  | http://localhost:9001 | admin/admin123  |
-| MinIO API      | http://localhost:9000 | admin/admin123  |
-| pgvector       | localhost:5433        | admin/admin     |
-| MLflow UI      | http://localhost:5000 | -               |
+| Service       | URL                   | Credentials    |
+| ------------- | --------------------- | -------------- |
+| MinIO Console | http://localhost:9001 | admin/admin123 |
+| MinIO API     | http://localhost:9000 | admin/admin123 |
+| pgvector      | localhost:5433        | admin/admin    |
+| MLflow UI     | http://localhost:5000 | -              |
 
 **Using data pushed to docker remote:**
 
@@ -718,7 +719,8 @@ curl -k https://minio-api.internal.opencloudhub.org/minio/health/live
 **⚠️ Devcontainer Networking Issue:**
 
 If you're in a VS Code devcontainer, the container likely **cannot reach** `minio-api.internal.opencloudhub.org` because:
-- That DNS resolves to a local IP (e.g., 192.168.x.x) 
+
+- That DNS resolves to a local IP (e.g., 192.168.x.x)
 - The devcontainer has its own network namespace
 - In this Devcontainer we run on the hosts network, but if restarting minikube, you lose context, but can just rebuild
 
@@ -771,12 +773,12 @@ The in-cluster URL (`minio.minio-tenant.svc.cluster.local`) is **only reachable 
 
 ### Environment Variables Reference
 
-| Variable | `.env.docker` | `.env.minikube` | In-Cluster |
-|----------|---------------|-----------------|------------|
-| `AWS_ENDPOINT_URL` | `http://localhost:9000` | `https://minio-api.internal.opencloudhub.org` | (from ConfigMap) |
-| `DVC_REMOTE` | `docker` | `minikube` | (not needed, uses config default) |
-| `PGVECTOR_HOST` | `localhost` | `127.0.0.1` (port-forward) | (from Secret) |
-| `PGVECTOR_PORT` | `5433` | `5432` | `5432` |
+| Variable           | `.env.docker`           | `.env.minikube`                               | In-Cluster                        |
+| ------------------ | ----------------------- | --------------------------------------------- | --------------------------------- |
+| `AWS_ENDPOINT_URL` | `http://localhost:9000` | `https://minio-api.internal.opencloudhub.org` | (from ConfigMap)                  |
+| `DVC_REMOTE`       | `docker`                | `minikube`                                    | (not needed, uses config default) |
+| `PGVECTOR_HOST`    | `localhost`             | `127.0.0.1` (port-forward)                    | (from Secret)                     |
+| `PGVECTOR_PORT`    | `5433`                  | `5432`                                        | `5432`                            |
 
 ### Common Pitfalls
 
@@ -786,6 +788,7 @@ The in-cluster URL (`minio.minio-tenant.svc.cluster.local`) is **only reachable 
 **Cause:** DVC is trying to reach a MinIO endpoint you can't access.
 
 **Debug:**
+
 ```bash
 # Check which endpoint DVC is trying to use:
 dvc config core.remote  # Shows default remote
@@ -794,18 +797,21 @@ dvc config remote.minikube.endpointurl  # Shows URL
 # Try with explicit remote:
 dvc list https://github.com/OpenCloudHub/data-registry data/wine-quality --remote docker
 ```
+
 </details>
 
 <details>
 <summary><b>🔴 "Unable to locate credentials" error</b></summary>
 
-**Cause:** AWS_* environment variables not set or empty.
+**Cause:** AWS\_\* environment variables not set or empty.
 
 **Fix:**
+
 ```bash
 set -a && source .env.docker && set +a
 env | grep AWS  # Verify they're set
 ```
+
 </details>
 
 <details>
@@ -814,9 +820,11 @@ env | grep AWS  # Verify they're set
 **Cause:** Empty `AWS_CA_BUNDLE=""` is different from unset — it breaks boto/aiohttp.
 
 **Fix:**
+
 ```bash
 unset AWS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE REQUESTS_CA_BUNDLE
 ```
+
 </details>
 
 <details>
@@ -825,17 +833,20 @@ unset AWS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE REQUESTS_CA_BUNDLE
 **Cause:** The git tag references a `dvc.lock` with hashes, but `dvc list` needs to fetch the `.dir` file from the remote to list directory contents.
 
 **Scenario:**
+
 1. You ran pipeline locally → data in local MinIO
-2. Committed and tagged
-3. Try `dvc list` from GitHub → tries minikube remote (from .dvc/config) → fails
+1. Committed and tagged
+1. Try `dvc list` from GitHub → tries minikube remote (from .dvc/config) → fails
 
 **Fix:**
+
 ```bash
 # Specify the correct remote explicitly:
 dvc list https://github.com/OpenCloudHub/data-registry data/wine-quality \
   --rev wine-quality-v1.0.0 \
   --remote docker
 ```
+
 </details>
 
 <details>
@@ -846,6 +857,7 @@ dvc list https://github.com/OpenCloudHub/data-registry data/wine-quality \
 **Fix:** Re-run pipelines to regenerate data, or restore MinIO from backup.
 
 **Prevention:** For important data, push to a persistent remote (e.g., cloud S3).
+
 </details>
 
 ______________________________________________________________________
@@ -919,11 +931,9 @@ pixel_mean = metadata["metrics"]["train"]["pixel_mean"]
 pixel_std = metadata["metrics"]["train"]["pixel_std"]
 
 # Log to MLflow for lineage
-mlflow.log_params({
-    "dvc_data_version": VERSION,
-    "pixel_mean": pixel_mean,
-    "pixel_std": pixel_std
-})
+mlflow.log_params(
+    {"dvc_data_version": VERSION, "pixel_mean": pixel_mean, "pixel_std": pixel_std}
+)
 ```
 
 **CLI:**
@@ -992,10 +1002,10 @@ questions_csv = dvc.api.read(
 
 **When to use `dvc add` vs pipelines:**
 
-| Approach | Use When | Example |
-|----------|----------|--------|
-| `dvc add` | Static files, manual curation, no processing needed | Evaluation questions, label mappings, config files |
-| DVC pipeline | Reproducible processing, external data sources, computed outputs | Download → Process → Analyze stages |
+| Approach     | Use When                                                         | Example                                            |
+| ------------ | ---------------------------------------------------------------- | -------------------------------------------------- |
+| `dvc add`    | Static files, manual curation, no processing needed              | Evaluation questions, label mappings, config files |
+| DVC pipeline | Reproducible processing, external data sources, computed outputs | Download → Process → Analyze stages                |
 
 ### Running Embeddings Pipeline
 
@@ -1036,6 +1046,7 @@ unset AWS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE  # Critical!
 ```
 
 This creates the following tags:
+
 - `emotion-v1.0.0`
 - `fashion-mnist-v1.0.0`
 - `wine-quality-v1.0.0`
@@ -1079,16 +1090,16 @@ The repository has two DVC remotes configured. **The default is `minikube`** (fo
 **⚠️ Important:** The `minikube` remote URL (`minio.minio-tenant.svc.cluster.local`) is only accessible from inside the Kubernetes cluster. For local development, you need to either:
 
 1. Use `--remote docker` flag with DVC commands
-2. Set `DVC_REMOTE=docker` environment variable (for Python API)
-3. Or change default: `dvc remote default docker` (modifies `.dvc/config.local`)
+1. Set `DVC_REMOTE=docker` environment variable (for Python API)
+1. Or change default: `dvc remote default docker` (modifies `.dvc/config.local`)
 
 ### Environment Files
 
-| File | Purpose | When to Use |
-|------|---------|-------------|
-| `.env.docker` | Local docker compose stack | Development, local testing |
-| `.env.minikube` | Minikube with ingress | Testing k8s deployments locally |
-| (none) | In-cluster via ConfigMaps | Production Argo workflows |
+| File            | Purpose                    | When to Use                     |
+| --------------- | -------------------------- | ------------------------------- |
+| `.env.docker`   | Local docker compose stack | Development, local testing      |
+| `.env.minikube` | Minikube with ingress      | Testing k8s deployments locally |
+| (none)          | In-cluster via ConfigMaps  | Production Argo workflows       |
 
 **Key variables:**
 
@@ -1155,11 +1166,13 @@ ______________________________________________________________________
 **The challenge:** DVC stores the remote URL in `.dvc/config` which is committed to git. When you `dvc get/list` from a GitHub repo, DVC clones the repo and uses its `.dvc/config` — not your local environment.
 
 **Our solution:**
+
 1. **Default remote = in-cluster** (`minikube`) for production pipelines
-2. **Explicit `--remote` flag** or `DVC_REMOTE` env var for local access
-3. **Both remotes point to same bucket** (`s3://dvcstore`) — only endpoint differs
+1. **Explicit `--remote` flag** or `DVC_REMOTE` env var for local access
+1. **Both remotes point to same bucket** (`s3://dvcstore`) — only endpoint differs
 
 **Why not just one remote?**
+
 - In-cluster jobs need internal Kubernetes DNS (`minio.minio-tenant.svc.cluster.local`)
 - Local development needs localhost or ingress URL
 - Cloud deployments might need different credentials entirely
@@ -1169,7 +1182,9 @@ ______________________________________________________________________
 ```python
 # Training code handles this with DVC_REMOTE env var
 dvc_remote = os.getenv("DVC_REMOTE")  # "docker", "minikube", or None
-fs = dvc.api.DVCFileSystem(repo=REPO, rev=VERSION, remote=dvc_remote, remote_config=creds)
+fs = dvc.api.DVCFileSystem(
+    repo=REPO, rev=VERSION, remote=dvc_remote, remote_config=creds
+)
 ```
 
 This way, the same training code works in all environments — just set the right env vars.

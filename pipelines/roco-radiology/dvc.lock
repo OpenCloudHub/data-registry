@@ -1,0 +1,96 @@
+schema: '2.0'
+stages:
+  download:
+    cmd: python scripts/download.py
+    deps:
+    - path: scripts/download.py
+      hash: md5
+      md5: 8c4a1c6ad644446c14729d0c326f882d
+      size: 3119
+      isexec: true
+    params:
+      params.yaml:
+        download:
+          dataset_name: unsloth/Radiology_mini
+          output_dir: ../../data/roco-radiology/raw
+          num_samples: 500
+    outs:
+    - path: ../../data/roco-radiology/raw/captions.json
+      hash: md5
+      md5: 5f063b8c23d6ad4fc1bf75a289b5e748
+      size: 101273
+    - path: ../../data/roco-radiology/raw/images
+      hash: md5
+      md5: 94872ba3b72188f4fdfeaba4bd28b4f2.dir
+      size: 41276501
+      nfiles: 500
+  process:
+    cmd: python scripts/process.py
+    deps:
+    - path: ../../data/roco-radiology/raw
+      hash: md5
+      md5: ec0ed7a4d3a135cc034544c5f9a37b12.dir
+      size: 41377797
+      nfiles: 502
+    - path: scripts/process.py
+      hash: md5
+      md5: e22ce83f8ab65439b49208b6b168e31e
+      size: 5172
+      isexec: true
+    params:
+      params.yaml:
+        process:
+          raw_dir: ../../data/roco-radiology/raw
+          output_dir: ../../data/roco-radiology/processed
+          stats_file: ../../data/roco-radiology/processed/process_stats.json
+          train_split: 0.8
+          prompt_name: radiology-vlm-prompt
+          prompt_version: 3
+    outs:
+    - path: ../../data/roco-radiology/processed/process_stats.json
+      hash: md5
+      md5: 89d8a01bdc8741bb757881a2b9ccd995
+      size: 528
+    - path: ../../data/roco-radiology/processed/test
+      hash: md5
+      md5: 45f86f00a917c88c5ee7c34fc2654318.dir
+      size: 8878239
+      nfiles: 101
+    - path: ../../data/roco-radiology/processed/train
+      hash: md5
+      md5: 1b6561f57a5656b0da028329aa4690cf.dir
+      size: 32722437
+      nfiles: 401
+  analyze:
+    cmd: python scripts/analyze.py
+    deps:
+    - path: ../../data/roco-radiology/processed/process_stats.json
+      hash: md5
+      md5: 89d8a01bdc8741bb757881a2b9ccd995
+      size: 528
+    - path: ../../data/roco-radiology/processed/test
+      hash: md5
+      md5: 45f86f00a917c88c5ee7c34fc2654318.dir
+      size: 8878239
+      nfiles: 101
+    - path: ../../data/roco-radiology/processed/train
+      hash: md5
+      md5: 1b6561f57a5656b0da028329aa4690cf.dir
+      size: 32722437
+      nfiles: 401
+    - path: scripts/analyze.py
+      hash: md5
+      md5: e038ca18592bd9770f3112bc44ef83de
+      size: 4284
+      isexec: true
+    params:
+      params.yaml:
+        analyze:
+          data_dir: ../../data/roco-radiology/processed
+          stats_file: ../../data/roco-radiology/processed/process_stats.json
+          output_file: ../../data/roco-radiology/metadata.json
+    outs:
+    - path: ../../data/roco-radiology/metadata.json
+      hash: md5
+      md5: 3b997291d0a341d57e42864ca525df46
+      size: 1178
